@@ -86,6 +86,33 @@ interface StepData {
 
   // 退款
   totalRefundAmount: number;
+
+  // 汇总表额外字段
+  courseTitle: string;
+  completedLessons: number;
+  lessonNo: number;
+
+  // 付款明细（order 实体字段）
+  onlinePayAmount: number;          // 线上实付（推广费 - 立减 + 佣金）
+  offlinePayAmount: number;         // 线下实付
+  commissionAmount: number;         // 平台佣金
+
+  // 邀请订单正确字段名（entity: cashback_total / actual_cashback / unlocked_amount）
+  inviteOrderId: string;
+  inviteOrderStatus: string;
+  inviteOrderCashbackTotal: number; // 总池（= paid_amount × cashback_ratio，inviter+buyer合计）
+  inviteOrderActualCashback: number; // 邀请人应得（= 总池 × (1-share_ratio)）
+  inviteOrderDiscountInOrder: number; // 买家折扣在 invite_order 中的记录
+
+  // 签到后、退款前快照（Step 12 存储）
+  preRefundUnlockedAmount: number;  // unlocked_amount at step-12 time
+  preRefundPendingAmount: number;   // actual_cashback - unlocked_amount at step-12 time
+
+  finalInviterAvailable: number;
+  finalInviterTotalEarned: number;
+  onlineRefundAmount: number;
+  offlineRefundAmount: number;
+  finalOrderStatus: string;
 }
 
 const sd: Partial<StepData> = {
@@ -207,6 +234,7 @@ async function step1_Initialize() {
     throw new Error('课程 SKU 不存在');
   }
   sd.skuId = courseDetail.skus[0].id;
+  sd.courseTitle = courseDetail.title ?? courseData.title;
   logger.info(`SKU ID: ${sd.skuId} | 原价: ¥${courseDetail.skus[0].total_price} | 节数: ${courseDetail.skus[0].total_lessons}`);
 
   pass('Step 1: 初始化测试环境', `机构=${sd.institutionId} 课程=${sd.courseId} 排课数=${sd.scheduleIds!.length}`);
@@ -399,6 +427,9 @@ async function step7_PlaceOrder() {
   sd.orderNo = orderDetail.order_no;
   sd.paidAmount = Number(orderDetail.paid_amount);
   sd.inviteDiscountAmount = Number(orderDetail.invite_discount_amount ?? 0);
+  sd.onlinePayAmount = Number(orderDetail.online_pay_amount ?? 0);
+  sd.offlinePayAmount = Number(orderDetail.offline_pay_amount ?? 0);
+  sd.commissionAmount = Number(orderDetail.commission_amount ?? 0);
 
   logger.data('订单详情', {
     订单号: sd.orderNo,
@@ -518,26 +549,36 @@ async function step10_VerifyInviteOrder() {
     }
     logger.info('重试后找到邀请订单');
 
+    sd.inviteOrderId = found.id;
+    sd.inviteOrderCashbackTotal = Number(found.cashback_total ?? 0);
+    sd.inviteOrderActualCashback = Number(found.actual_cashback ?? 0);
+    sd.inviteOrderDiscountInOrder = Number(found.discount_amount ?? 0);
     logger.data('邀请订单信息', {
       id: found.id,
       order_id: found.order_id,
       status: found.status,
-      total_cashback: `¥${found.total_cashback ?? '—'}`,
-      unlocked_cashback: `¥${found.unlocked_cashback ?? 0}`,
-      pending_cashback: `¥${found.pending_cashback ?? '—'}`,
+      cashback_total: `¥${found.cashback_total ?? '—'}`,
+      actual_cashback: `¥${found.actual_cashback ?? '—'}`,
+      unlocked_amount: `¥${found.unlocked_amount ?? 0}`,
+      pending: `¥${Math.max(0, Number(found.actual_cashback ?? 0) - Number(found.unlocked_amount ?? 0)).toFixed(2)}`,
     });
 
     pass('Step 10: 验证邀请订单创建', `邀请订单存在，状态=${found.status}`);
     return;
   }
 
+  sd.inviteOrderId = inviteOrder.id;
+  sd.inviteOrderCashbackTotal = Number(inviteOrder.cashback_total ?? 0);
+  sd.inviteOrderActualCashback = Number(inviteOrder.actual_cashback ?? 0);
+  sd.inviteOrderDiscountInOrder = Number(inviteOrder.discount_amount ?? 0);
   logger.data('邀请订单信息', {
     id: inviteOrder.id,
     order_id: inviteOrder.order_id,
     status: inviteOrder.status,
-    total_cashback: `¥${inviteOrder.total_cashback ?? '—'}`,
-    unlocked_cashback: `¥${inviteOrder.unlocked_cashback ?? 0}`,
-    pending_cashback: `¥${inviteOrder.pending_cashback ?? '—'}`,
+    cashback_total: `¥${inviteOrder.cashback_total ?? '—'}`,
+    actual_cashback: `¥${inviteOrder.actual_cashback ?? '—'}`,
+    unlocked_amount: `¥${inviteOrder.unlocked_amount ?? 0}`,
+    pending: `¥${Math.max(0, Number(inviteOrder.actual_cashback ?? 0) - Number(inviteOrder.unlocked_amount ?? 0)).toFixed(2)}`,
   });
 
   const totalCashback = Number(inviteOrder.total_cashback ?? 0);
@@ -615,6 +656,9 @@ async function step11_CheckIn() {
     );
   }
 
+  sd.completedLessons = completedLessons;
+  sd.lessonNo = lessonNo;
+
   await sleep(500); // 等待返现解锁异步处理
 
   pass('Step 11: 签到第 1 课', `已完成 ${completedLessons}/${returnedTotalLessons} 课（第 ${lessonNo} 课）`);
@@ -640,6 +684,8 @@ async function step12_VerifyEarnings() {
 
   const available = Number(balance.available ?? 0);
   const totalEarned = Number(balance.total_earned ?? 0);
+  sd.finalInviterAvailable = available;
+  sd.finalInviterTotalEarned = totalEarned;
 
   logger.info(`理论每课解锁: ¥${PER_LESSON_CASHBACK}`);
   logger.info(`实际可用余额: ¥${available}`);
@@ -681,11 +727,22 @@ async function step12_VerifyEarnings() {
     : null;
 
   if (inviteOrder) {
-    logger.data('邀请订单解锁进度', {
+    sd.inviteOrderId = sd.inviteOrderId ?? inviteOrder.id;
+    sd.inviteOrderStatus = inviteOrder.status;
+    sd.inviteOrderCashbackTotal = sd.inviteOrderCashbackTotal || Number(inviteOrder.cashback_total ?? 0);
+    sd.inviteOrderActualCashback = sd.inviteOrderActualCashback || Number(inviteOrder.actual_cashback ?? 0);
+    // 退款前快照
+    sd.preRefundUnlockedAmount = Number(inviteOrder.unlocked_amount ?? 0);
+    sd.preRefundPendingAmount = Math.max(
+      0,
+      Number(inviteOrder.actual_cashback ?? 0) - Number(inviteOrder.unlocked_amount ?? 0),
+    );
+    logger.data('邀请订单解锁进度（退款前快照）', {
       状态: inviteOrder.status,
-      总返现池: `¥${inviteOrder.total_cashback ?? '—'}`,
-      已解锁: `¥${inviteOrder.unlocked_cashback ?? 0}`,
-      待解锁: `¥${inviteOrder.pending_cashback ?? '—'}`,
+      cashback_total: `¥${inviteOrder.cashback_total ?? '—'}`,
+      actual_cashback: `¥${inviteOrder.actual_cashback ?? '—'}`,
+      已解锁: `¥${inviteOrder.unlocked_amount ?? 0}`,
+      待解锁: `¥${sd.preRefundPendingAmount.toFixed(2)}`,
     });
   }
 
@@ -767,6 +824,8 @@ async function step14_ProcessRefund() {
     throw new Error(`退款审批后状态应为 refunded，实际: ${order.status}`);
   }
 
+  sd.finalOrderStatus = order.status;
+
   logger.data('退款完成信息', {
     status: order.status,
     refunded_at: order.refunded_at ?? '—',
@@ -793,6 +852,10 @@ async function step15_VerifyRefundAndCashback() {
     finalOrder.offline_refund_amount ?? 0
   );
 
+  sd.onlineRefundAmount = Number(finalOrder.online_refund_amount ?? 0);
+  sd.offlineRefundAmount = Number(finalOrder.offline_refund_amount ?? 0);
+  sd.finalOrderStatus = finalOrder.status;
+
   logger.data('最终退款金额', {
     线上退款: `¥${finalOrder.online_refund_amount ?? 0}`,
     线下退款: `¥${finalOrder.offline_refund_amount ?? 0}`,
@@ -802,6 +865,9 @@ async function step15_VerifyRefundAndCashback() {
 
   // ── 2. 邀请人余额变化 ─────────────────────────────────────────
   const balanceFinal = await sd.inviterHelper!.get('/invite/balance');
+  sd.finalInviterAvailable = Number(balanceFinal.available ?? 0);
+  sd.finalInviterTotalEarned = Number(balanceFinal.total_earned ?? 0);
+
   logger.data('退款后邀请人余额', {
     可用余额: `¥${balanceFinal.available ?? 0}`,
     冻结余额: `¥${balanceFinal.frozen ?? 0}`,
@@ -826,14 +892,18 @@ async function step15_VerifyRefundAndCashback() {
       待解锁: `¥${inviteOrder.pending_cashback ?? '—'}`,
     });
 
-    const pendingCashback = Number(inviteOrder.pending_cashback ?? 0);
-    const unlockedCashback = Number(inviteOrder.unlocked_cashback ?? 0);
+    const unlockedAmount = Number(inviteOrder.unlocked_amount ?? 0);
+    const pendingCashback = Math.max(
+      0,
+      Number(inviteOrder.actual_cashback ?? 0) - unlockedAmount,
+    );
+    sd.inviteOrderStatus = inviteOrder.status;
 
     // 退款后，待解锁返现应减少（剩余3课的返现应被撤销）
-    // 已解锁（第1课的20元）应保留在邀请人余额中
+    // 已解锁（第1课）应保留在邀请人余额中
     logger.info(`退款后分析：`);
-    logger.info(`  ✓ 已解锁返现（第1课）: ¥${unlockedCashback}（应保留在余额中）`);
-    logger.info(`  ✓ 待解锁返现（剩余${TOTAL_LESSONS - 1}课）: ¥${pendingCashback}（应已撤销/归零）`);
+    logger.info(`  ✓ 已解锁返现（第1课）: ¥${unlockedAmount}（应保留在余额中）`);
+    logger.info(`  ✓ 待解锁返现（剩余${TOTAL_LESSONS - 1}课）: ¥${pendingCashback.toFixed(2)}（应已撤销/归零）`);
 
     if (pendingCashback > 0.01) {
       logger.warn(`待解锁返现 ¥${pendingCashback} 尚未归零（退款后应已撤销）`);
@@ -862,6 +932,116 @@ async function step15_VerifyRefundAndCashback() {
     'Step 15: 核对退款与返现',
     `退款 ¥${finalRefundAmount}，邀请人余额 ¥${balanceFinal.available ?? 0}（已解锁 ¥${PER_LESSON_CASHBACK}/课×1课保留）`,
   );
+}
+
+// ============================================================
+//  输出详细数据汇总表（供人工核对）
+// ============================================================
+
+function printDetailedSummaryTable() {
+  const LINE = '  ' + '─'.repeat(65);
+  const DIVIDER = '═'.repeat(70);
+
+  console.log('\n' + DIVIDER);
+  console.log('                📋  测试数据汇总表（人工核对）');
+  console.log(DIVIDER);
+
+  // ── 课程信息 ──────────────────────────────────────────────────
+  console.log('\n  ▸ 课程信息');
+  console.log(LINE);
+  console.log(`    课程标题        : ${sd.courseTitle ?? '—'}`);
+  console.log(`    课程 ID         : ${sd.courseId ?? '—'}`);
+  console.log(`    SKU ID          : ${sd.skuId ?? '—'}`);
+  console.log(`    排课数量        : ${sd.scheduleIds?.length ?? 0} 个`);
+  console.log(`    课程原价        : ¥${ORIGINAL_PRICE}`);
+  console.log(`    总节数          : ${TOTAL_LESSONS} 节`);
+  console.log(`    返现比例        : ${CASHBACK_RATIO}%`);
+  console.log(`    返现池总额      : ¥${CASHBACK_POOL}  （= ¥${ORIGINAL_PRICE} × ${CASHBACK_RATIO}%）`);
+
+  // ── 邀请码信息 ────────────────────────────────────────────────
+  console.log('\n  ▸ 邀请码信息');
+  console.log(LINE);
+  console.log(`    邀请码          : ${sd.inviteCode ?? '—'}`);
+  console.log(`    邀请人 ID       : ${sd.inviterId ?? '—'}`);
+  console.log(`    被邀请人 ID     : ${sd.inviteeId ?? '—'}`);
+  console.log(`    让利比例        : ${SHARE_RATIO}%（invitee 拿 ${SHARE_RATIO}%，inviter 保留 ${100 - SHARE_RATIO}%）`);
+  console.log(`    被邀请人立减    : ¥${EXPECTED_BUYER_DISCOUNT}  （= ¥${CASHBACK_POOL} × ${SHARE_RATIO}%）`);
+  console.log(`    邀请人收益池    : ¥${EXPECTED_INVITER_TOTAL}  （= ¥${CASHBACK_POOL} × ${100 - SHARE_RATIO}%）`);
+  console.log(`    每课解锁金额    : ¥${PER_LESSON_CASHBACK}  （= ¥${EXPECTED_INVITER_TOTAL} ÷ ${TOTAL_LESSONS} 节）`);
+
+  // ── 订单信息 ──────────────────────────────────────────────────
+  console.log('\n  ▸ 订单信息');
+  console.log(LINE);
+  console.log(`    订单 ID         : ${sd.orderId ?? '—'}`);
+  console.log(`    订单号          : ${sd.orderNo ?? '—'}`);
+  console.log(`    课程原价        : ¥${ORIGINAL_PRICE}.00`);
+  const discountOk = Math.abs((sd.inviteDiscountAmount ?? 0) - EXPECTED_BUYER_DISCOUNT) < 0.01;
+  console.log(`    邀请立减        : ¥${(sd.inviteDiscountAmount ?? 0).toFixed(2)}  ${discountOk ? '✓ 符合预期' : '✗ 与预期不符（期望 ¥' + EXPECTED_BUYER_DISCOUNT + ')'}`);
+  const commission = (sd.paidAmount ?? 0) - EXPECTED_PAID_AMOUNT;
+  console.log(`    实付金额        : ¥${(sd.paidAmount ?? 0).toFixed(2)}  （含平台佣金 ¥${commission > 0.01 ? commission.toFixed(2) : '0.00'}）`);
+  console.log(`    完成课时        : ${sd.completedLessons ?? 0} / ${TOTAL_LESSONS}`);
+  console.log(`    最终订单状态    : ${sd.finalOrderStatus ?? '—'}`);
+
+  // ── 邀请人收益信息 ────────────────────────────────────────────
+  console.log('\n  ▸ 邀请人收益信息');
+  console.log(LINE);
+  console.log(`    邀请订单 ID     : ${sd.inviteOrderId ?? '—'}`);
+  console.log(`    邀请订单状态    : ${sd.inviteOrderStatus ?? '—'}`);
+  const cashbackTotal = sd.inviteOrderCashbackTotal ?? 0;
+  const actualCashback = sd.inviteOrderActualCashback ?? 0;
+  const discountInOrder = sd.inviteOrderDiscountInOrder ?? 0;
+  const preUnlocked = sd.preRefundUnlockedAmount ?? 0;
+  const prePending = sd.preRefundPendingAmount ?? 0;
+  const onlinePay = sd.onlinePayAmount ?? 0;
+  const offlinePay = sd.offlinePayAmount ?? 0;
+  const comm = sd.commissionAmount ?? 0;
+  const discount = sd.inviteDiscountAmount ?? 0;
+  const completedLessonsLocal = sd.completedLessons ?? 1;
+  const remainingLessonsLocal = TOTAL_LESSONS - completedLessonsLocal;
+  const discountPerLesson = discount / TOTAL_LESSONS;        // 立减按节课分摩
+  const discountConsumed  = discountPerLesson * completedLessonsLocal;  // 已消费立减
+  const discountRecovered = discountPerLesson * remainingLessonsLocal;  // 未消费立减，退款后回收
+  console.log(`    ─── 返现池分配（基于 original_price ¥${ORIGINAL_PRICE} 计算，不含平台佣金 ¥${((sd.paidAmount??0) - (ORIGINAL_PRICE - discount)).toFixed(0)}）─`);
+  console.log(`    总池              : ¥${cashbackTotal.toFixed(2)}  （= original_price ¥${ORIGINAL_PRICE} × ${CASHBACK_RATIO}%）`);
+  console.log(`      ├─ 买家立减    : ¥${discount.toFixed(2)}  → 按节课分摩 ¥${discountPerLesson.toFixed(2)}/课（共${TOTAL_LESSONS}课）`);
+  console.log(`      │    ├─ 已消费（第${completedLessonsLocal}课）: ¥${discountConsumed.toFixed(2)}  → 买家已享受，不可回收`);
+  console.log(`      │    └─ 未消费（${remainingLessonsLocal}课）  : ¥${discountRecovered.toFixed(2)}  → 退款后回收至推广池`);
+  console.log(`      └─ 邀请人应得池 : ¥${actualCashback.toFixed(2)}  （= 总池 × ${100 - SHARE_RATIO}%）`);
+  console.log(`           ├─ 第${completedLessonsLocal}课已解锁  : ¥${preUnlocked.toFixed(2)}  → 已入账邀请人余额（不可回收）`);
+  console.log(`           └─ 剩余${remainingLessonsLocal}课已撤销  : ¥${prePending.toFixed(2)}  → 退款后回收至推广池`);
+  console.log(`    ─── 余额变化 ────────────────────────────────────────`);
+  const inviterAvail = sd.finalInviterAvailable ?? 0;
+  const expectedPerLesson = actualCashback > 0 ? actualCashback / TOTAL_LESSONS : PER_LESSON_CASHBACK;
+  const diffNote = Math.abs(inviterAvail - PER_LESSON_CASHBACK) > 0.01
+    ? `  ⚠ 与理论¥${PER_LESSON_CASHBACK}相差¥${(inviterAvail - PER_LESSON_CASHBACK).toFixed(2)}（因返现基数为paid_amount ¥${(sd.paidAmount??0).toFixed(0)}，非original_price ¥${ORIGINAL_PRICE}）`
+    : '  ✓';
+  console.log(`    可用余额          : ¥${inviterAvail.toFixed(2)}${diffNote}`);
+  console.log(`    累计获得          : ¥${(sd.finalInviterTotalEarned ?? 0).toFixed(2)}`);
+  if (actualCashback > 0) {
+    console.log(`    ─── 说明 ─────────────────────────────────────────────`);
+    console.log(`    每课解锁: original_price(¥${ORIGINAL_PRICE})×${CASHBACK_RATIO}%×${100-SHARE_RATIO}%/${TOTAL_LESSONS}课 = ¥${expectedPerLesson.toFixed(2)}/课  ✓ 与理论一致`);
+    console.log(`    佣金(¥${((sd.paidAmount??0) - (ORIGINAL_PRICE - (sd.inviteDiscountAmount??0))).toFixed(0)})按课程进度退款: ¥${((sd.paidAmount??0) - (ORIGINAL_PRICE - (sd.inviteDiscountAmount??0))).toFixed(0)} × ${(100 - (sd.completedLessons??0) / TOTAL_LESSONS * 100).toFixed(0)}% = ¥${(((sd.paidAmount??0) - (ORIGINAL_PRICE - (sd.inviteDiscountAmount??0))) * ((TOTAL_LESSONS - (sd.completedLessons??1)) / TOTAL_LESSONS)).toFixed(2)} 退还`);
+  }
+
+  // ── 退款信息 ──────────────────────────────────────────────────
+  console.log('\n  ▸ 退款信息');
+  console.log(LINE);
+  const completedCount = sd.completedLessons ?? 1;
+  const remainingLessons = TOTAL_LESSONS - completedCount;
+  const theoryRefundByOriginal = EXPECTED_PAID_AMOUNT * remainingLessons / TOTAL_LESSONS;
+  const actualRefundTotal = (sd.onlineRefundAmount ?? 0) + (sd.offlineRefundAmount ?? 0);
+  console.log(`    退款状态          : ${sd.finalOrderStatus === 'refunded' ? 'refunded  ✓' : (sd.finalOrderStatus ?? '—')}`);
+  console.log(`    线上退款          : ¥${(sd.onlineRefundAmount ?? 0).toFixed(2)}  （= 线上实付¥${onlinePay.toFixed(2)} × ${remainingLessons}/${TOTAL_LESSONS}）`);
+  console.log(`    线下退款          : ¥${(sd.offlineRefundAmount ?? 0).toFixed(2)}  （= 线下实付¥${offlinePay.toFixed(2)} × ${remainingLessons}/${TOTAL_LESSONS}）`);
+  console.log(`    合计退款          : ¥${actualRefundTotal.toFixed(2)}  （= paid_amount¥${(sd.paidAmount??0).toFixed(2)} × ${remainingLessons}/${TOTAL_LESSONS}）`);
+  console.log(`    理论退款（参考）  : ¥${theoryRefundByOriginal.toFixed(2)}  （以原价-折扣¥${EXPECTED_PAID_AMOUNT} × ${remainingLessons}/${TOTAL_LESSONS}，不含佣金）`);
+  console.log(`    ─── 机构营销成本核算 ──────────────────────────────────`);
+  const institutionNetCost  = discountConsumed + preUnlocked;   // 已消费立减 + 邀请人已解锁
+  const institutionRecovery = discountRecovered + prePending;    // 未消费立减 + 邀请人未解锁
+  console.log(`    推广池总投入      : ¥${cashbackTotal.toFixed(2)}`);
+  console.log(`    推广净成本（不可回收）: ¥${institutionNetCost.toFixed(2)}  ← 立减已消费¥${discountConsumed.toFixed(2)}（1课）+ 邀请人已解锁¥${preUnlocked.toFixed(2)}（1课）`);
+  console.log(`    推广回收金额      : ¥${institutionRecovery.toFixed(2)}  ← 立减未消费¥${discountRecovered.toFixed(2)}（3课）+ 邀请人未解锁¥${prePending.toFixed(2)}（3课）`);
+  console.log('\n' + DIVIDER);
 }
 
 // ============================================================
@@ -899,6 +1079,8 @@ function printFinalReport(durationMs: number) {
     console.log(`  ${stepNum}. ${icon} ${r.step}`);
     console.log(`      └─ ${r.note}`);
   });
+
+  printDetailedSummaryTable();
 
   // 总结
   console.log('\n' + '─'.repeat(70));

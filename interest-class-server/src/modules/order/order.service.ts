@@ -681,7 +681,8 @@ export class OrderService {
         order_id: order.id,
         course_id: order.course_id,
         institution_id: order.institution_id,
-        order_amount: Number(order.paid_amount),
+        // 返现基数使用课程原价，不含平台佣金；佣金按课程进度在退款中单独处理
+        order_amount: Number(order.original_price),
         cashback_ratio: Number(course.cashback_ratio) || 10,
         total_lessons: order.total_lessons || 0,
       });

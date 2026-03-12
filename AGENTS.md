@@ -4099,7 +4099,67 @@ patterns.forEach((p, i) => {
 
 ---
 
-### 检查清单 ✅
+### 错误 48: 邀友返现基数错误地使用 paid_amount（含佣金）而非 original_price ⚠️⚠️⚠️
+
+**错误现象**：
+```typescript
+// ❌ 错误：createInviteOrderIfNeeded 使用含佣金的 paid_amount 作为返现基数
+await this.inviteService.createInviteOrder({
+  order_amount: Number(order.paid_amount),  // ¥1040 = 原价¥1000 - 立减¥60 + 佣金¥100
+  cashback_ratio: Number(course.cashback_ratio),
+  // ...
+});
+// 结果：cashback_total = ¥1040 × 10% = ¥104（应为 ¥100）
+// 邀请人每课解锁 ¥10.40（应为 ¥10.00）
+// invite_order 中 discount_amount 记录为 ¥62.40（应为 ¥60.00）
+```
+
+**根本原因**：
+- `paid_amount` = 线上实付 + 线下实付 = (推广费基础 - 立减 + **佣金**) + 线下实付
+- 平台佣金属于平台收入，不应参与返现金额的计算
+- 返现比例（如 10%）是基于课程**原价**设计的，佣金已从支付结构中分离
+
+**正确写法**：
+```typescript
+// ✅ 正确：使用 original_price（课程原价）作为返现基数，不含佣金
+await this.inviteService.createInviteOrder({
+  // 返现基数使用课程原价，不含平台佣金；佣金按课程进度在退款中单独处理
+  order_amount: Number(order.original_price),  // ¥1000（不含佣金）
+  cashback_ratio: Number(course.cashback_ratio),
+  // ...
+});
+// 结果：cashback_total = ¥1000 × 10% = ¥100 ✓
+// 邀请人每课解锁 ¥10.00 ✓
+// invite_order 中 discount_amount 记录为 ¥60.00 ✓（与实际立减一致）
+```
+
+**退款中佣金的处理**：
+- 佣金（`commission_amount`）已嵌入 `online_pay_amount` 中存储
+- 退款时 `online_refund_amount = online_pay_amount × remaining_ratio` 自然包含佣金的按比例退还
+- 例：线上实付 ¥140（推广费¥100 - 立减¥60 + 佣金¥100），退 3/4 = ¥105（含佣金退还 ¥75）
+- **无需对退款逻辑做任何修改**，现有实现已正确处理
+
+**返现金额体系（修正后）**：
+```
+课程原价 ¥1000
+  × cashback_ratio 10%
+  = 返现总池 ¥100
+    × share_ratio 60%  → 买家立减 ¥60（与实际立减完全一致）
+    × (1 - share_ratio) 40% → 邀请人总收益 ¥40
+      ÷ total_lessons 4  = 每课解锁 ¥10
+
+paid_amount ¥1040 = (¥100推广费 - ¥60立减 + ¥100佣金) + ¥900线下
+  → 退款时按课程进度，佣金部分按比例归还，与返现计算完全分离
+```
+
+**规范**：
+- `createInviteOrderIfNeeded` 中必须使用 `order.original_price` 而非 `order.paid_amount`
+- `calculateDiscount` 接口从前端接收 `order_amount` 时，前端应传课程 SKU 价格（original_price），不含佣金
+- 佣金对返现计算透明，对退款计算自动生效
+
+---
+
+
 
 在生成新模块时，请检查以下内容：
 
