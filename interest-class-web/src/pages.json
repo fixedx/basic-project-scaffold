@@ -1,0 +1,568 @@
+{
+	"pages": [ //pages数组中第一项表示应用启动页，参考：https://uniapp.dcloud.io/collocation/pages
+		{
+			"path": "pages/index/index",
+			"style": {
+				"navigationBarTitleText": "首页",
+				"navigationStyle": "custom",
+				"enablePullDownRefresh": true
+			}
+		},
+		{
+			"path": "pages/schedule/index",
+			"style": {
+				"navigationBarTitleText": "课表",
+				"navigationStyle": "custom",
+				"enablePullDownRefresh": true
+			}
+		},
+		{
+			"path": "pages/mine/index",
+			"style": {
+				"navigationBarTitleText": "我的",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/check-in-tab/index",
+			"style": {
+				"navigationBarTitleText": "签到",
+				"navigationStyle": "custom",
+				"enablePullDownRefresh": true
+			}
+		},
+		{
+			"path": "pages/check-in-records/index",
+			"style": {
+				"navigationBarTitleText": "签到记录",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/login/index",
+			"style": {
+				"navigationBarTitleText": "登录",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/settings/index",
+			"style": {
+				"navigationBarTitleText": "设置"
+			}
+		},
+		{
+			"path": "pages/settings/profile",
+			"style": {
+				"navigationBarTitleText": "个人信息"
+			}
+		},
+		{
+			"path": "pages/notification/index",
+			"style": {
+				"navigationBarTitleText": "消息通知"
+			}
+		},
+		{
+			"path": "pages/help-center/index",
+			"style": {
+				"navigationBarTitleText": "帮助中心"
+			}
+		},
+		{
+			"path": "pages/help-center/list",
+			"style": {
+				"navigationBarTitleText": "帮助分类"
+			}
+		},
+		{
+			"path": "pages/help-center/detail",
+			"style": {
+				"navigationBarTitleText": "帮助详情"
+			}
+		},
+		{
+			"path": "pages/search/index",
+			"style": {
+				"navigationBarTitleText": "搜索",
+				"navigationStyle": "custom"
+			}
+		},
+		// 课程相关页面
+		{
+			"path": "pages/course-list/index",
+			"style": {
+				"navigationBarTitleText": "课程列表",
+				"navigationStyle": "custom",
+				"enablePullDownRefresh": true
+			}
+		},
+		{
+			"path": "pages/course-detail/index",
+			"style": {
+				"navigationBarTitleText": "课程详情"
+			}
+		},
+		// 机构相关页面
+		{
+			"path": "pages/institution-list/index",
+			"style": {
+				"navigationBarTitleText": "机构列表",
+				"navigationStyle": "custom",
+				"enablePullDownRefresh": true
+			}
+		},
+		{
+			"path": "pages/institution-detail/index",
+			"style": {
+				"navigationStyle": "custom",
+				"navigationBarTextStyle": "white"
+			}
+		},
+		{
+			"path": "pages/teacher-list/index",
+			"style": {
+				"navigationBarTitleText": "全部教师"
+			}
+		},
+		{
+			"path": "pages/teacher-detail/index",
+			"style": {
+				"navigationBarTitleText": "教师详情"
+			}
+		},
+		// 机构端页面
+		{
+			"path": "pages/institution/login/index",
+			"style": {
+				"navigationBarTitleText": "机构登录",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/teacher/login/index",
+			"style": {
+				"navigationBarTitleText": "教师登录",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/teacher/center/index",
+			"style": {
+				"navigationBarTitleText": "教师中心",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/teacher/schedule/index",
+			"style": {
+				"navigationBarTitleText": "教师课表",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/teacher/attendance/index",
+			"style": {
+				"navigationBarTitleText": "考勤管理",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/teacher/courses/index",
+			"style": {
+				"navigationBarTitleText": "授课课程"
+			}
+		},
+		{
+			"path": "pages/teacher/students/index",
+			"style": {
+				"navigationBarTitleText": "我的学员"
+			}
+		},
+		{
+			"path": "pages/teacher/attendance-detail/index",
+			"style": {
+				"navigationBarTitleText": "课程考勤详情"
+			}
+		},
+		{
+			"path": "pages/institution/center/index",
+			"style": {
+				"navigationBarTitleText": "机构中心",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/institution/profile/index",
+			"style": {
+				"navigationBarTitleText": "机构信息"
+			}
+		},
+		{
+			"path": "pages/institution/contract/index",
+			"style": {
+				"navigationBarTitleText": "签署入驻协议"
+			}
+		},
+		{
+			"path": "pages/institution/settle/index",
+			"style": {
+				"navigationBarTitleText": "机构入驻"
+			}
+		},
+		{
+			"path": "pages/institution/orders/index",
+			"style": {
+				"navigationBarTitleText": "订单管理"
+			}
+		},
+		{
+			"path": "pages/institution/order-detail/index",
+			"style": {
+				"navigationBarTitleText": "订单详情",
+				"enablePullDownRefresh": true
+			}
+		},
+		{
+			"path": "pages/institution/courses/index",
+			"style": {
+				"navigationBarTitleText": "课程管理"
+			}
+		},
+		{
+			"path": "pages/institution/course-edit/index",
+			"style": {
+				"navigationBarTitleText": "编辑课程"
+			}
+		},
+		{
+			"path": "pages/institution/classroom-list/index",
+			"style": {
+				"navigationBarTitleText": "教室管理"
+			}
+		},
+		{
+			"path": "pages/institution/classroom-edit/index",
+			"style": {
+				"navigationBarTitleText": "编辑教室"
+			}
+		},
+		{
+			"path": "pages/institution/teacher-list/index",
+			"style": {
+				"navigationBarTitleText": "教师管理"
+			}
+		},
+		{
+			"path": "pages/institution/teacher-edit/index",
+			"style": {
+				"navigationBarTitleText": "编辑教师"
+			}
+		},
+		{
+			"path": "pages/institution/student-list/index",
+			"style": {
+				"navigationBarTitleText": "学员管理"
+			}
+		},
+		{
+			"path": "pages/institution/schedule-list/index",
+			"style": {
+				"navigationBarTitleText": "排课管理"
+			}
+		},
+		{
+			"path": "pages/institution/schedule-edit/index",
+			"style": {
+				"navigationBarTitleText": "编辑排课"
+			}
+		},
+		{
+			"path": "pages/institution/schedule-batch/index",
+			"style": {
+				"navigationBarTitleText": "批量排课"
+			}
+		},
+		{
+			"path": "pages/institution/banner-list/index",
+			"style": {
+				"navigationBarTitleText": "Banner 管理"
+			}
+		},
+		{
+			"path": "pages/institution/banner-edit/index",
+			"style": {
+				"navigationBarTitleText": "编辑 Banner"
+			}
+		},
+		{
+			"path": "pages/institution/review-list/index",
+			"style": {
+				"navigationBarTitleText": "用户评价"
+			}
+		},
+		// 用户预约订单页面
+		{
+			"path": "pages/booking-form/index",
+			"style": {
+				"navigationBarTitleText": "预约报名"
+			}
+		},
+		{
+			"path": "pages/my-bookings/index",
+			"style": {
+				"navigationBarTitleText": "我的预约",
+				"enablePullDownRefresh": true
+			}
+		},
+		{
+			"path": "pages/my-favorites/index",
+			"style": {
+				"navigationBarTitleText": "我的收藏"
+			}
+		},
+		{
+			"path": "pages/course-hours/index",
+			"style": {
+				"navigationBarTitleText": "课时资产"
+			}
+		},
+		{
+			"path": "pages/booking-detail/index",
+			"style": {
+				"navigationBarTitleText": "预约详情",
+				"enablePullDownRefresh": true
+			}
+		},
+		{
+			"path": "pages/change-booking/index",
+			"style": {
+				"navigationBarTitleText": "修改预约"
+			}
+		},
+		{
+			"path": "pages/my-orders/index",
+			"style": {
+				"navigationBarTitleText": "我的订单",
+				"enablePullDownRefresh": true
+			}
+		},
+		{
+			"path": "pages/order-detail/index",
+			"style": {
+				"navigationBarTitleText": "订单详情",
+				"enablePullDownRefresh": true
+			}
+		},
+		{
+			"path": "pages/order-pay/index",
+			"style": {
+				"navigationBarTitleText": "订单支付"
+			}
+		},
+		{
+			"path": "pages/course-review/index",
+			"style": {
+				"navigationBarTitleText": "评价课程"
+			}
+		},
+		{
+			"path": "pages/review-list/index",
+			"style": {
+				"navigationBarTitleText": "学员评价",
+				"enablePullDownRefresh": true
+			}
+		},
+		// 宝贝管理
+		{
+			"path": "pages/child-list/index",
+			"style": {
+				"navigationBarTitleText": "宝贝管理",
+				"enablePullDownRefresh": true
+			}
+		},
+		{
+			"path": "pages/child-edit/index",
+			"style": {
+				"navigationBarTitleText": "添加宝贝"
+			}
+		},
+		// 管理员页面
+		{
+			"path": "pages/admin/login/index",
+			"style": {
+				"navigationBarTitleText": "管理员登录",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/admin/center/index",
+			"style": {
+				"navigationBarTitleText": "管理中心",
+				"navigationStyle": "custom",
+				"enablePullDownRefresh": true
+			}
+		},
+		{
+			"path": "pages/admin/reviews/index",
+			"style": {
+				"navigationBarTitleText": "审核管理"
+			}
+		},
+		{
+			"path": "pages/admin/institutions/index",
+			"style": {
+				"navigationBarTitleText": "机构管理"
+			}
+		},
+		{
+			"path": "pages/admin/institution-detail/index",
+			"style": {
+				"navigationBarTitleText": "机构详情"
+			}
+		},
+		{
+			"path": "pages/admin/institution-edit/index",
+			"style": {
+				"navigationBarTitleText": "编辑机构信息"
+			}
+		},
+		{
+			"path": "pages/admin/feedback-list/index",
+			"style": {
+				"navigationBarTitleText": "反馈管理"
+			}
+		},
+		{
+			"path": "pages/admin/orders/index",
+			"style": {
+				"navigationBarTitleText": "订单管理"
+			}
+		},
+		{
+			"path": "pages/admin/order-detail/index",
+			"style": {
+				"navigationBarTitleText": "订单详情",
+				"enablePullDownRefresh": true
+			}
+		},
+		{
+			"path": "pages/admin/banners/index",
+			"style": {
+				"navigationBarTitleText": "横幅管理"
+			}
+		},
+		{
+			"path": "pages/admin/banner-edit/index",
+			"style": {
+				"navigationBarTitleText": "编辑横幅"
+			}
+		},
+		{
+			"path": "pages/admin/users/index",
+			"style": {
+				"navigationBarTitleText": "用户管理",
+				"enablePullDownRefresh": true
+			}
+		},
+		{
+			"path": "pages/admin/announcements/index",
+			"style": {
+				"navigationBarTitleText": "公告管理"
+			}
+		},
+		{
+			"path": "pages/admin/announcement-edit/index",
+			"style": {
+				"navigationBarTitleText": "编辑公告"
+			}
+		},
+		{
+			"path": "pages/admin/finance/index",
+			"style": {
+				"navigationBarTitleText": "财务结算"
+			}
+		},
+		// 邀友返现相关页面
+		{
+			"path": "pages/mine/invite/index",
+			"style": {
+				"navigationBarTitleText": "邀请有礼"
+			}
+		},
+		{
+			"path": "pages/mine/invite-earnings/index",
+			"style": {
+				"navigationBarTitleText": "邀请收益"
+			}
+		},
+		{
+			"path": "pages/mine/wallet/index",
+			"style": {
+				"navigationBarTitleText": "我的钱包"
+			}
+		},
+		{
+			"path": "pages/invite-code-select/index",
+			"style": {
+				"navigationBarTitleText": "选择邀请码"
+			}
+		},
+		{
+			"path": "pages/agreement/index",
+			"style": {
+				"navigationBarTitleText": "用户协议"
+			}
+		},
+		{
+			"path": "pages/privacy/index",
+			"style": {
+				"navigationBarTitleText": "隐私政策"
+			}
+		}
+	],
+	"globalStyle": {
+		"navigationBarTextStyle": "black",
+		"navigationBarTitleText": "uni-app",
+		"navigationBarBackgroundColor": "#F8F8F8",
+		"backgroundColor": "#F8F8F8"
+	},
+	"easycom": {
+		"autoscan": true,
+		"custom": {
+			"^wd-(.*)": "wot-design-uni/components/wd-$1/wd-$1.vue"
+		}
+	},
+	"tabBar": {
+		"color": "#999999",
+		"selectedColor": "#52c41a",
+		"borderStyle": "black",
+		"backgroundColor": "#ffffff",
+		"list": [
+			{
+				"pagePath": "pages/index/index",
+				"text": "首页",
+				"iconPath": "static/tabbar/home.png",
+				"selectedIconPath": "static/tabbar/home-active.png"
+			},
+			{
+				"pagePath": "pages/schedule/index",
+				"text": "课表",
+				"iconPath": "static/tabbar/schedule.png",
+				"selectedIconPath": "static/tabbar/schedule-active.png"
+			},
+			{
+				"pagePath": "pages/check-in-tab/index",
+				"text": "签到",
+				"iconPath": "static/tabbar/check-in.png",
+				"selectedIconPath": "static/tabbar/check-in-active.png"
+			},
+			{
+				"pagePath": "pages/mine/index",
+				"text": "我的",
+				"iconPath": "static/tabbar/mine.png",
+				"selectedIconPath": "static/tabbar/mine-active.png"
+			}
+		]
+	}
+}

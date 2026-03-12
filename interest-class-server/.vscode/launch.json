@@ -1,0 +1,19 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "启动 NPM 脚本",
+      "runtimeExecutable": "pnpm",    // 指定运行工具：npm, yarn, 或 pnpm
+      "runtimeArgs": [
+        "run",
+        "start:dev"                        // 这里换成你在 package.json 里具体的脚本名
+      ],
+      "console": "integratedTerminal", // 在 VS Code 内置终端显示日志
+      "skipFiles": [
+        "<node_internals>/**"
+      ]
+    }
+  ]
+}

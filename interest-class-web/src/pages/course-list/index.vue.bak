@@ -1,0 +1,415 @@
+<template>
+  <view class="course-list-page">
+    <!-- 搜索栏 -->
+    <view class="search-bar">
+      <view class="search-input-wrapper">
+        <wd-input
+          v-model="searchKeyword"
+          placeholder="搜索课程、机构"
+          clearable
+          @confirm="handleSearch"
+        >
+          <template #prefix>
+            <wd-icon name="search" />
+          </template>
+        </wd-input>
+      </view>
+      <wd-button type="primary" size="small" @click="handleSearch">
+        搜索
+      </wd-button>
+    </view>
+
+    <!-- 筛选栏 -->
+    <view class="filter-bar">
+      <view class="filter-item" @click="showCategoryPicker = true">
+        <text>{{ selectedCategoryLabel }}</text>
+        <wd-icon name="arrow-down" size="24rpx" />
+      </view>
+      <view class="filter-item" @click="showSortPicker = true">
+        <text>{{ selectedSortLabel }}</text>
+        <wd-icon name="arrow-down" size="24rpx" />
+      </view>
+    </view>
+
+    <!-- 课程列表 -->
+    <view class="course-list">
+      <view
+        v-for="course in courses"
+        :key="course.id"
+        class="course-item"
+        @click="handleCourseClick(course)"
+      >
+        <asyncimage
+          :src="course.cover_url"
+          width="200rpx"
+          height="200rpx"
+          mode="aspectFill"
+          class="course-cover"
+        />
+        <view class="course-info">
+          <text class="course-title">{{ course.title }}</text>
+          <text class="course-subtitle" v-if="course.subtitle">
+            {{ course.subtitle }}
+          </text>
+          <view class="course-meta">
+            <text class="meta-item" v-if="course.min_age || course.max_age">
+              {{ course.min_age || 0 }}-{{ course.max_age || 99 }}岁
+            </text>
+            <text class="meta-item" v-if="course.lesson_duration">
+              {{ course.lesson_duration }}分钟/节
+            </text>
+          </view>
+          <view class="course-footer">
+            <text class="course-price" v-if="course.skus && course.skus.length > 0">
+              ¥{{ getMinPrice(course.skus) }}起
+            </text>
+            <text class="course-sales">{{ course.sales_count || 0 }}人已报名</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 加载更多 -->
+    <view class="load-more" v-if="hasMore">
+      <wd-button
+        type="primary"
+        plain
+        size="small"
+        :loading="loading"
+        @click="loadMoreCourses"
+      >
+        {{ loading ? '加载中...' : '加载更多' }}
+      </wd-button>
+    </view>
+
+    <!-- 没有更多 -->
+    <view class="no-more" v-if="!hasMore && courses.length > 0">
+      <text>没有更多了</text>
+    </view>
+
+    <!-- 空状态 -->
+    <view class="empty-state" v-if="!loading && courses.length === 0">
+      <wd-icon name="picture" size="120rpx" color="#d9d9d9" />
+      <text class="empty-text">暂无课程</text>
+    </view>
+
+    <!-- 分类选择器 -->
+    <wd-picker
+      v-model="selectedCategory"
+      :columns="categoryOptions"
+      :show="showCategoryPicker"
+      @confirm="handleCategoryConfirm"
+      @cancel="showCategoryPicker = false"
+    />
+
+    <!-- 排序选择器 -->
+    <wd-picker
+      v-model="selectedSort"
+      :columns="sortOptions"
+      :show="showSortPicker"
+      @confirm="handleSortConfirm"
+      @cancel="showSortPicker = false"
+    />
+  </view>
+</template>
+
+<script setup lang="ts">
+import { ref, onMounted, computed } from 'vue'
+import { onLoad } from '@dcloudio/uni-app'
+import { courseApi, type Course } from '@/api'
+import { showErrorToast } from '@/utils/toast'
+
+// 搜索和筛选条件
+const searchKeyword = ref('')
+const selectedCategory = ref('')
+const selectedSort = ref('default')
+const showCategoryPicker = ref(false)
+const showSortPicker = ref(false)
+
+// 数据
+const courses = ref<Course[]>([])
+const loading = ref(false)
+const page = ref(1)
+const pageSize = ref(10)
+const total = ref(0)
+
+// 分类选项
+const categoryOptions = [
+  { label: '全部分类', value: '' },
+  { label: '美术', value: 'art' },
+  { label: '音乐', value: 'music' },
+  { label: '舞蹈', value: 'dance' },
+  { label: '体育', value: 'sports' },
+  { label: '编程', value: 'coding' },
+  { label: '语言', value: 'language' },
+  { label: 'STEM', value: 'stem' },
+  { label: '其他', value: 'other' },
+]
+
+// 排序选项
+const sortOptions = [
+  { label: '默认排序', value: 'default' },
+  { label: '最新发布', value: 'newest' },
+  { label: '价格从低到高', value: 'price_asc' },
+  { label: '价格从高到低', value: 'price_desc' },
+  { label: '报名人数', value: 'sales' },
+]
+
+// 选中分类标签
+const selectedCategoryLabel = computed(() => {
+  const category = categoryOptions.find(c => c.value === selectedCategory.value)
+  return category?.label || '全部分类'
+})
+
+// 选中排序标签
+const selectedSortLabel = computed(() => {
+  const sort = sortOptions.find(s => s.value === selectedSort.value)
+  return sort?.label || '默认排序'
+})
+
+// 是否还有更多
+const hasMore = computed(() => {
+  return courses.value.length < total.value
+})
+
+// 加载课程列表
+const loadCourses = async (resetPage = false) => {
+  if (resetPage) {
+    page.value = 1
+    courses.value = []
+  }
+  
+  loading.value = true
+  try {
+    const params: any = {
+      page: page.value,
+      pageSize: pageSize.value,
+    }
+    
+    if (searchKeyword.value) {
+      params.keyword = searchKeyword.value
+    }
+    
+    if (selectedCategory.value) {
+      params.category = selectedCategory.value
+    }
+    
+    if (selectedSort.value && selectedSort.value !== 'default') {
+      params.sort = selectedSort.value
+    }
+    
+    const data = await courseApi.getList(params)
+    
+    if (resetPage) {
+      courses.value = data.data
+    } else {
+      courses.value.push(...data.data)
+    }
+    
+    total.value = data.total
+  } catch (error) {
+    showErrorToast('加载失败')
+  } finally {
+    loading.value = false
+  }
+}
+
+// 加载更多
+const loadMoreCourses = async () => {
+  if (loading.value || !hasMore.value) return
+  
+  page.value++
+  await loadCourses(false)
+}
+
+// 搜索
+const handleSearch = () => {
+  loadCourses(true)
+}
+
+// 确认分类
+const handleCategoryConfirm = () => {
+  showCategoryPicker.value = false
+  loadCourses(true)
+}
+
+// 确认排序
+const handleSortConfirm = () => {
+  showSortPicker.value = false
+  loadCourses(true)
+}
+
+// 获取最低价格
+const getMinPrice = (skus: any[]) => {
+  if (!skus || skus.length === 0) return 0
+  return Math.min(...skus.map(sku => sku.total_price || 0))
+}
+
+// 点击课程
+const handleCourseClick = (course: Course) => {
+  uni.navigateTo({
+    url: `/pages/course-detail/index?id=${course.id}`,
+  })
+}
+
+onLoad((options) => {
+  if (options.category) {
+    selectedCategory.value = options.category
+  }
+  if (options.keyword) {
+    searchKeyword.value = options.keyword
+  }
+})
+
+onMounted(() => {
+  loadCourses(true)
+})
+</script>
+
+<style lang="scss" scoped>
+.course-list-page {
+  min-height: 100vh;
+  background-color: $uni-bg-color-grey;
+  padding-bottom: 32rpx;
+}
+
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  padding: 24rpx 32rpx;
+  background-color: $uni-bg-color;
+}
+
+.search-input-wrapper {
+  flex: 1;
+}
+
+.filter-bar {
+  display: flex;
+  gap: 16rpx;
+  padding: 24rpx 32rpx;
+  background-color: $uni-bg-color;
+  border-top: 1rpx solid $uni-border-color-secondary;
+}
+
+.filter-item {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8rpx;
+  padding: 16rpx;
+  background-color: $uni-bg-color-grey;
+  border-radius: 8rpx;
+  font-size: 28rpx;
+  color: $uni-text-color;
+}
+
+.course-list {
+  padding: 24rpx 32rpx;
+}
+
+.course-item {
+  display: flex;
+  gap: 24rpx;
+  padding: 24rpx;
+  background-color: $uni-bg-color;
+  border-radius: 16rpx;
+  margin-bottom: 24rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
+}
+
+.course-cover {
+  width: 200rpx;
+  height: 200rpx;
+  border-radius: 12rpx;
+}
+
+.course-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.course-title {
+  font-size: 28rpx;
+  font-weight: bold;
+  color: $uni-text-color;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.course-subtitle {
+  font-size: 24rpx;
+  color: $uni-text-color-secondary;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin-top: 8rpx;
+}
+
+.course-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  margin-top: 12rpx;
+}
+
+.meta-item {
+  font-size: 20rpx;
+  color: $uni-text-color-tertiary;
+  padding: 4rpx 12rpx;
+  background-color: $uni-bg-color-grey;
+  border-radius: 4rpx;
+}
+
+.course-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 12rpx;
+}
+
+.course-price {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: $uni-color-primary;
+}
+
+.course-sales {
+  font-size: 20rpx;
+  color: $uni-text-color-tertiary;
+}
+
+.load-more {
+  margin-top: 32rpx;
+  display: flex;
+  justify-content: center;
+}
+
+.no-more {
+  margin-top: 32rpx;
+  text-align: center;
+  font-size: 24rpx;
+  color: $uni-text-color-tertiary;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 120rpx 0;
+}
+
+.empty-text {
+  margin-top: 24rpx;
+  font-size: 28rpx;
+  color: $uni-text-color-tertiary;
+}
+</style>
