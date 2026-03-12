@@ -37,6 +37,7 @@ import { runInviteTests } from './invite.test';
 import { runCRUDTests as runFavoriteTests } from './favorite.test';
 import { runCRUDTests as runFeedbackTests } from './feedback.test';
 import { runCRUDTests as runPaymentCallbackTests } from './payment-callback.test';
+import { runCRUDTests as runPageScenariosTests } from './page-scenarios.test';
 
 // ==================== 类型定义 ====================
 /**
@@ -289,6 +290,14 @@ const TEST_MODULES: TestModule[] = [
     dependencies: ['order'],
     category: 'integration',
     priority: 35,
+  },
+  {
+    name: 'page-scenarios',
+    displayName: '前端页面场景',
+    fn: runPageScenariosTests,
+    dependencies: ['course', 'schedule', 'order', 'invite'],
+    category: 'integration',
+    priority: 40,
   },
 ];
 
