@@ -140,9 +140,94 @@ async function createDemoData() {
     announcementId: '',  // 公告 ID
   };
 
+  // 标记是否找到已有数据（用于跳过创建步骤）
+  let isExistingData = false;
+
   try {
+    // ==================== 0. 检查是否已有演示数据（幂等支持）====================
+    logger.section('0. 检查已有演示数据');
+
+    try {
+      const checkCode = `phone_${CONFIG.OWNER_PHONE}_${Date.now()}`;
+      const existingLogin = await client.post<{ token: string; userInfo: any }>(
+        '/auth/phone-login',
+        { code: checkCode, type: 'institution' },
+      );
+      createdData.token = existingLogin.token;
+      client.setToken(createdData.token);
+
+      // ⚠️ 关键：直接使用 JWT 中的 institutionId，确保与 token 完全一致
+      // 不用 GET /institution/my（它按 created_by 查询，多次运行后可能与 JWT 不同机构）
+      const jwtInstitutionId = existingLogin.userInfo?.institutionId;
+      if (jwtInstitutionId) {
+        createdData.institutionId = jwtInstitutionId;
+        isExistingData = true;
+        const myInstitution = await client.get<any>(`/institution/${jwtInstitutionId}`).catch(() => null);
+        logger.info(`检测到已有机构: ${jwtInstitutionId} (${myInstitution?.name || ''})`);
+
+        // 加载已有教师
+        try {
+          const teachers = await client.get<any[]>('/teacher', { institutionId: jwtInstitutionId });
+          if (Array.isArray(teachers) && teachers.length > 0) {
+            createdData.teacherIds = teachers.map((t: any) => t.id);
+            logger.info(`已有教师: ${createdData.teacherIds.length} 位`);
+          }
+        } catch (e) { /* 忽略 */ }
+
+        // 加载已有教室
+        try {
+          const classrooms = await client.get<any[]>('/classroom', { institutionId: jwtInstitutionId });
+          if (Array.isArray(classrooms) && classrooms.length > 0) {
+            createdData.classroomIds = classrooms.map((c: any) => c.id);
+            logger.info(`已有教室: ${createdData.classroomIds.length} 间`);
+          }
+        } catch (e) { /* 忽略 */ }
+
+        // 加载已有课程
+        try {
+          const coursesResult = await client.get<any>('/courses', {
+            institutionId: jwtInstitutionId,
+            page: 1,
+            pageSize: 20,
+          });
+          const courseList = coursesResult?.data || coursesResult;
+          if (Array.isArray(courseList) && courseList.length > 0) {
+            createdData.courseIds = courseList.map((c: any) => c.id);
+            logger.info(`已有课程: ${createdData.courseIds.length} 门`);
+
+            // 获取第一个课程的 SKU
+            try {
+              const firstCourse = await client.get<any>(`/courses/${createdData.courseIds[0]}`);
+              if (firstCourse?.skus?.length > 0) {
+                createdData.skuId = firstCourse.skus[0].id;
+                logger.info(`已有 SKU: ${createdData.skuId}`);
+              }
+            } catch (e) { /* 忽略 */ }
+
+            // 获取第一个课程的排课
+            try {
+              const schedules = await client.get<any[]>(`/schedule/course/${createdData.courseIds[0]}`);
+              if (Array.isArray(schedules) && schedules.length > 0) {
+                createdData.scheduleIds = schedules.map((s: any) => s.id);
+                logger.info(`已有排课: ${createdData.scheduleIds.length} 条`);
+              }
+            } catch (e) { /* 忽略 */ }
+          }
+        } catch (e) { /* 忽略 */ }
+
+        logger.success('找到已有演示数据，机构/教师/教室/课程创建步骤将跳过');
+      }
+    } catch (e) {
+      logger.info('未找到已有数据，将从头创建新演示数据');
+    }
+
     // ==================== 1. 创建机构 ====================
-    logger.section('1. 创建机构');
+    if (createdData.institutionId) {
+      logger.section('1. 创建机构 [已跳过 - 使用已有机构]');
+      logger.info(`复用机构: ${createdData.institutionId}`);
+    } else {
+      logger.section('1. 创建机构');
+    }
 
     const institutionData = {
       accounts: [
@@ -227,34 +312,37 @@ async function createDemoData() {
       ],
     };
 
-    createdData.institutionId = await client.post('/institution', institutionData);
-    logger.success(`机构创建成功: ${createdData.institutionId}`);
-    logger.info(`机构名称: ${institutionData.name}`);
-    logger.info(`Owner手机号: ${CONFIG.OWNER_PHONE}`);
-
-    await sleep(500);
+    if (!createdData.institutionId) {
+      createdData.institutionId = await client.post('/institution', institutionData);
+      logger.success(`机构创建成功: ${createdData.institutionId}`);
+      logger.info(`机构名称: ${institutionData.name}`);
+      logger.info(`Owner手机号: ${CONFIG.OWNER_PHONE}`);
+      await sleep(500);
+    }
 
     // ==================== 2. 手机号登录 ====================
-    logger.section('2. 机构登录');
+    if (createdData.token) {
+      logger.section('2. 机构登录 [已跳过 - 已在检查阶段登录]');
+    } else {
+      logger.section('2. 机构登录');
+      const mockCode = `phone_${CONFIG.OWNER_PHONE}_${Date.now()}`;
+      const loginResult = await client.post<{ token: string }>(
+        '/auth/phone-login',
+        {
+          code: mockCode,
+          type: 'institution',
+        },
+      );
+      createdData.token = loginResult.token;
+      client.setToken(createdData.token);
+      logger.success(`登录成功，Token已设置`);
+      await sleep(300);
+    }
 
-    const mockCode = `phone_${CONFIG.OWNER_PHONE}_${Date.now()}`;
-    const loginResult = await client.post<{ token: string }>(
-      '/auth/phone-login',
-      {
-        code: mockCode,
-        type: 'institution',
-      },
-    );
-    createdData.token = loginResult.token;
-    client.setToken(createdData.token);
-    logger.success(`登录成功，Token已设置`);
+    // ==================== 3. 机构签约与审核流程 ====================
+    logger.section('3. 机构签约与审核流程');
 
-    await sleep(300);
-
-    // ==================== 3. 管理员登录并审核通过机构 ====================
-    logger.section('3. 审核通过机构');
-
-    // 使用管理员账号登录，获取 admin token
+    // 管理员登录
     const adminLoginResult = await client.post<{ token: string }>(
       '/auth/admin-login',
       {
@@ -264,21 +352,63 @@ async function createDemoData() {
     );
     const adminToken = adminLoginResult.token;
     logger.success(`管理员登录成功`);
-
-    // 使用管理员 token 创建独立客户端
     const adminClient = new ApiClient(adminToken);
-    await adminClient.put(
-      `/admin/audit/${createdData.institutionId}`,
-      {
-        auditStatus: 'approved',
-      },
-    );
-    logger.success('机构审核通过');
 
+    // 查询机构当前审核状态
+    const institutionDetail = await client.get<{ audit_status: string }>(
+      `/institution/${createdData.institutionId}`,
+    );
+    let effectiveStatus = institutionDetail.audit_status;
+    logger.info(`机构当前审核状态: ${effectiveStatus}`);
+
+    // 3a: 管理员审核机构（pending → contract_signing）
+    if (effectiveStatus === 'pending') {
+      await adminClient.put(
+        `/admin/audit/${createdData.institutionId}`,
+        { auditStatus: 'approved' },
+      );
+      effectiveStatus = 'contract_signing';
+      logger.success('3a. 管理员审核通过 → 待签约(contract_signing)');
+      await sleep(200);
+    } else {
+      logger.info(`3a. 跳过审核（当前状态: ${effectiveStatus}）`);
+    }
+
+    // 3b: 机构提交签约凭证（contract_signing → contract_review）
+    if (effectiveStatus === 'contract_signing') {
+      await client.put(
+        `/institution/${createdData.institutionId}/submit-contract`,
+        { contract_screenshot: ImageUrls.certificate() },
+      );
+      effectiveStatus = 'contract_review';
+      logger.success('3b. 机构提交签约凭证 → 签约审核中(contract_review)');
+      await sleep(200);
+    } else {
+      logger.info(`3b. 跳过提交签约（当前状态: ${effectiveStatus}）`);
+    }
+
+    // 3c: 管理员审核通过签约（contract_review → approved）
+    if (effectiveStatus === 'contract_review') {
+      await adminClient.put(
+        `/admin/contract/${createdData.institutionId}`,
+        { status: 'approved' },
+      );
+      effectiveStatus = 'approved';
+      logger.success('3c. 管理员签约审核通过 → 机构正式上线(approved)');
+      await sleep(200);
+    } else {
+      logger.info(`3c. 跳过签约审核（当前状态: ${effectiveStatus}）`);
+    }
+
+    logger.success(`机构审核完成，最终状态: ${effectiveStatus}`);
     await sleep(300);
 
     // ==================== 4. 创建教师 ====================
-    logger.section('4. 创建教师');
+    if (createdData.teacherIds.length > 0) {
+      logger.section('4. 创建教师 [已跳过 - 使用已有教师]');
+      logger.info(`复用已有教师: ${createdData.teacherIds.length} 位`);
+    } else {
+      logger.section('4. 创建教师');
 
     const teachers = [
       {
@@ -328,9 +458,14 @@ async function createDemoData() {
       createdData.teacherIds.push(teacherId);
       logger.success(`教师 "${teacher.name}" 创建成功: ${teacherId}`);
     }
+    } // end else (创建教师)
 
     // ==================== 5. 创建教室 ====================
-    logger.section('5. 创建教室');
+    if (createdData.classroomIds.length > 0) {
+      logger.section('5. 创建教室 [已跳过 - 使用已有教室]');
+      logger.info(`复用已有教室: ${createdData.classroomIds.length} 间`);
+    } else {
+      logger.section('5. 创建教室');
 
     const classrooms = [
       {
@@ -381,9 +516,14 @@ async function createDemoData() {
       createdData.classroomIds.push(classroomId);
       logger.success(`教室 "${classroom.name}" 创建成功: ${classroomId}`);
     }
+    } // end else (创建教室)
 
     // ==================== 6. 创建课程 ====================
-    logger.section('6. 创建课程');
+    if (createdData.courseIds.length > 0) {
+      logger.section('6. 创建课程 [已跳过 - 使用已有课程]');
+      logger.info(`复用已有课程: ${createdData.courseIds.length} 门`);
+    } else {
+      logger.section('6. 创建课程');
 
     const courses = [
       {
@@ -609,16 +749,19 @@ async function createDemoData() {
     }
 
     // 获取第一个课程的 SKU ID（供后续订单流程使用）
-    try {
-      await sleep(200);
-      const firstCourseDetail = await client.get<any>(`/courses/${createdData.courseIds[0]}`);
-      if (firstCourseDetail.skus && firstCourseDetail.skus.length > 0) {
-        createdData.skuId = firstCourseDetail.skus[0].id;
-        logger.info(`获取到课程 SKU ID: ${createdData.skuId}`);
+    if (!createdData.skuId) {
+      try {
+        await sleep(200);
+        const firstCourseDetail = await client.get<any>(`/courses/${createdData.courseIds[0]}`);
+        if (firstCourseDetail.skus && firstCourseDetail.skus.length > 0) {
+          createdData.skuId = firstCourseDetail.skus[0].id;
+          logger.info(`获取到课程 SKU ID: ${createdData.skuId}`);
+        }
+      } catch (error: any) {
+        logger.error(`获取课程 SKU 失败: ${error.message}`);
       }
-    } catch (error: any) {
-      logger.error(`获取课程 SKU 失败: ${error.message}`);
     }
+    } // end else (创建课程)
 
     // ==================== 7. 验证教师登录 ====================
     logger.section('7. 验证教师登录');
@@ -649,7 +792,6 @@ async function createDemoData() {
         '/auth/parent-phone-login',
         {
           phone: CONFIG.PARENT_PHONE,
-          password: '66666666',
         },
       );
       parentClient.setToken(parentLoginResult.token);
@@ -721,6 +863,7 @@ async function createDemoData() {
           child_id: createdData.childId,
           student_name: '小明',
           student_age: 6,
+          student_phone: CONFIG.PARENT_PHONE,
         });
         createdData.bookingId = bookingId;
         logger.success(`试听预约创建成功: ${bookingId}`);
@@ -792,17 +935,18 @@ async function createDemoData() {
     // ==================== 15. 上课签到 ====================
     logger.section('15. 上课签到');
 
-    if (createdData.orderId) {
+    if (createdData.orderId && createdData.bookingId) {
       try {
-        await client.post('/check-in', {
+        await parentClient.post('/check-in', {
           order_id: createdData.orderId,
+          booking_id: createdData.bookingId,
         });
         logger.success('签到成功，已扣减一节课时');
       } catch (error: any) {
         logger.error(`签到失败: ${error.message}`);
       }
     } else {
-      logger.info('无订单ID，跳过签到');
+      logger.info('无订单ID或预约ID，跳过签到');
     }
 
     await sleep(200);
@@ -826,15 +970,15 @@ async function createDemoData() {
 
     if (createdData.orderId) {
       try {
-        const reviewId = await parentClient.post<string>('/review', {
+        const reviewResult = await parentClient.post<{ id: string }>('/review', {
           course_id: createdData.courseIds[0],
           order_id: createdData.orderId,
           rating: 5,
           content: '课程质量非常好！老师很专业，教学方法生动有趣，孩子每次都很期待上课。形体和气质都有明显改善，强烈推荐！',
           images: [ImageUrls.random(800, 600)],
         });
-        createdData.reviewId = reviewId;
-        logger.success(`评价发表成功: ${reviewId}`);
+        createdData.reviewId = reviewResult.id;
+        logger.success(`评价发表成功: ${reviewResult.id}`);
       } catch (error: any) {
         logger.error(`发表评价失败: ${error.message}`);
       }

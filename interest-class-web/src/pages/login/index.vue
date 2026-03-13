@@ -106,13 +106,8 @@
       </view>
     </view>
     <!-- 取消登录 -->
-    <view class="cancel-login" @click="handleCancel">
-      <text class="iconfont icon-close" style="font-size: 24rpx; margin-right: 8rpx;"></text>
-      <text>取消登录，浏览首页</text>
-    </view>
-    <!-- 取消登录 -->
     <view class="cancel-login" @click="handleCancelLogin">
-      <text class="cancel-text">取消登录，浏览首页</text>
+      <text class="cancel-text">取消登录</text>
     </view>
 
     <!-- 底部装饰 -->
@@ -420,24 +415,6 @@ const handleCancelLogin = () => {
   align-items: center;
   justify-content: center;
   margin-top: 40rpx;
-  padding: 16rpx;
-  z-index: 1;
-  cursor: pointer;
-
-  &:active { opacity: 0.6; }
-
-  .cancel-text {
-    font-size: 26rpx;
-    color: $uni-text-color-tertiary;
-    text-decoration: underline;
-  }
-}
-
-.cancel-login {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-top: 40rpx;
   padding: 16rpx 32rpx;
   z-index: 1;
   cursor: pointer;
@@ -446,9 +423,10 @@ const handleCancelLogin = () => {
 
   &:active { opacity: 0.4; }
 
-  text {
+  .cancel-text {
     font-size: 26rpx;
     color: $uni-text-color-tertiary;
+    text-decoration: underline;
   }
 }
 

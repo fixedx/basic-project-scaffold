@@ -65,7 +65,7 @@ export class UserInstitutionRepository extends BaseRepository<UserInstitutionEnt
   ): Promise<Array<{ institution_id: string; role: string }>> {
     const relations = await this.getQuery()
       .where('entity.user_id = :userId', { userId })
-      .orderBy('entity.created_at', 'DESC')
+      .orderBy('entity.created_at', 'ASC')
       .getMany();
 
     return relations.map((r) => ({

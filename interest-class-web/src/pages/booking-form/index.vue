@@ -168,8 +168,8 @@
         </view>
       </view>
 
-      <!-- 优惠与抵扣 -->
-      <view class="section" v-if="course?.type !== 'trial'">
+      <!-- 优惠与抵扣（体验课/试听类SKU不展示邀请码） -->
+      <view class="section" v-if="course?.type !== 'trial' && !isTrialSku">
         <view class="section-title">优惠与抵扣</view>
         
         <!-- 邀请码输入 -->

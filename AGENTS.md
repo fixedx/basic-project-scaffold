@@ -5,7 +5,80 @@
 
 ---
 
-### 错误 46: TypeORM synchronize 不管理带 WHERE 子句的部分唯一索引 ⚠️⚠️⚠️
+### 错误 49: phoneLogin JWT institutionId 与 GET /institution/my 返回不一致 ⚠️⚠️⚠️
+
+**错误现象**：
+```typescript
+// 演示脚本 Step 14（确认线下支付）报 400 "无权访问此订单"
+// order.institution_id = 旧机构A，JWT 的 institutionId = 新机构B
+// assertOrderAccess: order.institution_id !== currentInstitutionId → 抛出 BadRequestException
+```
+
+**根本原因**：
+- `auth.service.ts` 的 `phoneLogin` 通过 `findInstitutionsByUserId`（ORDER BY `created_at DESC`）取第一条，即**最新创建**的机构
+- `institution.repository.ts` 的 `findByCurrentUser`（WHERE `created_by = userId`，无 ORDER BY）返回**最老的**机构
+- 演示脚本多次运行后（幂等修复前）为同一手机号创建了多个机构，教师/订单数据都在老机构下
+- JWT 的 `institutionId` = 新机构，但订单的 `institution_id` = 老机构 → `assertOrderAccess` 失败
+
+**正确写法**：
+```typescript
+// user-institution.repository.ts — 改为 ASC 排序，始终使用最早（主）机构
+const relations = await this.getQuery()
+  .where('entity.user_id = :userId', { userId })
+  .orderBy('entity.created_at', 'ASC')   // ✅ ASC = 取最早创建的机构
+  .getMany();
+// 原来是 DESC（取最新的），改为 ASC（取最老的/主机构）
+```
+
+```typescript
+// 演示脚本 Step 0 — 直接使用 JWT 返回的 institutionId，而非 GET /institution/my
+const existingLogin = await client.post<{ token: string; userInfo: any }>(
+  '/auth/phone-login', { code: checkCode, type: 'institution' },
+);
+const jwtInstitutionId = existingLogin.userInfo?.institutionId;  // ✅ 从 JWT payload 取
+// ❌ 不要用 GET /institution/my（按 created_by 查询，可能指向不同机构）
+```
+
+**规范**：
+- `findInstitutionsByUserId` 使用 `ASC` 排序保证 JWT 始终指向用户的"主机构"（第一个创建的）
+- 演示/测试脚本登录后，必须从登录响应的 `userInfo.institutionId` 获取机构 ID，不能用 `GET /institution/my`
+- 创建订单/预约后，用于管理操作（确认支付、签到等）的 token 必须与订单的 `institution_id` 匹配
+
+---
+
+### 错误 50: 签到接口调用方与参数不完整 ⚠️⚠️
+
+**错误现象**：
+```typescript
+// ❌ 错误：Step 15 用机构 client 且没有 booking_id
+await client.post('/check-in', {
+  order_id: createdData.orderId,  // 缺少 booking_id
+});
+// 报 400: "缺少预约信息，无法签到"
+// 报 400: "无权操作此订单"（因为 order.user_id ≠ 机构 owner 的 userId）
+```
+
+**根本原因**：
+- `check-in.service.ts` 验证 `orderData.user_id !== userId`：只有**下单的家长**才能签到
+- `booking_id` 在 DTO 中是可选字段，但 service 内部强制要求（`if (!dto.booking_id) throw BadRequest`）
+
+**正确写法**：
+```typescript
+// ✅ 签到必须用家长 token，且要传 booking_id
+await parentClient.post('/check-in', {
+  order_id: createdData.orderId,
+  booking_id: createdData.bookingId,  // ← 必须传
+});
+```
+
+**规范**：
+- 签到接口调用方：`parentClient`（家长 token），不能用机构 token
+- 签到必须传 `booking_id`（即使 DTO 中标注为 `@IsOptional()`）
+- `booking_id` 来自创建预约步骤存储的 `createdData.bookingId`
+
+---
+
+
 
 **错误现象**：
 ```sql
