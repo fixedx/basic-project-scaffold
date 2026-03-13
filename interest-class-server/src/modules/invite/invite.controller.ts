@@ -39,30 +39,6 @@ export class InviteController {
   }
 
   /**
-   * 冻结邀请码
-   */
-  @Post('code/freeze')
-  async freezeInviteCode() {
-    return this.inviteService.freezeInviteCode();
-  }
-
-  /**
-   * 解冻邀请码
-   */
-  @Post('code/unfreeze')
-  async unfreezeInviteCode() {
-    return this.inviteService.unfreezeInviteCode();
-  }
-
-  /**
-   * 重置邀请码
-   */
-  @Post('code/reset')
-  async resetInviteCode() {
-    return this.inviteService.resetInviteCode();
-  }
-
-  /**
    * 获取可用邀请码列表（按立减金额排序）
    * 用于用户选择邀请码时展示
    */

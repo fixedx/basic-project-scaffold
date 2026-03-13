@@ -361,46 +361,62 @@ async function createDemoData() {
     let effectiveStatus = institutionDetail.audit_status;
     logger.info(`机构当前审核状态: ${effectiveStatus}`);
 
-    // 3a: 管理员审核机构（pending → contract_signing）
+    // 3a: 机构提交审核申请（draft/rejected → pending）
+    if (['draft', 'rejected'].includes(effectiveStatus)) {
+      await client.post(
+        '/institution/submit',
+        { institutionId: createdData.institutionId },
+      );
+      effectiveStatus = 'pending';
+      logger.success('3a. 机构提交审核申请 → 待审核(pending)');
+      await sleep(200);
+    } else {
+      logger.info(`3a. 跳过提交审核（当前状态: ${effectiveStatus}）`);
+    }
+
+    // 3b: 管理员审核机构（pending → contract_signing）
     if (effectiveStatus === 'pending') {
       await adminClient.put(
         `/admin/audit/${createdData.institutionId}`,
         { auditStatus: 'approved' },
       );
       effectiveStatus = 'contract_signing';
-      logger.success('3a. 管理员审核通过 → 待签约(contract_signing)');
+      logger.success('3b. 管理员审核通过 → 待签约(contract_signing)');
       await sleep(200);
     } else {
-      logger.info(`3a. 跳过审核（当前状态: ${effectiveStatus}）`);
+      logger.info(`3b. 跳过审核（当前状态: ${effectiveStatus}）`);
     }
 
-    // 3b: 机构提交签约凭证（contract_signing → contract_review）
+    // 3c: 机构提交签约凭证（contract_signing → contract_review）
     if (effectiveStatus === 'contract_signing') {
       await client.put(
         `/institution/${createdData.institutionId}/submit-contract`,
         { contract_screenshot: ImageUrls.certificate() },
       );
       effectiveStatus = 'contract_review';
-      logger.success('3b. 机构提交签约凭证 → 签约审核中(contract_review)');
+      logger.success('3c. 机构提交签约凭证 → 签约审核中(contract_review)');
       await sleep(200);
     } else {
-      logger.info(`3b. 跳过提交签约（当前状态: ${effectiveStatus}）`);
+      logger.info(`3c. 跳过提交签约（当前状态: ${effectiveStatus}）`);
     }
 
-    // 3c: 管理员审核通过签约（contract_review → approved）
+    // 3d: 管理员审核通过签约（contract_review → approved）
     if (effectiveStatus === 'contract_review') {
       await adminClient.put(
         `/admin/contract/${createdData.institutionId}`,
         { status: 'approved' },
       );
       effectiveStatus = 'approved';
-      logger.success('3c. 管理员签约审核通过 → 机构正式上线(approved)');
+      logger.success('3d. 管理员签约审核通过 → 机构正式上线(approved)');
       await sleep(200);
     } else {
-      logger.info(`3c. 跳过签约审核（当前状态: ${effectiveStatus}）`);
+      logger.info(`3d. 跳过签约审核（当前状态: ${effectiveStatus}）`);
     }
 
-    logger.success(`机构审核完成，最终状态: ${effectiveStatus}`);
+    if (effectiveStatus !== 'approved') {
+      throw new Error(`机构审核流程未完成，当前状态: ${effectiveStatus}，请检查后重试`);
+    }
+    logger.success(`✅ 机构已正式上线，可上架课程、接受家长浏览下单`);
     await sleep(300);
 
     // ==================== 4. 创建教师 ====================

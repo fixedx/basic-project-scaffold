@@ -38,12 +38,6 @@
     <view class="invite-section">
       <view class="section-title-row">
         <text class="title">我的专属邀请码</text>
-        <view 
-          class="status-tag"
-          :class="{ 'status-frozen': inviteCode?.status === 'frozen' }"
-        >
-          {{ inviteCode?.status === 'active' ? '使用中' : '已冻结' }}
-        </view>
       </view>
 
       <view class="code-card">
@@ -95,7 +89,7 @@
           v-model="shareRatio"
           :min="0"
           :max="100"
-          :step="5"
+          :step="1"
           active-color="#52c41a"
           @dragend="handleRatioChange"
         />
@@ -114,31 +108,6 @@
       </view>
     </view>
 
-    <!-- 管理操作 -->
-    <view class="action-section">
-      <wd-button 
-        v-if="inviteCode?.status === 'active'"
-        block 
-        plain
-        type="warning"
-        @click="handleFreeze"
-      >
-        冻结邀请码
-      </wd-button>
-      <wd-button 
-        v-else
-        block 
-        type="primary"
-        @click="handleUnfreeze"
-      >
-        解冻邀请码
-      </wd-button>
-      
-      <view class="reset-link" @click="handleReset">
-        重置邀请码 (生成新的ID)
-      </view>
-    </view>
-    
     <!-- 使用说明 -->
     <view class="tips-card">
       <text class="tips-title">收益说明</text>
@@ -204,52 +173,6 @@ const handleRatioChange = async (event: { value: number } | number) => {
   } catch (e) {
     uni.showToast({ title: '设置失败', icon: 'none' })
   }
-}
-
-const handleFreeze = async () => {
-  uni.showModal({
-    title: '确认冻结',
-    content: '冻结后邀请码将无法使用，确定要冻结吗？',
-    success: async (res) => {
-      if (res.confirm) {
-        try {
-          await inviteApi.freezeInviteCode()
-          uni.showToast({ title: '已冻结', icon: 'success' })
-          loadData()
-        } catch (e) {
-          uni.showToast({ title: '操作失败', icon: 'none' })
-        }
-      }
-    },
-  })
-}
-
-const handleUnfreeze = async () => {
-  try {
-    await inviteApi.unfreezeInviteCode()
-    uni.showToast({ title: '已解冻', icon: 'success' })
-    loadData()
-  } catch (e) {
-    uni.showToast({ title: '操作失败', icon: 'none' })
-  }
-}
-
-const handleReset = async () => {
-  uni.showModal({
-    title: '确认重置',
-    content: '重置后将生成新的邀请码，原邀请码将失效，确定要重置吗？',
-    success: async (res) => {
-      if (res.confirm) {
-        try {
-          const newCode = await inviteApi.resetInviteCode()
-          inviteCode.value = newCode
-          uni.showToast({ title: '重置成功', icon: 'success' })
-        } catch (e) {
-          uni.showToast({ title: '操作失败', icon: 'none' })
-        }
-      }
-    },
-  })
 }
 
 const goToEarnings = () => {
@@ -381,19 +304,6 @@ onMounted(() => {
       font-size: 30rpx;
       font-weight: bold;
       color: #333;
-    }
-    
-    .status-tag {
-      font-size: 22rpx;
-      padding: 4rpx 12rpx;
-      border-radius: 8rpx;
-      background: #e6f7ff;
-      color: #1890ff;
-      
-      &.status-frozen {
-        background: #fff1f0;
-        color: #f5222d;
-      }
     }
   }
   
@@ -546,20 +456,6 @@ onMounted(() => {
         font-weight: 500;
       }
     }
-  }
-}
-
-/* 操作区域 */
-.action-section {
-  margin-top: 48rpx;
-  padding: 0 16rpx;
-  
-  .reset-link {
-    text-align: center;
-    font-size: 24rpx;
-    color: #999;
-    margin-top: 24rpx;
-    text-decoration: underline;
   }
 }
 

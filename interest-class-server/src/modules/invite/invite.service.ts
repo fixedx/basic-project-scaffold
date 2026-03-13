@@ -166,86 +166,6 @@ export class InviteService implements OnModuleInit {
   }
 
   /**
-   * 冻结邀请码
-   */
-  @Transactional()
-  async freezeInviteCode(): Promise<boolean> {
-    const userId = this.userContextService.getCurrentUserId();
-    const inviteCode = await this.userInviteCodeRepository.findByUserId(userId);
-
-    if (!inviteCode) {
-      throw new BadRequestException('邀请码不存在');
-    }
-
-    await this.userInviteCodeRepository.update(inviteCode.id, {
-      status: 'frozen',
-    });
-
-    this.logger.log(`用户 ${userId} 冻结邀请码`);
-    return true;
-  }
-
-  /**
-   * 解冻邀请码
-   */
-  @Transactional()
-  async unfreezeInviteCode(): Promise<boolean> {
-    const userId = this.userContextService.getCurrentUserId();
-    const inviteCode = await this.userInviteCodeRepository.findByUserId(userId);
-
-    if (!inviteCode) {
-      throw new BadRequestException('邀请码不存在');
-    }
-
-    await this.userInviteCodeRepository.update(inviteCode.id, {
-      status: 'active',
-    });
-
-    this.logger.log(`用户 ${userId} 解冻邀请码`);
-    return true;
-  }
-
-  /**
-   * 重置邀请码
-   */
-  @Transactional()
-  async resetInviteCode(): Promise<UserInviteCodeEntity> {
-    const userId = this.userContextService.getCurrentUserId();
-    const inviteCode = await this.userInviteCodeRepository.findByUserId(userId);
-
-    if (!inviteCode) {
-      throw new BadRequestException('邀请码不存在');
-    }
-
-    // 生成新的邀请码
-    let newCode: string = this.generateInviteCode();
-    let exists = await this.userInviteCodeRepository.existsByInviteCode(newCode);
-    let attempts = 1;
-    while (exists && attempts < 10) {
-      newCode = this.generateInviteCode();
-      exists = await this.userInviteCodeRepository.existsByInviteCode(newCode);
-      attempts++;
-    }
-    if (exists) {
-      throw new BadRequestException('生成邀请码失败，请重试');
-    }
-
-    await this.userInviteCodeRepository.update(inviteCode.id, {
-      invite_code: newCode,
-      status: 'active',
-      daily_use_count: 0,
-    });
-
-    this.logger.log(
-      `用户 ${userId} 重置邀请码 ${inviteCode.invite_code} -> ${newCode}`,
-    );
-
-    return this.userInviteCodeRepository.findByUserId(
-      userId,
-    ) as Promise<UserInviteCodeEntity>;
-  }
-
-  /**
    * 获取可用邀请码列表（按立减金额排序）
    * @param order_amount 订单金额
    * @param cashback_ratio 课程返现比例
@@ -303,12 +223,7 @@ export class InviteService implements OnModuleInit {
       return { valid: false, message: '邀请码无效' };
     }
 
-    // 2. 检查邀请码是否被冻结
-    if (inviteCodeEntity.status !== 'active') {
-      return { valid: false, message: '邀请码已被冻结' };
-    }
-
-    // 3. 检查当日使用次数是否超限
+    // 2. 检查当日使用次数是否超限
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     let dailyCount = inviteCodeEntity.daily_use_count;

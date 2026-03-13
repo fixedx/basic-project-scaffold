@@ -126,27 +126,6 @@ export const inviteApi = {
   },
 
   /**
-   * 冻结邀请码
-   */
-  freezeInviteCode() {
-    return post<boolean>('/invite/code/freeze')
-  },
-
-  /**
-   * 解冻邀请码
-   */
-  unfreezeInviteCode() {
-    return post<boolean>('/invite/code/unfreeze')
-  },
-
-  /**
-   * 重置邀请码
-   */
-  resetInviteCode() {
-    return post<InviteCodeInfo>('/invite/code/reset')
-  },
-
-  /**
    * 获取可用邀请码列表（按立减金额排序）
    */
   getAvailableInviteCodes(order_amount: number, cashback_ratio: number) {

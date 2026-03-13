@@ -189,33 +189,7 @@ async function testGetCashbackRecords() {
 }
 
 /**
- * 测试8: 冻结邀请码
- */
-async function testFreezeInviteCode() {
-  const result = await inviterHelper.post('/invite/code/freeze');
-
-  if (result !== true) {
-    throw new Error('冻结邀请码失败');
-  }
-
-  logger.success('冻结邀请码成功');
-}
-
-/**
- * 测试9: 解冻邀请码
- */
-async function testUnfreezeInviteCode() {
-  const result = await inviterHelper.post('/invite/code/unfreeze');
-
-  if (result !== true) {
-    throw new Error('解冻邀请码失败');
-  }
-
-  logger.success('解冻邀请码成功');
-}
-
-/**
- * 测试10: 申请提现（余额不足场景）
+ * 测试8: 申请提现（余额不足场景）
  */
 async function testApplyWithdrawInsufficientBalance() {
   try {
@@ -239,52 +213,7 @@ async function testApplyWithdrawInsufficientBalance() {
 }
 
 /**
- * 测试11: 验证已冻结的邀请码（应该失败）
- */
-async function testValidateFrozenInviteCode(inviteCode: string) {
-  await inviterHelper.post('/invite/code/freeze');
-
-  try {
-    await helper.post('/invite/validate', { 
-      invite_code: inviteCode,
-      course_id: 'test_course_id'
-    });
-    throw new Error('预期应该报错：邀请码已冻结');
-  } catch (error: any) {
-    if (
-      error.message.includes('冻结') ||
-      error.message.includes('frozen') ||
-      error.message.includes('无效') ||
-      error.message.includes('invalid')
-    ) {
-      logger.success('已冻结邀请码验证正确拒绝');
-    } else {
-      throw error;
-    }
-  }
-
-  await inviterHelper.post('/invite/code/unfreeze');
-}
-
-/**
- * 测试12: 重置邀请码
- */
-async function testResetInviteCode() {
-  const before = await inviterHelper.get('/invite/code');
-  const oldCode = before.invite_code;
-
-  const result = await inviterHelper.post('/invite/code/reset');
-
-  if (!result.invite_code || result.invite_code === oldCode) {
-    throw new Error('重置邀请码失败：新码与旧码相同');
-  }
-
-  logger.success(`重置邀请码成功: ${oldCode} -> ${result.invite_code}`);
-  return result;
-}
-
-/**
- * 测试13: 使用自己的邀请码（应该失败）
+ * 测试9: 使用自己的邀请码（应该失败）
  */
 async function testValidateOwnInviteCode() {
   const myCode = await helper.get('/invite/code');
@@ -701,17 +630,7 @@ const basicTests = [
   { name: '获取邀请订单列表', fn: testGetInviteOrders },
   { name: '获取返现记录', fn: testGetCashbackRecords },
   { name: '获取提现记录', fn: testGetWithdrawRecords },
-  { name: '冻结邀请码', fn: testFreezeInviteCode },
-  { name: '解冻邀请码', fn: testUnfreezeInviteCode },
-  {
-    name: '验证已冻结邀请码（应失败）',
-    fn: async () => {
-      const inviteCode = (await inviterHelper.get('/invite/code')).invite_code;
-      return testValidateFrozenInviteCode(inviteCode);
-    },
-  },
   { name: '申请提现-余额不足', fn: testApplyWithdrawInsufficientBalance },
-  { name: '重置邀请码', fn: testResetInviteCode },
 ];
 
 const e2eTests = [
