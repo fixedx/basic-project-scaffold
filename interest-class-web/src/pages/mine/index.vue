@@ -9,112 +9,111 @@
           width="120rpx" 
           height="120rpx"
           mode="aspectFill"
+          round
           custom-class="avatar"
         />
         <image 
           v-else
           class="avatar" 
-          src="/static/default-avatar.png" 
+          src="/static/images/default-avatar.png" 
           mode="aspectFill"
         />
         <view class="info-content">
           <view class="name-row">
-            <text class="nickname">{{ userInfo.nickname || '点击登录' }}</text>
+            <text class="nickname">{{ userInfo.nickname || (getToken() ? '未设置昵称' : '点击登录') }}</text>
             <view class="vip-tag" v-if="userInfo.id">
               <text class="iconfont icon-vip-fill"></text>
-              <text>普通会员</text>
+              <text>成长会员</text>
             </view>
           </view>
           <text class="uid" v-if="userInfo.id">ID: {{ userInfo.id.slice(-8) }}</text>
           <text class="phone" v-else>登录发现更多精彩</text>
         </view>
         <view class="setting-btn" @click.stop="goToSettings">
-          <text class="iconfont icon-settings"></text>
+          <text class="iconfont icon-settings-fill"></text>
         </view>
       </view>
 
       <!-- 2. 数据统计栏（浮动感） -->
       <view class="stats-card">
         <view class="stat-item" @click="goToWallet">
-          <text class="num">{{ income.toFixed(2) }}</text>
-          <text class="label">累计收益(元)</text>
+          <view class="num-wrap">
+            <text class="unit">¥</text>
+            <text class="num">{{ income.toFixed(2) }}</text>
+          </view>
+          <text class="label">累计赚取</text>
         </view>
         <view class="stat-item" @click="goToCourseHours">
-          <text class="num">{{ totalHours }}</text>
-          <text class="label">剩余课时</text>
+          <view class="num-wrap">
+            <text class="num">{{ totalHours }}</text>
+            <text class="unit">节</text>
+          </view>
+          <text class="label">课时资产</text>
         </view>
         <view class="stat-item" @click="goToChildren">
-          <text class="num">{{ childCount || 0 }}</text>
+          <view class="num-wrap">
+            <text class="num">{{ childCount || 0 }}</text>
+            <text class="unit">人</text>
+          </view>
           <text class="label">我的宝贝</text>
         </view>
       </view>
     </view>
 
     <view class="content-body">
-      <!-- 3. 我的订单 -->
-      <view class="section-card order-section">
-        <view class="section-header" @click="goToOrders('all')">
-          <text class="title">我的订单</text>
-          <view class="more">
-            <text>全部订单</text>
-            <text class="iconfont icon-right"></text>
+      <!-- 官方赚取/让利 核心控制面板 -->
+      <view class="section-card profit-panel" v-if="userInfo.id && inviteCodeInfo">
+        <view class="panel-header">
+          <view class="title-group">
+            <text class="iconfont icon-money-wallet-fill theme-icon"></text>
+            <text class="title">邀友返现 · 让利设置</text>
+          </view>
+          <view class="invite-code-pill" @click="copyInviteCode">
+            <text class="label">我的邀请码:</text>
+            <text class="value">{{ inviteCodeInfo?.invite_code || '---' }}</text>
+            <text class="iconfont icon-copy"></text>
           </view>
         </view>
-        <view class="order-menu">
-          <view class="menu-item" @click="goToOrders('unpaid')">
-            <view class="icon-wrap">
-              <text class="iconfont icon-money-wallet" style="color: #ff4d4f;"></text>
-              <view v-if="orderCount.unpaid > 0" class="badge">{{ orderCount.unpaid }}</view>
-            </view>
-            <text class="label">待付款</text>
-          </view>
-          <view class="menu-item" @click="goToOrders('pending_confirm')">
-            <view class="icon-wrap">
-              <text class="iconfont icon-time" style="color: #faad14;"></text>
-              <view v-if="orderCount.pendingConfirm > 0" class="badge">{{ orderCount.pendingConfirm }}</view>
-            </view>
-            <text class="label">待确认</text>
-          </view>
-          <view class="menu-item" @click="goToOrders('confirmed')">
-            <view class="icon-wrap">
-              <text class="iconfont icon-success-fill" style="color: #52c41a;"></text>
-              <view v-if="orderCount.confirmed > 0" class="badge">{{ orderCount.confirmed }}</view>
-            </view>
-            <text class="label">已确认</text>
-          </view>
-          <view class="menu-item" @click="goToOrders('refund')">
-            <view class="icon-wrap">
-              <text class="iconfont icon-money-red-packet" style="color: #1890ff;"></text>
-              <view v-if="orderCount.refund > 0" class="badge">{{ orderCount.refund }}</view>
-            </view>
-            <text class="label">退款/售后</text>
-          </view>
-        </view>
-      </view>
 
-      <!-- 4. 邀请码卡片（增强视觉，放在中间） -->
-      <view class="section-card invite-section" v-if="userInfo.id">
-        <view class="invite-banner" @click="goToPromo">
-          <view class="banner-left">
-            <view class="banner-title">邀好友，赚现金</view>
-            <view class="banner-desc">好友下单立减，你得现金返利</view>
-          </view>
-          <view class="banner-btn">去赚钱</view>
-        </view>
-        
-        <view class="invite-code-container">
-          <view class="code-box">
-            <view class="code-main">
-              <text class="label">邀请码</text>
-              <text class="value">{{ inviteCodeInfo?.invite_code || '---' }}</text>
+        <view class="slider-container">
+          <view class="slider-labels">
+            <view class="label-item">
+              <text class="role">我赚 (邀友)</text>
+              <text class="percent">{{ 100 - (inviteCodeInfo?.share_ratio || 0) }}%</text>
             </view>
-            <view class="copy-btn" @click="copyInviteCode">复制</view>
+            <view class="label-item text-right">
+              <text class="role">友得 (让利)</text>
+              <text class="percent">{{ inviteCodeInfo?.share_ratio || 0 }}%</text>
+            </view>
+          </view>
+          
+          <view class="slider-wrapper">
+            <slider 
+              :value="inviteCodeInfo?.share_ratio" 
+              @change="onShareRatioChange"
+              activeColor="#52c41a"
+              backgroundColor="#f0f0f0"
+              block-size="24"
+              block-color="#52c41a"
+              :step="5"
+            />
+          </view>
+          
+          <view class="slider-tips">
+            <text class="iconfont icon-info"></text>
+            <text>拖动滑块调整分配比例，让利越多邀友成功率越高哦</text>
+          </view>
+        </view>
+
+        <view class="profit-actions">
+          <view class="action-item" @click="goToPromo">
+            <text class="iconfont icon-share"></text>
+            <text>立即邀友</text>
           </view>
           <view class="divider"></view>
-          <view class="share-info" @click="goToPromo">
-            <text class="share-label">让利比例</text>
-            <text class="share-value">{{ inviteCodeInfo?.share_ratio ?? 50 }}%</text>
-            <text class="iconfont icon-right"></text>
+          <view class="action-item" @click="goToWallet">
+            <text class="iconfont icon-money-rmb"></text>
+            <text>收益提现</text>
           </view>
         </view>
       </view>
@@ -356,6 +355,26 @@ const copyInviteCode = () => {
   })
 }
 
+/**
+ * 更新让利比例
+ */
+const onShareRatioChange = async (e: any) => {
+  const value = e.detail.value
+  if (value === inviteCodeInfo.value?.share_ratio) return
+  
+  uni.showLoading({ title: '更新中...' })
+  try {
+    await inviteApi.updateMyInviteCodeRatio(value)
+    inviteCodeInfo.value.share_ratio = value
+    uni.showToast({ title: '设置已生效', icon: 'success' })
+  } catch (error) {
+    console.error('更新让利比例失败:', error)
+    uni.showToast({ title: '更新失败', icon: 'none' })
+  } finally {
+    uni.hideLoading()
+  }
+}
+
 const goToWallet = () => {
   uni.navigateTo({ url: '/pages/mine/wallet/index' })
 }
@@ -429,21 +448,35 @@ onShow(() => {
 }
 
 .header-section {
-  background: linear-gradient(180deg, $uni-color-primary 0%, #73d13d 100%);
+  background: linear-gradient(135deg, #52c41a 0%, #73d13d 100%);
   padding: 0 32rpx 100rpx;
+  position: relative;
+  overflow: hidden;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: -60rpx;
+    right: -60rpx;
+    width: 240rpx;
+    height: 240rpx;
+    background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0) 70%);
+    border-radius: 50%;
+  }
 }
 
 .user-card {
   display: flex;
   align-items: center;
-  padding: 40rpx 0 20rpx;
+  padding: 40rpx 0 30rpx;
   position: relative;
+  z-index: 2;
 
   .avatar {
     width: 120rpx;
     height: 120rpx;
     border-radius: 60rpx;
-    border: 4rpx solid rgba(255, 255, 255, 0.6);
+    border: 4rpx solid rgba(255, 255, 255, 0.4);
     background-color: #fff;
     overflow: hidden;
   }
@@ -452,7 +485,6 @@ onShow(() => {
     width: 120rpx !important;
     height: 120rpx !important;
     border-radius: 60rpx !important;
-    border: 4rpx solid rgba(255, 255, 255, 0.6) !important;
     overflow: hidden;
     
     image {
@@ -464,22 +496,16 @@ onShow(() => {
     margin-left: 24rpx;
     flex: 1;
 
-    .nickname {
-      font-size: 38rpx;
-      font-weight: 600;
-      color: #fff;
-      display: block;
-      margin-bottom: 8rpx;
-    }
-
-    .meta-row {
+    .name-row {
       display: flex;
       align-items: center;
-      gap: 16rpx;
+      gap: 12rpx;
+      margin-bottom: 8rpx;
 
-      .phone {
-        font-size: 26rpx;
-        color: rgba(255, 255, 255, 0.9);
+      .nickname {
+        font-size: 38rpx;
+        font-weight: 600;
+        color: #fff;
       }
 
       .vip-tag {
@@ -488,7 +514,7 @@ onShow(() => {
         border-radius: 20rpx;
         display: flex;
         align-items: center;
-        gap: 4rpx;
+        gap: 6rpx;
 
         .iconfont {
           font-size: 24rpx;
@@ -498,8 +524,20 @@ onShow(() => {
         text {
           font-size: 22rpx;
           color: #fff;
+          font-weight: 500;
         }
       }
+    }
+
+    .uid {
+      font-size: 24rpx;
+      color: rgba(255, 255, 255, 0.8);
+      display: block;
+    }
+
+    .phone {
+      font-size: 24rpx;
+      color: rgba(255, 255, 255, 0.8);
     }
   }
 
@@ -523,9 +561,11 @@ onShow(() => {
   display: flex;
   background: #fff;
   border-radius: 24rpx;
-  padding: 32rpx 0;
-  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.05);
-  margin-top: 20rpx;
+  padding: 36rpx 0;
+  box-shadow: 0 10rpx 30rpx rgba(0, 0, 0, 0.04);
+  margin-top: 32rpx;
+  position: relative;
+  z-index: 10;
 
   .stat-item {
     flex: 1;
@@ -538,33 +578,229 @@ onShow(() => {
       content: '';
       position: absolute;
       right: 0;
-      top: 20%;
-      height: 60%;
+      top: 50%;
+      transform: translateY(-50%);
+      height: 40rpx;
       width: 1rpx;
-      background-color: #eee;
+      background-color: #f0f0f0;
     }
 
     &:last-child::after {
       display: none;
     }
 
-    .num {
-      font-size: 36rpx;
-      font-weight: bold;
-      color: #333;
-      margin-bottom: 8rpx;
+    .num-wrap {
+      display: flex;
+      align-items: baseline;
+      margin-bottom: 6rpx;
+
+      .num {
+        font-size: 40rpx;
+        font-weight: 800;
+        color: #333;
+        font-family: 'DIN Alternate', 'Helvetica Neue', Helvetica, sans-serif;
+      }
+
+      .unit {
+        font-size: 20rpx;
+        color: #999;
+        margin-left: 4rpx;
+        font-weight: 400;
+      }
     }
 
     .label {
-      font-size: 24rpx;
-      color: #999;
+      font-size: 22rpx;
+      color: #bbbbbb;
+      font-weight: 400;
     }
   }
 }
 
 .content-body {
-  padding: 0 32rpx;
-  margin-top: -60rpx;
+  padding: 0 24rpx;
+  margin-top: -80rpx;
+  position: relative;
+  z-index: 11;
+}
+
+.profit-panel {
+  padding: 32rpx 28rpx;
+  background: #fff;
+  border-radius: 28rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.03);
+
+  .panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 24rpx;
+
+    .title-group {
+      display: flex;
+      align-items: center;
+      gap: 12rpx;
+      flex-shrink: 0;
+
+      .theme-icon {
+        font-size: 40rpx;
+        color: #ffa940;
+      }
+
+      .title {
+        font-size: 30rpx;
+        font-weight: 700;
+        color: #1a1a1a;
+        letter-spacing: 0.5rpx;
+        white-space: nowrap;
+      }
+    }
+
+    .invite-code-pill {
+      display: flex;
+      align-items: center;
+      gap: 8rpx;
+      background: #fbfbfb;
+      padding: 8rpx 16rpx;
+      border-radius: 30rpx;
+      border: 1rpx solid #f0f0f0;
+      flex-shrink: 1;
+      max-width: 240rpx;
+      overflow: hidden;
+
+      .label {
+        font-size: 20rpx;
+        color: #bbbbbb;
+        white-space: nowrap;
+      }
+
+      .value {
+        font-size: 24rpx;
+        font-weight: 700;
+        color: #333;
+        font-family: 'DIN Alternate', sans-serif;
+        white-space: nowrap;
+      }
+
+      .icon-copy {
+        font-size: 24rpx;
+        color: $uni-color-primary;
+        flex-shrink: 0;
+      }
+    }
+  }
+
+  .slider-container {
+    background: #ffffff;
+    border: 1rpx solid #f6f6f6;
+    border-radius: 20rpx;
+    padding: 32rpx 24rpx;
+    margin-bottom: 32rpx;
+    position: relative;
+
+    .slider-labels {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 16rpx;
+
+      .label-item {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+
+        .role {
+          font-size: 22rpx;
+          color: #999;
+          margin-bottom: 4rpx;
+          white-space: nowrap;
+        }
+
+        .percent {
+          font-size: 40rpx;
+          font-weight: 800;
+          color: #333;
+          font-family: 'DIN Alternate', sans-serif;
+        }
+
+        &.text-right {
+          text-align: right;
+
+          .percent {
+            color: $uni-color-primary;
+          }
+        }
+      }
+    }
+
+    .slider-wrapper {
+      padding: 12rpx 0;
+      
+      :deep(slider) {
+        margin: 0;
+      }
+    }
+
+    .slider-tips {
+      display: flex;
+      align-items: flex-start;
+      gap: 12rpx;
+      margin-top: 24rpx;
+      padding: 16rpx 20rpx;
+      background: #fffbe6;
+      border-radius: 12rpx;
+      
+      .icon-info {
+        font-size: 24rpx;
+        color: #faad14;
+        margin-top: 4rpx;
+      }
+
+      text {
+        font-size: 22rpx;
+        color: #d48806;
+        line-height: 1.5;
+        font-weight: 400;
+      }
+    }
+  }
+
+  .profit-actions {
+    display: flex;
+    align-items: center;
+    border-top: 1rpx solid #f8f8f8;
+    padding-top: 32rpx;
+
+    .action-item {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12rpx;
+      
+      .iconfont {
+        font-size: 34rpx;
+        color: #444;
+      }
+
+      text {
+        font-size: 28rpx;
+        color: #333;
+        font-weight: 600;
+        white-space: nowrap;
+      }
+
+      &:active {
+        opacity: 0.6;
+        background: #fcfcfc;
+      }
+    }
+
+    .divider {
+      width: 1rpx;
+      height: 32rpx;
+      background: #f0f0f0;
+    }
+  }
 }
 
 .section-card {
@@ -755,8 +991,8 @@ onShow(() => {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 32rpx 0;
-    border-bottom: 1rpx solid #f5f5f5;
+    padding: 36rpx 0;
+    border-bottom: 1rpx solid #fafafa;
 
     &:last-child {
       border-bottom: none;
@@ -767,19 +1003,25 @@ onShow(() => {
       align-items: center;
 
       .cell-icon {
-        font-size: 44rpx;
-        margin-right: 24rpx;
+        font-size: 40rpx;
+        margin-right: 28rpx;
       }
 
       .cell-label {
-        font-size: 28rpx;
+        font-size: 30rpx;
+        font-weight: 500;
         color: #333;
       }
     }
 
     .iconfont.icon-right {
       font-size: 24rpx;
-      color: #ccc;
+      color: #999;
+      opacity: 0.4;
+    }
+
+    &:active {
+      opacity: 0.6;
     }
   }
 }
