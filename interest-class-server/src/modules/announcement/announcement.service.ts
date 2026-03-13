@@ -16,7 +16,7 @@ export class AnnouncementService {
    * 仅管理员可操作
    */
   private assertAdmin(): void {
-    const roles = this.userContextService.get<string[]>('roles') || [];
+    const roles = (this.userContextService.get('roles') as string[]) || [];
     if (!roles.includes('admin')) {
       throw new ForbiddenException('需要管理员权限');
     }

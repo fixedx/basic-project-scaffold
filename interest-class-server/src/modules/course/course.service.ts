@@ -33,6 +33,7 @@ export class CourseService {
    */
   private calculateSkuPrices(
     courseType: string,
+    skuType: string,
     totalPrice: number,
     cashbackType: string,
     cashbackValue: number,
@@ -40,7 +41,7 @@ export class CourseService {
     let onlinePayPrice = 0;
     let offlinePayPrice = 0;
 
-    if (courseType === 'trial') {
+    if (courseType === 'trial' || skuType === 'trial') {
       // 试听课：全额线上支付
       onlinePayPrice = totalPrice;
       offlinePayPrice = 0;
@@ -77,8 +78,8 @@ export class CourseService {
         throw new BadRequestException(`规格${index + 1}的价格必须大于0`);
       }
 
-      // 正式课校验返现金额
-      if (dto.type === 'standard') {
+      // 正式课校验返现金额（体验课套餐 type='trial' 跳过此校验）
+      if (dto.type === 'standard' && sku.type !== 'trial') {
         if (!sku.cashback_value || sku.cashback_value <= 0) {
           throw new BadRequestException(
             `正式课规格${index + 1}必须设置返现金额`,
@@ -143,16 +144,17 @@ export class CourseService {
 
     // 创建SKU
     const skus = dto.skus.map((skuDto) => {
-      // 计算线上线下金额
+      // SKU 类型：课程是 trial 则全部为 trial，否则用前端传的 type 或默认 standard
+      const skuType = dto.type === 'trial' ? 'trial' : (skuDto.type || 'standard');
+
+      // 计算线上线下金额（需先确定 skuType）
       const { onlinePayPrice, offlinePayPrice } = this.calculateSkuPrices(
         dto.type,
+        skuType,
         skuDto.total_price,
         skuDto.cashback_type,
         skuDto.cashback_value,
       );
-
-      // SKU 类型：课程是 trial 则全部为 trial，否则用前端传的 type 或默认 standard
-      const skuType = dto.type === 'trial' ? 'trial' : (skuDto.type || 'standard');
 
       return this.courseSkuRepository.create({
         course_id: savedCourse.id,
@@ -235,15 +237,16 @@ export class CourseService {
           throw new BadRequestException('SKU价格不能为空');
         }
 
+        // SKU 类型：课程是 trial 则全部为 trial，否则用前端传的 type 或默认 standard
+        const skuType = course.type === 'trial' ? 'trial' : (skuDto.type || 'standard');
+
         const { onlinePayPrice, offlinePayPrice } = this.calculateSkuPrices(
           course.type,
+          skuType,
           skuDto.total_price,
           skuDto.cashback_type || 'none',
           skuDto.cashback_value || 0,
         );
-
-        // SKU 类型：课程是 trial 则全部为 trial，否则用前端传的 type 或默认 standard
-        const skuType = course.type === 'trial' ? 'trial' : (skuDto.type || 'standard');
 
         return this.courseSkuRepository.create({
           course_id: id,

@@ -538,6 +538,37 @@ async function createDemoData() {
     if (createdData.courseIds.length > 0) {
       logger.section('6. 创建课程 [已跳过 - 使用已有课程]');
       logger.info(`复用已有课程: ${createdData.courseIds.length} 门`);
+      // 修复已有课程的脏数据：cashback_enabled 和 SKU type
+      for (const courseId of createdData.courseIds) {
+        try {
+          const detail = await client.get<any>(`/courses/${courseId}`);
+          if (!detail) continue;
+
+          // 修复 SKU type：名称含"体验"的 SKU 确保 type='trial'
+          const fixedSkus = (detail.skus || []).map((sku: any) => {
+            const isTrialSku = (sku.name || '').includes('体验') || sku.cashback_type === 'none';
+            if (isTrialSku && sku.type !== 'trial') {
+              return { id: sku.id, type: 'trial', cashback_type: 'none', cashback_value: 0 };
+            }
+            if (!isTrialSku && sku.type === 'trial') {
+              return { id: sku.id, type: 'standard' };
+            }
+            return { id: sku.id }; // 无需修改
+          });
+
+          const needUpdate = !detail.cashback_enabled ||
+            fixedSkus.some((s: any) => Object.keys(s).length > 1);
+
+          if (needUpdate) {
+            await client.put(`/courses/${courseId}`, {
+              cashback_enabled: true,
+              cashback_ratio: detail.cashback_ratio || 10,
+              skus: fixedSkus,
+            });
+            logger.info(`修复课程数据: ${courseId}`);
+          }
+        } catch (e) { /* 忽略单条更新失败 */ }
+      }
     } else {
       logger.section('6. 创建课程');
 
@@ -559,13 +590,16 @@ async function createDemoData() {
         max_age: 8,
         lesson_duration: 60,
         type: 'standard',
+        cashback_enabled: true,
+        cashback_ratio: 10,
         skus: [
           {
             name: '体验课（1节）',
+            type: 'trial',
             total_lessons: 1,
             total_price: 68,
-            cashback_type: 'fixed',
-            cashback_value: 10,
+            cashback_type: 'none',
+            cashback_value: 0,
           },
           {
             name: '月度课程包（8节）',
@@ -599,13 +633,16 @@ async function createDemoData() {
         max_age: 10,
         lesson_duration: 90,
         type: 'standard',
+        cashback_enabled: true,
+        cashback_ratio: 10,
         skus: [
           {
             name: '体验课（1节）',
+            type: 'trial',
             total_lessons: 1,
             total_price: 58,
-            cashback_type: 'fixed',
-            cashback_value: 8,
+            cashback_type: 'none',
+            cashback_value: 0,
           },
           {
             name: '12节课程包',
@@ -631,13 +668,16 @@ async function createDemoData() {
         max_age: 8,
         lesson_duration: 45,
         type: 'standard',
+        cashback_enabled: true,
+        cashback_ratio: 10,
         skus: [
           {
             name: '体验课（1节）',
+            type: 'trial',
             total_lessons: 1,
             total_price: 88,
-            cashback_type: 'fixed',
-            cashback_value: 15,
+            cashback_type: 'none',
+            cashback_value: 0,
           },
           {
             name: '月度课程包（4节）',
@@ -670,13 +710,16 @@ async function createDemoData() {
         max_age: 12,
         lesson_duration: 75,
         type: 'standard',
+        cashback_enabled: true,
+        cashback_ratio: 10,
         skus: [
           {
             name: '体验课（1节）',
+            type: 'trial',
             total_lessons: 1,
             total_price: 78,
-            cashback_type: 'fixed',
-            cashback_value: 10,
+            cashback_type: 'none',
+            cashback_value: 0,
           },
           {
             name: '季度课程包（24节）',
