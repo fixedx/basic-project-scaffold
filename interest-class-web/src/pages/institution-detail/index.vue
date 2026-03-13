@@ -382,7 +382,7 @@ const handleMoreReviews = () => {
   height: 44px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   padding: 0 16px;
   position: relative;
 }
@@ -396,6 +396,10 @@ const handleMoreReviews = () => {
   font-weight: bold;
   color: #333;
   pointer-events: none;
+  max-width: 40%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .nav-capsule {
@@ -408,6 +412,8 @@ const handleMoreReviews = () => {
   height: 32px;
   padding: 0 4rpx;
   transition: all 0.3s;
+  flex-shrink: 0;
+  z-index: 10;
 
   &.dark {
     background: rgba(255, 255, 255, 0.9);
