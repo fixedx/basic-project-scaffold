@@ -191,8 +191,8 @@
           <view class="cashback-banner" @click="goToInvite()">
             <view class="cashback-banner__left">
               <view class="cashback-banner__tag">限时活动</view>
-              <text class="cashback-banner__title">邀友购课，双向返现</text>
-              <text class="cashback-banner__desc">分享专属邀请码给好友，好友购课后你我双方均可获得返现奖励！课程完成后按进度解锁，余额随时可提现。</text>
+              <text class="cashback-banner__title">邀友购课，被邀请人立减·邀请人返现</text>
+              <text class="cashback-banner__desc">分享专属邀请码给好友，好友购课立即享受立减优惠，你按好友完课进度解锁返现，满50元随时可提现。</text>
             </view>
             <view class="cashback-banner__right">
               <text class="cashback-banner__amount">最高</text>

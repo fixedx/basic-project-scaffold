@@ -237,8 +237,19 @@ export class InviteService implements OnModuleInit {
       return { valid: false, message: '该邀请码今日使用次数已达上限' };
     }
 
-    // 4. 检查课程是否为返现课程（需要在调用方验证）
-    // 这里返回有效，课程验证由调用方处理
+    // 4. 检查课程是否为返现课程（必须在此验证）
+    if (course_id) {
+      const courseRows = await this.dataSource.query(
+        `SELECT cashback_enabled FROM courses WHERE id = $1 AND is_delete = false LIMIT 1`,
+        [course_id],
+      );
+      if (!courseRows || courseRows.length === 0) {
+        return { valid: false, message: '课程不存在，邀请码无效' };
+      }
+      if (!courseRows[0].cashback_enabled) {
+        return { valid: false, message: '该课程未开启返现功能，邀请码无效' };
+      }
+    }
 
     // 5. 检查不能使用自己的邀请码
     const currentUserId = this.userContextService.getCurrentUserIdOrNull();
@@ -268,19 +279,21 @@ export class InviteService implements OnModuleInit {
       throw new BadRequestException('邀请码无效');
     }
 
-    // 从课程表查询实际返现比例
+    // 从课程表查询实际返现比例（同时校验课程是否开启了返现）
     let cashback_ratio = 0;
     if (course_id) {
       const courseRows = await this.dataSource.query(
         `SELECT cashback_ratio, cashback_enabled FROM courses WHERE id = $1 AND is_delete = false`,
         [course_id],
       );
-      if (courseRows && courseRows.length > 0) {
-        const course = courseRows[0];
-        cashback_ratio = course.cashback_enabled
-          ? Number(course.cashback_ratio) || 0
-          : 0;
+      if (!courseRows || courseRows.length === 0) {
+        throw new BadRequestException('课程不存在');
       }
+      const course = courseRows[0];
+      if (!course.cashback_enabled) {
+        throw new BadRequestException('该课程未开启返现功能，邀请码无效');
+      }
+      cashback_ratio = Number(course.cashback_ratio) || 0;
     }
 
     const share_ratio = inviteCodeEntity.share_ratio;
@@ -581,9 +594,8 @@ export class InviteService implements OnModuleInit {
   }
 
   /**
-   * 申请提现
+   * 申请提现（无需审核，直接发起微信转账，实时到账）
    */
-  @Transactional()
   async applyWithdraw(dto: ApplyWithdrawDto): Promise<string> {
     const userId = this.userContextService.getCurrentUserId();
     const { amount } = dto;
@@ -602,34 +614,84 @@ export class InviteService implements OnModuleInit {
 
     // 获取用户的微信 openid（转账时需要）
     const user = await this.userRepository.findOneById(userId);
-    const wxOpenid = user?.openid || undefined;
+    const wxOpenid = user?.openid || '';
 
-    // 冻结余额
-    await this.userBalanceRepository.freezeBalance(userId, amount);
+    // Phase-1（快速事务）: 冻结余额 + 创建提现记录（status=approved，直接跳过 pending 审核）
+    const withdrawId = generateSnowflakeId();
+    const outBatchNo = this.generateTransferBatchNo();
+    const outDetailNo = this.generateTransferDetailNo(withdrawId);
 
-    // 创建提现记录
-    const withdraw = this.withdrawRecordRepository.create({
-      id: generateSnowflakeId(),
-      user_id: userId,
+    await this.dataSource.transaction(async () => {
+      // 原子冻结余额
+      await this.userBalanceRepository.freezeBalance(userId, amount);
+
+      // 创建提现记录（直接为 approved 状态，等待转账）
+      const withdraw = this.withdrawRecordRepository.create({
+        id: withdrawId,
+        user_id: userId,
+        amount,
+        status: 'approved',
+        wx_openid: wxOpenid,
+        out_batch_no: outBatchNo,
+        out_detail_no: outDetailNo,
+        reviewed_at: new Date(),
+      });
+      await this.withdrawRecordRepository.save(withdraw);
+
+      // 记录流水
+      await this.cashbackRecordRepository.createRecord({
+        user_id: userId,
+        amount: -amount,
+        balance_before: Number(balance.balance),
+        balance_after: Number(balance.balance) - amount,
+        type: 'withdraw',
+        remark: '提现申请',
+      });
+    });
+
+    this.logger.log(`用户 ${userId} 申请提现 ${amount} 元, openid=${wxOpenid || '无'}, withdrawId=${withdrawId}`);
+
+    // Phase-2（无事务）: 发起微信转账（DB 连接已归还）
+    const transferResult = await this.paymentService.createTransfer(
+      withdrawId,
+      wxOpenid,
       amount,
-      status: 'pending',
-      wx_openid: wxOpenid,
-    });
-    await this.withdrawRecordRepository.save(withdraw);
+      '余额提现',
+      { outBatchNo, outDetailNo },
+    );
 
-    // 记录流水
-    await this.cashbackRecordRepository.createRecord({
-      user_id: userId,
-      amount: -amount,
-      balance_before: Number(balance.balance),
-      balance_after: Number(balance.balance) - amount,
-      type: 'withdraw',
-      remark: '提现申请',
-    });
+    if (transferResult.success) {
+      // Phase-3（快速事务）: approved -> completed + 余额扣减 + 通知
+      const finalizeRows = await this.dataSource.query(
+        `UPDATE withdraw_records
+         SET status = 'completed',
+             wx_transaction_id = COALESCE(wx_transaction_id, $2),
+             completed_at = NOW(),
+             updated_at = NOW()
+         WHERE id = $1 AND status = 'approved' AND is_delete = false
+         RETURNING id`,
+        [withdrawId, transferResult.batch_id || outBatchNo],
+      );
 
-    this.logger.log(`用户 ${userId} 申请提现 ${amount} 元, openid=${wxOpenid || '无'}`);
+      if (finalizeRows && finalizeRows.length > 0) {
+        await this.userBalanceRepository.completeWithdraw(userId, amount);
+      }
 
-    return withdraw.id;
+      try {
+        await this.notificationService.notifyWithdrawDone({
+          userId,
+          withdrawAmount: amount,
+          withdrawNo: withdrawId,
+        });
+      } catch { /* 通知失败不影响主流程 */ }
+
+      this.logger.log(`提现转账成功：ID=${withdrawId}, 金额=${amount}, 批次=${transferResult.batch_id}`);
+    } else {
+      // 转账失败：保持 approved 状态，由 retryApprovedWithdrawals 定时任务补偿
+      this.logger.error(`提现转账失败（将由定时任务重试）：ID=${withdrawId}, 原因=${transferResult.message}`);
+    }
+
+    return withdrawId;
   }
 
   /**

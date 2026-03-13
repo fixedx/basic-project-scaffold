@@ -498,6 +498,15 @@ export class AuthService {
       const teacherId = teacherUser.teacher_id;
       const institutionId = teacherUser.institution_id;
 
+      // ⚠️ 检查机构是否被冻结（与机构登录保持一致）
+      const institutionRows = await this.dataSource.query(
+        `SELECT audit_status FROM institutions WHERE id = $1 AND is_delete = false LIMIT 1`,
+        [institutionId],
+      );
+      if (institutionRows.length > 0 && institutionRows[0].audit_status === 'frozen') {
+        throw new UnauthorizedException('该机构已被冻结，教师无法登录，请联系平台客服');
+      }
+
       // 更新最后登录时间
       await this.userRepository.update(user.id, {
         lastLoginAt: new Date(),

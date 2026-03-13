@@ -252,6 +252,11 @@ export class InstitutionService {
       throw new BadRequestException('无权限修改该机构');
     }
 
+    // 冻结状态：所有字段只读，任何人都不能修改
+    if (institution.audit_status === 'frozen') {
+      throw new BadRequestException('该机构已被冻结，信息完全只读，无法修改');
+    }
+
     // 敏感字段列表（资质相关字段）
     const sensitiveFields = [
       'license_no',
@@ -259,8 +264,8 @@ export class InstitutionService {
       'legal_person',
     ];
 
-    // 如果已审核通过或冻结，不允许修改敏感字段
-    if (['approved', 'frozen'].includes(institution.audit_status)) {
+    // 审核通过后不允许修改敏感字段
+    if (institution.audit_status === 'approved') {
       const hasSensitiveChange = sensitiveFields.some(
         (field) => dto[field] !== undefined,
       );

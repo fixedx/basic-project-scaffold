@@ -321,6 +321,11 @@ export class AdminService {
       throw new BadRequestException('机构不存在');
     }
 
+    // 冻结状态下，即使管理员也无法修改机构信息
+    if (institution.audit_status === 'frozen') {
+      throw new BadRequestException('该机构已被冻结，信息完全只读，无法修改');
+    }
+
     // 管理员可以编辑所有字段（不限制敏感字段）
     // 从 DTO 中分离出子表字段
     const { accounts, teachers, honors, showcases, teaching_environments, ...entityData } = dto as any;

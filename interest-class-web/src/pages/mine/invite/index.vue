@@ -114,7 +114,7 @@
       <view class="tips-list">
         <text class="tips-item">1. 分享邀请码给好友，好友下单可享受立减优惠。</text>
         <text class="tips-item">2. 比如课程返现比例是10%，您设置好友让利50%，则好友优惠5%，您获得5%收益。</text>
-        <text class="tips-item">3. 收益在好友"确认收货/核销完成"后自动结算到余额。</text>
+        <text class="tips-item">3. 收益按好友完课进度自动解锁到余额，完课50%解锁50%返现。</text>
         <text class="tips-item">4. 满50元可申请提现到微信零钱，实时到账。</text>
       </view>
     </view>

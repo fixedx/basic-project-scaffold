@@ -150,7 +150,7 @@
             <text class="notice-title">提现说明</text>
             <text class="notice-item">• 提现将转入您的微信零钱</text>
             <text class="notice-item">• 最低提现金额 {{ balance?.withdraw_min_amount || 50 }} 元</text>
-            <text class="notice-item">• 提现申请将在1-3个工作日内处理</text>
+            <text class="notice-item">• 提现将实时转入您的微信零钱</text>
           </view>
         </view>
         
