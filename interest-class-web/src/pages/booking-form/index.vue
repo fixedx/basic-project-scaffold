@@ -250,10 +250,6 @@
               <text class="fee-label">平台服务费</text>
               <text class="fee-value">+￥{{ formatPrice(commissionAmount) }}</text>
             </view>
-            <view class="fee-row" v-if="inviteDiscount > 0">
-              <text class="fee-label">邀请码优惠</text>
-              <text class="fee-value discount">-￥{{ formatPrice(inviteDiscount) }}</text>
-            </view>
             <view class="fee-row" v-if="useBalance && balanceDeductAmount > 0">
               <text class="fee-label">余额抵扣</text>
               <text class="fee-value discount">-￥{{ formatPrice(balanceDeductAmount) }}</text>
@@ -560,7 +556,7 @@ const recalculateAmount = async () => {
       course_id: courseId.value,
       sku_id: skuId.value,
       quantity: 1,
-      invite_code: inviteValidated.value ? inviteCode.value.trim() : undefined,
+      invite_code: (!isTrialSku.value && inviteValidated.value) ? inviteCode.value.trim() : undefined,
       use_balance: useBalance.value,
     })
     amountResult.value = result
@@ -786,10 +782,10 @@ const handleSubmit = async () => {
       student_phone: selectedChild.value.phone || '',
       student_age: selectedChild.value.age,
       schedule_ids: selectedScheduleIds.value,
-      payment_method: 'offline' as const,
+      payment_method: (isTrialSku.value ? 'wechat' : 'offline') as 'wechat' | 'offline',
       remark: form.remark.trim() || undefined,
       // 邀请码和余额抵扣（后端会重新计算金额，前端只传标记）
-      invite_code: inviteValidated.value ? inviteCode.value.trim() : undefined,
+      invite_code: (!isTrialSku.value && inviteValidated.value) ? inviteCode.value.trim() : undefined,
       use_balance_amount: useBalance.value ? amountResult.value.balance_deduct : undefined,
     }
 

@@ -255,6 +255,7 @@ const handleCallPhone = () => {
 .contact-left {
   flex: 1;
   padding: 8rpx 0;
+  overflow: hidden;
 }
 
 .contact-address {

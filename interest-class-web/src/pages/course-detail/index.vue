@@ -205,35 +205,35 @@
           <!-- 须知列表 -->
           <view class="notice-list">
             <view class="notice-item">
-              <text class="notice-icon">�</text>
+              <text class="iconfont icon-calendar notice-icon" style="color: #597ef7;"></text>
               <view class="notice-body">
                 <text class="notice-label">预约规则</text>
                 <text class="notice-text">下单时即选定上课时段，订单确认后预约自动生效并出现在课表中；如需调整时段，课前 24 小时以上可直接修改，24 小时内需机构审核</text>
               </view>
             </view>
             <view class="notice-item">
-              <text class="notice-icon">✅</text>
+              <text class="iconfont icon-confirm notice-icon" style="color: #52c41a;"></text>
               <view class="notice-body">
                 <text class="notice-label">签到规则</text>
                 <text class="notice-text">每次上课须在 App 内签到，签到后自动扣除一节课时并记录上课进度</text>
               </view>
             </view>
             <view class="notice-item">
-              <text class="notice-icon">🔄</text>
+              <text class="iconfont icon-money-rmb notice-icon" style="color: #fa8c16;"></text>
               <view class="notice-body">
                 <text class="notice-label">退款规则</text>
                 <text class="notice-text">订单确认后可申请退款，退款金额按剩余未上课时比例退还；课时已全部消耗不支持退款</text>
               </view>
             </view>
             <view class="notice-item">
-              <text class="notice-icon">📱</text>
+              <text class="iconfont icon-order notice-icon" style="color: #1890ff;"></text>
               <view class="notice-body">
                 <text class="notice-label">课时查询</text>
                 <text class="notice-text">可在「我的订单」中实时查看剩余课时、签到记录及返现进度</text>
               </view>
             </view>
             <view class="notice-item">
-              <text class="notice-icon">👶</text>
+              <text class="iconfont icon-smile notice-icon" style="color: #ff7a45;"></text>
               <view class="notice-body">
                 <text class="notice-label">宝贝信息</text>
                 <text class="notice-text">下单时请选择正确的宝贝信息，提交后不可更改，请仔细核对</text>
@@ -722,14 +722,11 @@ onMounted(() => {
   white-space: nowrap;
   margin: 0 -32rpx;
   padding: 0 32rpx;
-  width: calc(100% + 64rpx);
 }
 
 .sku-list {
   display: inline-flex;
   gap: 20rpx;
-  padding-bottom: 12rpx;
-  padding-right: 32rpx;
 }
 
 .sku-item {
@@ -912,7 +909,7 @@ onMounted(() => {
 }
 
 .notice-icon {
-  font-size: 32rpx;
+  font-size: 36rpx;
   line-height: 1.4;
   flex-shrink: 0;
   margin-top: 2rpx;
