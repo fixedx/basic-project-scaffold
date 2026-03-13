@@ -88,6 +88,12 @@
             </view>
           </view>
 
+          <!-- 分配机制说明 -->
+          <view class="ratio-hint">
+            <text class="iconfont icon-info"></text>
+            <text class="hint-text">好友每报一节课，课程返现按此比例分配：左边是好友立减金额，右边是你的到账收益</text>
+          </view>
+
           <view class="slider-box">
             <slider 
               :value="inviteCodeInfo?.share_ratio" 
@@ -100,8 +106,8 @@
               :step="1"
             />
             <view class="slider-marks">
-              <text>让利更多</text>
-              <text>我赚更多</text>
+              <text>好友优惠↑</text>
+              <text>↑我赚更多</text>
             </view>
           </view>
         </view>
@@ -185,7 +191,8 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { onShow, onLoad } from '@dcloudio/uni-app'
+import { onShow, onLoad, onShareAppMessage, onShareTimeline } from '@dcloudio/uni-app'
+import { getShareContent, getTimelineContent } from '@/utils/share'
 import { authApi } from '@/api/auth'
 import { childApi } from '@/api/child'
 import { inviteApi } from '@/api/invite'
@@ -200,12 +207,18 @@ import { useAuthGuard } from '@/composables/useAuthGuard'
 const { isReady } = useAuthGuard()
 const userStore = useUserStore()
 const userInfo = ref<any>({})
+const inviteCodeInfo = ref<any>(null)
+
+// ⚠️ 必须在页面 <script setup> 中直接调用，不能放在 composable 里
+// uni-app 编译器扫描本文件来决定是否把 onShareAppMessage 写进 Page({})，
+// 在 composable 内部调用时编译器感知不到，导致微信菜单项灰色
+onShareAppMessage(() => getShareContent(inviteCodeInfo.value?.invite_code))
+onShareTimeline(() => getTimelineContent(inviteCodeInfo.value?.invite_code))
 const income = ref(0)
 const totalHours = ref(0) 
 const childCount = ref(0)
 const statusBarHeight = ref(0)
 const navBarHeight = ref(44)
-const inviteCodeInfo = ref<any>(null)
 const orderCount = ref({
   pendingConfirm: 0,
   unpaid: 0,
@@ -340,7 +353,7 @@ const goToOrders = (status: string) => {
 }
 
 const goToPromo = () => {
-  uni.navigateTo({ url: '/pages/mine/invite/index' })
+  uni.showShareMenu({ withShareTicket: true, menus: ['shareAppMessage', 'shareTimeline'] })
 }
 
 const copyInviteCode = () => {
@@ -371,7 +384,7 @@ const onShareRatioChange = async (e: any) => {
   
   uni.showLoading({ title: '更新中...' })
   try {
-    await inviteApi.updateMyInviteCodeRatio(value)
+    await inviteApi.setShareRatio(value)
     inviteCodeInfo.value.share_ratio = value
     uni.showToast({ title: '设置已生效', icon: 'success' })
   } catch (error) {
@@ -644,6 +657,29 @@ onShow(() => {
         text { font-size: 20rpx; color: #ccc; }
       }
     }
+
+    .ratio-hint {
+      display: flex;
+      align-items: flex-start;
+      gap: 10rpx;
+      background: rgba(82, 196, 26, 0.08);
+      border-radius: 12rpx;
+      padding: 16rpx 20rpx;
+      margin-bottom: 24rpx;
+
+      .iconfont {
+        font-size: 24rpx;
+        color: $uni-color-primary;
+        flex-shrink: 0;
+        margin-top: 2rpx;
+      }
+
+      .hint-text {
+        font-size: 22rpx;
+        color: #52873a;
+        line-height: 1.6;
+      }
+    }
   }
 
   .profit-footer {
@@ -704,4 +740,5 @@ onShow(() => {
   padding-bottom: constant(safe-area-inset-bottom);
   padding-bottom: env(safe-area-inset-bottom);
 }
+
 </style>
