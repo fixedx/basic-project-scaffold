@@ -29,10 +29,6 @@ import { MoneyMath } from '@/common/utils/money.util';
 @Injectable()
 export class InviteService implements OnModuleInit {
   private readonly logger = new Logger(InviteService.name);
-  // 邀请码单日使用上限（可配置）
-  private readonly DAILY_USE_LIMIT = 50;
-  // 提现最低门槛
-  private readonly WITHDRAW_MIN_AMOUNT = 50;
 
   /**
    * 模块初始化：确保 user_balances 的部分唯一索引存在
@@ -56,6 +52,27 @@ export class InviteService implements OnModuleInit {
    */
   private generateTransferBatchNo(): string {
     return `WD${generateSnowflakeId()}`;
+  }
+
+  /**
+   * 从 platform_configs 表读取数字型配置项
+   * 若记录不存在或查询失败，回退到 defaultValue
+   */
+  private async getConfigValue(key: string, defaultValue: number): Promise<number> {
+    try {
+      const rows = await this.dataSource.query(
+        `SELECT config_value FROM platform_configs
+         WHERE config_key = $1 AND is_delete = false LIMIT 1`,
+        [key],
+      );
+      if (rows && rows.length > 0) {
+        const val = Number(rows[0].config_value);
+        return isNaN(val) ? defaultValue : val;
+      }
+    } catch {
+      // 表不存在或查询失败时使用默认值
+    }
+    return defaultValue;
   }
 
   /**
@@ -233,7 +250,9 @@ export class InviteService implements OnModuleInit {
     ) {
       dailyCount = 0;
     }
-    if (dailyCount >= this.DAILY_USE_LIMIT) {
+    const dailyLimit = await this.getConfigValue('invite_daily_use_limit', 50);
+    // dailyLimit = -1 表示不限制
+    if (dailyLimit !== -1 && dailyCount >= dailyLimit) {
       return { valid: false, message: '该邀请码今日使用次数已达上限' };
     }
 
@@ -582,14 +601,15 @@ export class InviteService implements OnModuleInit {
   async getBalance() {
     const userId = this.userContextService.getCurrentUserId();
     const balance = await this.userBalanceRepository.getOrCreate(userId);
+    const withdrawMin = await this.getConfigValue('withdraw_min_amount', 50);
     return {
       available: Number(balance.balance),
       frozen: Number(balance.frozen_balance),
       total_earned: Number(balance.total_earned),
       total_withdrawn: Number(balance.total_withdrawn),
       total_used: Number(balance.total_used),
-      can_withdraw: Number(balance.balance) >= this.WITHDRAW_MIN_AMOUNT,
-      withdraw_min_amount: this.WITHDRAW_MIN_AMOUNT,
+      can_withdraw: Number(balance.balance) >= withdrawMin,
+      withdraw_min_amount: withdrawMin,
     };
   }
 
@@ -600,9 +620,10 @@ export class InviteService implements OnModuleInit {
     const userId = this.userContextService.getCurrentUserId();
     const { amount } = dto;
 
-    if (amount < this.WITHDRAW_MIN_AMOUNT) {
+    const withdrawMin = await this.getConfigValue('withdraw_min_amount', 50);
+    if (amount < withdrawMin) {
       throw new BadRequestException(
-        `提现金额最低${this.WITHDRAW_MIN_AMOUNT}元`,
+        `提现金额最低${withdrawMin}元`,
       );
     }
 

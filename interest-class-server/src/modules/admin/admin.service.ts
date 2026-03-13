@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, Logger, OnModuleInit } from '@nestjs/common';
 import { InstitutionRepository } from '@/modules/institution/repositories/institution.repository';
 import { InstitutionHonorRepository } from '@/modules/institution/repositories/institution-honor.repository';
 import { InstitutionShowcaseRepository } from '@/modules/institution/repositories/institution-showcase.repository';
@@ -14,9 +14,12 @@ import { ReviewContractDto } from '@/modules/institution/dto/review-contract.dto
 import { UpdateInstitutionDto } from '@/modules/institution/dto/update-institution.dto';
 import { Transactional } from '@/common/decorators/transaction.decorator';
 import { DataSource } from 'typeorm';
+import { generateSnowflakeId } from '@/utils/snowflake.util';
+import { UpdatePlatformConfigDto } from './dto/update-platform-config.dto';
 
 @Injectable()
-export class AdminService {
+export class AdminService implements OnModuleInit {
+  private readonly logger = new Logger(AdminService.name);
   constructor(
     private institutionRepository: InstitutionRepository,
     private honorRepository: InstitutionHonorRepository,
@@ -29,6 +32,77 @@ export class AdminService {
     private userContextService: UserContextService,
     private dataSource: DataSource,
   ) {}
+
+  /**
+   * 模块初始化：写入平台配置默认值（幂等）
+   */
+  async onModuleInit() {
+    try {
+      const defaults = [
+        {
+          key: 'invite_daily_use_limit',
+          value: '50',
+          desc: '邀请码单日使用上限，-1 表示不限制',
+        },
+        {
+          key: 'withdraw_min_amount',
+          value: '50',
+          desc: '提现最低门槛（元）',
+        },
+      ];
+      for (const cfg of defaults) {
+        await this.dataSource.query(
+          `INSERT INTO platform_configs
+             (id, config_key, config_value, description, is_active, is_delete, created_at, updated_at)
+           VALUES ($1, $2, $3, $4, true, false, NOW(), NOW())
+           ON CONFLICT (config_key) DO NOTHING`,
+          [generateSnowflakeId(), cfg.key, cfg.value, cfg.desc],
+        );
+      }
+      this.logger.log('✅ 平台配置默认值已就绪');
+    } catch (error: any) {
+      this.logger.error(`❌ 初始化平台配置失败: ${error.message}`);
+    }
+  }
+
+  // ─────────────────────────────────────────────────
+  //  平台配置（管理员 CRUD）
+  // ─────────────────────────────────────────────────
+
+  /**
+   * 获取全部平台配置
+   */
+  async getPlatformConfigs() {
+    this.assertAdmin();
+    const rows = await this.dataSource.query(
+      `SELECT config_key, config_value, description, updated_at
+       FROM platform_configs
+       WHERE is_delete = false
+       ORDER BY config_key ASC`,
+    );
+    return rows;
+  }
+
+  /**
+   * 更新单个平台配置
+   */
+  async setPlatformConfig(key: string, dto: UpdatePlatformConfigDto): Promise<void> {
+    this.assertAdmin();
+    const affected = await this.dataSource.query(
+      `UPDATE platform_configs
+       SET config_value = $1,
+           description  = COALESCE($2, description),
+           updated_at   = NOW()
+       WHERE config_key = $3 AND is_delete = false
+       RETURNING config_key`,
+      [dto.config_value, dto.description ?? null, key],
+    );
+    // UPDATE/DELETE RETURNING 返回 [rows, rowCount] 格式，规范化取第一项
+    const rows = Array.isArray(affected[0]) ? affected[0] : affected;
+    if (!rows || rows.length === 0) {
+      throw new BadRequestException(`配置项 "${key}" 不存在`);
+    }
+  }
 
   /**
    * 验证当前用户是否为管理员

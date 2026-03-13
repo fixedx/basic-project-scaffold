@@ -11,6 +11,7 @@ import { OrderService } from '@/modules/order/order.service';
 import { AuditInstitutionDto } from './dto/audit-institution.dto';
 import { ReviewContractDto } from '@/modules/institution/dto/review-contract.dto';
 import { UpdateInstitutionDto } from '@/modules/institution/dto/update-institution.dto';
+import { UpdatePlatformConfigDto } from './dto/update-platform-config.dto';
 
 @Controller('admin')
 export class AdminController {
@@ -151,5 +152,34 @@ export class AdminController {
     @Query('keyword') keyword?: string,
   ) {
     return this.adminService.getUserList(page, pageSize, keyword);
+  }
+
+  // ──────────────────────────────────────────────────
+  //  平台配置管理
+  // ──────────────────────────────────────────────────
+
+  /**
+   * 获取全部平台配置项
+   * GET /admin/platform-config
+   */
+  @Get('platform-config')
+  async getPlatformConfigs() {
+    return this.adminService.getPlatformConfigs();
+  }
+
+  /**
+   * 更新单个平台配置项
+   * PUT /admin/platform-config/:key
+   * 支持的 key：
+   *   - invite_daily_use_limit  邀请码单日使用上限，-1 = 不限制
+   *   - withdraw_min_amount     提现最低门槛（元）
+   */
+  @Put('platform-config/:key')
+  async setPlatformConfig(
+    @Param('key') key: string,
+    @Body() dto: UpdatePlatformConfigDto,
+  ): Promise<boolean> {
+    await this.adminService.setPlatformConfig(key, dto);
+    return true;
   }
 }
