@@ -432,7 +432,13 @@ const formatPrice = (price: number | string) => {
 }
 
 // ===== 以下所有金额字段都来自后端计算结果 =====
-const isTrialSku = computed(() => amountResult.value.is_trial)
+// ⚠️ isTrialSku 同时检查课程类型、SKU类型和后端计算结果
+// 三重保险：只要任一为 trial，立即隐藏邀请码/余额/线下尾款，不依赖接口是否返回
+const isTrialSku = computed(() =>
+  amountResult.value.is_trial ||
+  course.value?.type === 'trial' ||
+  selectedSku.value?.type === 'trial'
+)
 const onlinePayBase = computed(() => amountResult.value.online_pay_base)
 const balanceDeductAmount = computed(() => amountResult.value.balance_deduct)
 const totalDiscount = computed(() => amountResult.value.total_discount)
