@@ -13,6 +13,7 @@
         :course="course"
         role="parent"
         flat
+        :show-promo="true"
         @click="(c: any) => emit('click', c)"
       />
     </view>

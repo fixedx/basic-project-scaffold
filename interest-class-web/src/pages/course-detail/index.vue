@@ -258,6 +258,7 @@ import { getToken } from '@/utils/request'
 import AsyncImage from '@/components/AsyncImage/index.vue'
 import PageFooter from '@/components/PageFooter/index.vue'
 import Loading from '@/components/Loading/index.vue'
+import InstitutionCard from '@/components/InstitutionCard/index.vue'
 
 const courseId = ref('')
 const course = ref<Course | null>(null)
@@ -280,23 +281,19 @@ const handleBack = () => {
 const reviews = ref<Review[]>([])
 const reviewsTotal = ref(0)
 
-// 计算属性：当前选中SKU的最高返现金额 = 课程金额 × 返现比例
+// 计算属性：当前选中SKU的最高返现金额
+// 直接使用后端 findOne 已计算好的 max_cashback_amount（基于最高价格SKU × 课程返现比例）
+// 避免在前端重复逻辑且绕过 cashback_enabled 默认 false 的陷阱
 const skuCashbackAmount = computed(() => {
   if (!course.value || !selectedSku.value) return 0
-  // 体验课不参与返现（课程级别或SKU级别的体验课都不参与）
-  if (course.value.type === 'trial') return 0
-  if ((selectedSku.value as any).type === 'trial') return 0
-  if (!course.value.cashback_enabled) return 0
-  const price = Number(selectedSku.value.total_price) || 0
-  const cashbackRatio = Number(course.value.cashback_ratio) || 10
-  return Number((price * cashbackRatio / 100).toFixed(2))
+  return Number((course.value as any).max_cashback_amount) || 0
 })
 
-// 计算属性：当前选中SKU的最高立减金额 = 返现金额 × 最高让利比例
+// 计算属性：当前选中SKU的最高立减金额
+// 直接使用后端 findOne 已计算好的 max_discount_amount
 const skuDiscountAmount = computed(() => {
-  if (skuCashbackAmount.value <= 0) return 0
-  const maxShareRatio = Number((course.value as any)?.max_share_ratio) || 50
-  return Number((skuCashbackAmount.value * maxShareRatio / 100).toFixed(2))
+  if (!course.value || !selectedSku.value) return 0
+  return Number((course.value as any).max_discount_amount) || 0
 })
 
 // 加载课程详情
