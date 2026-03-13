@@ -160,6 +160,13 @@
             </view>
             <text class="iconfont icon-right"></text>
           </view>
+          <view class="service-cell" @click="goToCashbackGuide">
+            <view class="cell-left">
+              <text class="iconfont icon-money-red-packet cell-icon" style="color: #fa8c16;"></text>
+              <text class="cell-label">返现与让利</text>
+            </view>
+            <text class="iconfont icon-right"></text>
+          </view>
           <view class="service-cell" @click="goToHelp">
             <view class="cell-left">
               <text class="iconfont icon-help cell-icon" style="color: #73d13d;"></text>
@@ -367,6 +374,10 @@ const goToCourseHours = () => {
 
 const goToHelp = () => {
   uni.navigateTo({ url: '/pages/help-center/index' })
+}
+
+const goToCashbackGuide = () => {
+  uni.navigateTo({ url: '/pages/help-center/detail?categoryId=invite&articleId=invite-1' })
 }
 
 const goToSettings = () => {

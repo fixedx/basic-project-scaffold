@@ -186,18 +186,58 @@
           <view class="section-header">
             <text class="section-title">购课须知</text>
           </view>
+
+          <!-- 🎁 邀友返现活动横幅 -->
+          <view class="cashback-banner" @click="goToInvite()">
+            <view class="cashback-banner__left">
+              <view class="cashback-banner__tag">限时活动</view>
+              <text class="cashback-banner__title">邀友购课，双向返现</text>
+              <text class="cashback-banner__desc">分享专属邀请码给好友，好友购课后你我双方均可获得返现奖励！课程完成后按进度解锁，余额随时可提现。</text>
+            </view>
+            <view class="cashback-banner__right">
+              <text class="cashback-banner__amount">最高</text>
+              <text class="cashback-banner__percent">15%</text>
+              <text class="cashback-banner__unit">返现</text>
+              <text class="iconfont icon-right cashback-banner__arrow"></text>
+            </view>
+          </view>
+
+          <!-- 须知列表 -->
           <view class="notice-list">
             <view class="notice-item">
-              <text class="notice-label">📅 有效期</text>
-              <text class="notice-text">购买后180天内有效</text>
+              <text class="notice-icon">�</text>
+              <view class="notice-body">
+                <text class="notice-label">预约规则</text>
+                <text class="notice-text">下单时即选定上课时段，订单确认后预约自动生效并出现在课表中；如需调整时段，课前 24 小时以上可直接修改，24 小时内需机构审核</text>
+              </view>
             </view>
             <view class="notice-item">
-              <text class="notice-label">🔄 退款规则</text>
-              <text class="notice-text">未开始课程可全额退款</text>
+              <text class="notice-icon">✅</text>
+              <view class="notice-body">
+                <text class="notice-label">签到规则</text>
+                <text class="notice-text">每次上课须在 App 内签到，签到后自动扣除一节课时并记录上课进度</text>
+              </view>
             </view>
             <view class="notice-item">
-              <text class="notice-label">📝 预约规则</text>
-              <text class="notice-text">需提前24小时预约</text>
+              <text class="notice-icon">🔄</text>
+              <view class="notice-body">
+                <text class="notice-label">退款规则</text>
+                <text class="notice-text">订单确认后可申请退款，退款金额按剩余未上课时比例退还；课时已全部消耗不支持退款</text>
+              </view>
+            </view>
+            <view class="notice-item">
+              <text class="notice-icon">📱</text>
+              <view class="notice-body">
+                <text class="notice-label">课时查询</text>
+                <text class="notice-text">可在「我的订单」中实时查看剩余课时、签到记录及返现进度</text>
+              </view>
+            </view>
+            <view class="notice-item">
+              <text class="notice-icon">👶</text>
+              <view class="notice-body">
+                <text class="notice-label">宝贝信息</text>
+                <text class="notice-text">下单时请选择正确的宝贝信息，提交后不可更改，请仔细核对</text>
+              </view>
             </view>
           </view>
         </view>
@@ -335,6 +375,11 @@ const formatDate = (dateStr: string) => {
   if (!dateStr) return ''
   const date = new Date(dateStr)
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+}
+
+// 跳转邀请页
+const goToInvite = () => {
+  goToInvite()
 }
 
 // 查看更多评价
@@ -856,23 +901,126 @@ onMounted(() => {
 .notice-list {
   display: flex;
   flex-direction: column;
-  gap: 24rpx;
+  gap: 28rpx;
+  margin-top: 24rpx;
 }
 
 .notice-item {
   display: flex;
-  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16rpx;
+}
+
+.notice-icon {
+  font-size: 32rpx;
+  line-height: 1.4;
+  flex-shrink: 0;
+  margin-top: 2rpx;
+}
+
+.notice-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+  flex: 1;
+}
+
+.notice-label {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: $uni-text-color;
+}
+
+.notice-text {
+  font-size: 26rpx;
+  color: $uni-text-color-secondary;
+  line-height: 1.6;
+}
+
+// 邀友返现活动横幅
+.cashback-banner {
+  display: flex;
   align-items: center;
-  
-  .notice-label {
-    font-size: 28rpx;
-    color: #666;
+  justify-content: space-between;
+  background: linear-gradient(135deg, #f6ffed 0%, #d9f7be 100%);
+  border: 2rpx solid $uni-color-primary-lighter;
+  border-radius: 20rpx;
+  padding: 28rpx 24rpx;
+  margin-bottom: 8rpx;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: -20rpx;
+    right: 80rpx;
+    width: 120rpx;
+    height: 120rpx;
+    background: rgba(82, 196, 26, 0.08);
+    border-radius: 50%;
   }
-  
-  .notice-text {
-    font-size: 28rpx;
-    color: #333;
-    font-weight: 500;
+
+  &__left {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8rpx;
+    padding-right: 20rpx;
+  }
+
+  &__tag {
+    display: inline-flex;
+    align-self: flex-start;
+    padding: 4rpx 16rpx;
+    background-color: $uni-color-primary;
+    color: #fff;
+    font-size: 20rpx;
+    font-weight: 600;
+    border-radius: 20rpx;
+    letter-spacing: 1rpx;
+  }
+
+  &__title {
+    font-size: 30rpx;
+    font-weight: bold;
+    color: $uni-color-primary-dark;
+  }
+
+  &__desc {
+    font-size: 24rpx;
+    color: $uni-text-color-secondary;
+    line-height: 1.6;
+  }
+
+  &__right {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  &__amount {
+    font-size: 22rpx;
+    color: $uni-color-primary-dark;
+  }
+
+  &__percent {
+    font-size: 52rpx;
+    font-weight: bold;
+    color: $uni-color-primary;
+    line-height: 1.1;
+  }
+
+  &__unit {
+    font-size: 22rpx;
+    color: $uni-color-primary-dark;
+  }
+
+  &__arrow {
+    font-size: 24rpx;
+    color: $uni-color-primary;
+    margin-top: 8rpx;
   }
 }
 
