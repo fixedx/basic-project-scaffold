@@ -1,40 +1,35 @@
 <template>
   <view v-if="isReady" class="mine-page">
     <!-- 1. 顶部用户信息背景区域 -->
-    <view class="header-section" :style="{ paddingTop: safeAreaTop + 'px' }">
-      <view class="user-card" @click="handleUserInfo">
-        <AsyncImage 
-          v-if="userInfo.avatar"
-          :url="userInfo.avatar"
-          width="120rpx" 
-          height="120rpx"
-          mode="aspectFill"
-          round
-          custom-class="avatar"
-        />
-        <image 
-          v-else
-          class="avatar" 
-          src="/static/images/default-avatar.png" 
-          mode="aspectFill"
-        />
-        <view class="info-content">
-          <view class="name-row">
+    <view class="header-section" :style="{ paddingTop: statusBarHeight + 'px' }">
+      <!-- 胶囊按钮左侧的个人信息 -->
+      <view class="compact-header" :style="{ height: navBarHeight + 'px' }">
+        <view class="header-left" @click="handleUserInfo">
+          <AsyncImage 
+            v-if="userInfo.avatar"
+            :url="userInfo.avatar"
+            width="64rpx" 
+            height="64rpx"
+            mode="aspectFill"
+            round
+            custom-class="avatar"
+          />
+          <image 
+            v-else
+            class="avatar" 
+            src="/static/images/default-avatar.png" 
+            mode="aspectFill"
+          />
+          <view class="user-meta">
             <text class="nickname">{{ userInfo.nickname || (getToken() ? '未设置昵称' : '点击登录') }}</text>
-            <view class="vip-tag" v-if="userInfo.id">
+            <view class="vip-badge" v-if="userInfo.id">
               <text class="iconfont icon-vip-fill"></text>
-              <text>成长会员</text>
             </view>
           </view>
-          <text class="uid" v-if="userInfo.id">ID: {{ userInfo.id.slice(-8) }}</text>
-          <text class="phone" v-else>登录发现更多精彩</text>
-        </view>
-        <view class="setting-btn" @click.stop="goToSettings">
-          <text class="iconfont icon-settings-fill"></text>
         </view>
       </view>
 
-      <!-- 2. 数据统计栏（浮动感） -->
+      <!-- 数据统计栏（浮动感） -->
       <view class="stats-card">
         <view class="stat-item" @click="goToWallet">
           <view class="num-wrap">
@@ -61,117 +56,121 @@
     </view>
 
     <view class="content-body">
-      <!-- 官方赚取/让利 核心控制面板 -->
-      <view class="section-card profit-panel" v-if="userInfo.id && inviteCodeInfo">
-        <view class="panel-header">
-          <view class="title-group">
-            <text class="iconfont icon-money-wallet-fill theme-icon"></text>
-            <text class="title">邀友返现 · 让利设置</text>
-          </view>
-          <view class="invite-code-pill" @click="copyInviteCode">
-            <text class="label">我的邀请码:</text>
-            <text class="value">{{ inviteCodeInfo?.invite_code || '---' }}</text>
-            <text class="iconfont icon-copy"></text>
-          </view>
-        </view>
-
-        <view class="slider-container">
-          <view class="slider-labels">
-            <view class="label-item">
-              <text class="role">我赚 (邀友)</text>
-              <text class="percent">{{ 100 - (inviteCodeInfo?.share_ratio || 0) }}%</text>
-            </view>
-            <view class="label-item text-right">
-              <text class="role">友得 (让利)</text>
-              <text class="percent">{{ inviteCodeInfo?.share_ratio || 0 }}%</text>
+      <!-- 官方赚取/让利 核心控制面板 - 新风格 -->
+      <view class="profit-box" v-if="userInfo.id && inviteCodeInfo">
+        <view class="profit-main">
+          <view class="profit-header">
+            <view class="title-tip">推荐有礼</view>
+            <view class="invite-code" @click="copyInviteCode">
+              <text>邀请码 {{ inviteCodeInfo?.invite_code }}</text>
+              <text class="iconfont icon-copy"></text>
             </view>
           </view>
           
-          <view class="slider-wrapper">
+          <view class="distribution-area">
+            <view class="dist-card mine" :class="{ 'dist-active': inviteCodeInfo?.share_ratio < 50 }">
+              <view class="dist-label">我赚收益</view>
+              <view class="dist-value">
+                <text class="num">{{ 100 - (inviteCodeInfo?.share_ratio || 0) }}</text>
+                <text class="unit">%</text>
+              </view>
+            </view>
+            <view class="dist-connector">
+              <view class="dots"></view>
+              <view class="iconfont icon-share"></view>
+            </view>
+            <view class="dist-card friend" :class="{ 'dist-active': inviteCodeInfo?.share_ratio >= 50 }">
+              <view class="dist-label">友得优惠</view>
+              <view class="dist-value">
+                <text class="num">{{ inviteCodeInfo?.share_ratio || 0 }}</text>
+                <text class="unit">%</text>
+              </view>
+            </view>
+          </view>
+
+          <view class="slider-box">
             <slider 
               :value="inviteCodeInfo?.share_ratio" 
+              @changing="onRatioChanging"
               @change="onShareRatioChange"
               activeColor="#52c41a"
               backgroundColor="#f0f0f0"
-              block-size="24"
+              block-size="20"
               block-color="#52c41a"
-              :step="5"
+              :step="1"
             />
-          </view>
-          
-          <view class="slider-tips">
-            <text class="iconfont icon-info"></text>
-            <text>拖动滑块调整分配比例，让利越多邀友成功率越高哦</text>
+            <view class="slider-marks">
+              <text>让利更多</text>
+              <text>我赚更多</text>
+            </view>
           </view>
         </view>
-
-        <view class="profit-actions">
-          <view class="action-item" @click="goToPromo">
+        
+        <view class="profit-footer">
+          <view class="footer-btn" @click="goToPromo">
             <text class="iconfont icon-share"></text>
-            <text>立即邀友</text>
+            <text>立即分享</text>
           </view>
-          <view class="divider"></view>
-          <view class="action-item" @click="goToWallet">
+          <view class="footer-btn secondary" @click="goToWallet">
             <text class="iconfont icon-money-rmb"></text>
-            <text>收益提现</text>
+            <text>收益详情</text>
           </view>
         </view>
       </view>
 
-      <!-- 5. 常用服务 -->
+      <!-- 常用服务 -->
       <view class="section-card service-section">
         <view class="section-header">
           <text class="title">常用服务</text>
         </view>
-        <view class="service-list">
-          <view class="service-cell" @click="goToBookings">
-            <view class="cell-left">
-              <text class="iconfont icon-calendar cell-icon" style="color: #597ef7;"></text>
-              <text class="cell-label">我的预约</text>
+        <view class="grid-services">
+          <view class="grid-item" @click="goToBookings">
+            <view class="grid-icon-wrap" style="background: rgba(89, 126, 247, 0.1);">
+              <text class="iconfont icon-calendar" style="color: #597ef7;"></text>
             </view>
-            <text class="iconfont icon-right"></text>
+            <text class="grid-label">我的预约</text>
           </view>
-          <view class="service-cell" @click="goToChildren">
-            <view class="cell-left">
-              <text class="iconfont icon-smile cell-icon" style="color: #ff7a45;"></text>
-              <text class="cell-label">宝贝管理</text>
+          <view class="grid-item" @click="goToChildren">
+            <view class="grid-icon-wrap" style="background: rgba(255, 122, 69, 0.1);">
+              <text class="iconfont icon-smile" style="color: #ff7a45;"></text>
             </view>
-            <text class="iconfont icon-right"></text>
+            <text class="grid-label">宝贝管理</text>
           </view>
-          <view class="service-cell" @click="goToWallet">
-            <view class="cell-left">
-              <text class="iconfont icon-money-wallet cell-icon" style="color: #ffc53d;"></text>
-              <text class="cell-label">我的钱包</text>
+          <view class="grid-item" @click="goToWallet">
+            <view class="grid-icon-wrap" style="background: rgba(255, 197, 61, 0.1);">
+              <text class="iconfont icon-money-wallet" style="color: #ffc53d;"></text>
             </view>
-            <text class="iconfont icon-right"></text>
+            <text class="grid-label">我的钱包</text>
           </view>
-          <view class="service-cell" @click="goToFavorites">
-            <view class="cell-left">
-              <text class="iconfont icon-favorites cell-icon" style="color: #f5222d;"></text>
-              <text class="cell-label">我的收藏</text>
+          <view class="grid-item" @click="goToFavorites">
+            <view class="grid-icon-wrap" style="background: rgba(245, 34, 45, 0.1);">
+              <text class="iconfont icon-favorites" style="color: #f5222d;"></text>
             </view>
-            <text class="iconfont icon-right"></text>
+            <text class="grid-label">我的收藏</text>
           </view>
-          <view class="service-cell" @click="openFeedback">
-            <view class="cell-left">
-              <text class="iconfont icon-edit cell-icon" style="color: #13c2c2;"></text>
-              <text class="cell-label">意见反馈</text>
+          <view class="grid-item" @click="openFeedback">
+            <view class="grid-icon-wrap" style="background: rgba(19, 194, 194, 0.1);">
+              <text class="iconfont icon-edit" style="color: #13c2c2;"></text>
             </view>
-            <text class="iconfont icon-right"></text>
+            <text class="grid-label">意见反馈</text>
           </view>
-          <view class="service-cell" @click="goToCashbackGuide">
-            <view class="cell-left">
-              <text class="iconfont icon-money-red-packet cell-icon" style="color: #fa8c16;"></text>
-              <text class="cell-label">返现与让利</text>
+          <view class="grid-item" @click="goToCashbackGuide">
+            <view class="grid-icon-wrap" style="background: rgba(250, 140, 22, 0.1);">
+              <text class="iconfont icon-money-red-packet" style="color: #fa8c16;"></text>
             </view>
-            <text class="iconfont icon-right"></text>
+            <text class="grid-label">返现攻略</text>
           </view>
-          <view class="service-cell" @click="goToHelp">
-            <view class="cell-left">
-              <text class="iconfont icon-help cell-icon" style="color: #73d13d;"></text>
-              <text class="cell-label">使用帮助</text>
+          <view class="grid-item" @click="goToHelp">
+            <view class="grid-icon-wrap" style="background: rgba(115, 209, 61, 0.1);">
+              <text class="iconfont icon-help" style="color: #73d13d;"></text>
             </view>
-            <text class="iconfont icon-right"></text>
+            <text class="grid-label">使用帮助</text>
+          </view>
+          <view class="grid-item" @click="goToSettings">
+            <view class="grid-icon-wrap" style="background: rgba(102, 102, 102, 0.1);">
+              <text class="iconfont icon-settings" style="color: #666;"></text>
+            </view>
+            <text class="grid-label">系统设置</text>
           </view>
         </view>
       </view>
@@ -204,7 +203,8 @@ const userInfo = ref<any>({})
 const income = ref(0)
 const totalHours = ref(0) 
 const childCount = ref(0)
-const safeAreaTop = ref(0)
+const statusBarHeight = ref(0)
+const navBarHeight = ref(44)
 const inviteCodeInfo = ref<any>(null)
 const orderCount = ref({
   pendingConfirm: 0,
@@ -215,13 +215,11 @@ const orderCount = ref({
 
 onLoad(() => {
   const systemInfo = uni.getSystemInfoSync()
+  statusBarHeight.value = systemInfo.statusBarHeight || 0
+  
   // #ifdef MP-WEIXIN
   const menuButton = uni.getMenuButtonBoundingClientRect()
-  safeAreaTop.value = menuButton.bottom + 12
-  // #endif
-
-  // #ifndef MP-WEIXIN
-  safeAreaTop.value = (systemInfo.statusBarHeight || 0) + 12
+  navBarHeight.value = (menuButton.top - statusBarHeight.value) * 2 + menuButton.height
   // #endif
 })
 
@@ -356,6 +354,15 @@ const copyInviteCode = () => {
 }
 
 /**
+ * 更新让利比例时的实时预览
+ */
+const onRatioChanging = (e: any) => {
+  if (inviteCodeInfo.value) {
+    inviteCodeInfo.value.share_ratio = e.detail.value;
+  }
+}
+
+/**
  * 更新让利比例
  */
 const onShareRatioChange = async (e: any) => {
@@ -448,357 +455,212 @@ onShow(() => {
 }
 
 .header-section {
-  background: linear-gradient(135deg, #52c41a 0%, #73d13d 100%);
-  padding: 0 32rpx 100rpx;
-  position: relative;
-  overflow: hidden;
+  background: linear-gradient(180deg, $uni-color-primary-lighter 0%, #f8f8f8 100%);
+  padding: 0 32rpx 32rpx;
 
-  &::after {
-    content: '';
-    position: absolute;
-    top: -60rpx;
-    right: -60rpx;
-    width: 240rpx;
-    height: 240rpx;
-    background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0) 70%);
-    border-radius: 50%;
-  }
-}
-
-.user-card {
-  display: flex;
-  align-items: center;
-  padding: 40rpx 0 30rpx;
-  position: relative;
-  z-index: 2;
-
-  .avatar {
-    width: 120rpx;
-    height: 120rpx;
-    border-radius: 60rpx;
-    border: 4rpx solid rgba(255, 255, 255, 0.4);
-    background-color: #fff;
-    overflow: hidden;
-  }
-
-  :deep(.avatar) {
-    width: 120rpx !important;
-    height: 120rpx !important;
-    border-radius: 60rpx !important;
-    overflow: hidden;
+  .compact-header {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start; /* 强制左对齐 */
+    width: 100%;
+    box-sizing: border-box;
     
-    image {
-      border-radius: 60rpx !important;
-    }
-  }
-
-  .info-content {
-    margin-left: 24rpx;
-    flex: 1;
-
-    .name-row {
+    .header-left {
       display: flex;
       align-items: center;
-      gap: 12rpx;
-      margin-bottom: 8rpx;
+      gap: 16rpx;
+      max-width: 400rpx; /* 限制宽度，防止钻入右侧胶囊按钮区域 */
 
-      .nickname {
-        font-size: 38rpx;
-        font-weight: 600;
-        color: #fff;
+      .avatar {
+        width: 64rpx;
+        height: 64rpx;
+        border-radius: 32rpx;
+        border: 2rpx solid #fff;
+        background-color: #eee;
+        flex-shrink: 0;
+      }
+      
+      /* 针对 AsyncImage 组件的样式 */
+      :deep(.avatar) {
+        width: 64rpx !important;
+        height: 64rpx !important;
+        border-radius: 32rpx !important;
       }
 
-      .vip-tag {
-        background: rgba(255, 255, 255, 0.2);
-        padding: 4rpx 16rpx;
-        border-radius: 20rpx;
+      .user-meta {
         display: flex;
-        align-items: center;
-        gap: 6rpx;
+        flex-direction: column;
+        overflow: hidden; /* 防止文字溢出 */
 
-        .iconfont {
-          font-size: 24rpx;
-          color: #ffeb3b;
+        .nickname {
+          font-size: 30rpx;
+          font-weight: 600;
+          color: #333;
+          line-height: 1.2;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis; /* 文字过长显示省略号 */
         }
 
-        text {
-          font-size: 22rpx;
-          color: #fff;
-          font-weight: 500;
+        .vip-badge {
+          display: flex;
+          align-items: center;
+          margin-top: 4rpx;
+          .iconfont {
+            font-size: 24rpx;
+            color: #faad14;
+          }
         }
       }
     }
-
-    .uid {
-      font-size: 24rpx;
-      color: rgba(255, 255, 255, 0.8);
-      display: block;
-    }
-
-    .phone {
-      font-size: 24rpx;
-      color: rgba(255, 255, 255, 0.8);
-    }
   }
 
-  .setting-btn {
-    width: 64rpx;
-    height: 64rpx;
+  .stats-card {
     display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(255, 255, 255, 0.15);
-    border-radius: 32rpx;
+    background: #fff;
+    border-radius: 24rpx;
+    padding: 32rpx 0;
+    margin-top: 40rpx;
+    box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.03);
 
-    .iconfont {
-      color: #fff;
-      font-size: 36rpx;
-    }
-  }
-}
-
-.stats-card {
-  display: flex;
-  background: #fff;
-  border-radius: 24rpx;
-  padding: 36rpx 0;
-  box-shadow: 0 10rpx 30rpx rgba(0, 0, 0, 0.04);
-  margin-top: 32rpx;
-  position: relative;
-  z-index: 10;
-
-  .stat-item {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    position: relative;
-
-    &::after {
-      content: '';
-      position: absolute;
-      right: 0;
-      top: 50%;
-      transform: translateY(-50%);
-      height: 40rpx;
-      width: 1rpx;
-      background-color: #f0f0f0;
-    }
-
-    &:last-child::after {
-      display: none;
-    }
-
-    .num-wrap {
+    .stat-item {
+      flex: 1;
       display: flex;
-      align-items: baseline;
-      margin-bottom: 6rpx;
-
-      .num {
-        font-size: 40rpx;
-        font-weight: 800;
-        color: #333;
-        font-family: 'DIN Alternate', 'Helvetica Neue', Helvetica, sans-serif;
+      flex-direction: column;
+      align-items: center;
+      
+      .num-wrap {
+        margin-bottom: 8rpx;
+        display: flex;
+        align-items: baseline;
+        .num { font-size: 36rpx; font-weight: bold; color: #333; font-family: 'DIN Alternate', sans-serif; }
+        .unit { font-size: 20rpx; color: #999; margin-left: 2rpx; }
       }
 
-      .unit {
-        font-size: 20rpx;
-        color: #999;
-        margin-left: 4rpx;
-        font-weight: 400;
-      }
-    }
+      .label { font-size: 24rpx; color: #999; }
 
-    .label {
-      font-size: 22rpx;
-      color: #bbbbbb;
-      font-weight: 400;
+      &:not(:last-child) { border-right: 1rpx solid #f5f5f5; }
     }
   }
 }
 
 .content-body {
-  padding: 0 24rpx;
-  margin-top: -80rpx;
-  position: relative;
-  z-index: 11;
+  padding: 0 32rpx;
 }
 
-.profit-panel {
-  padding: 32rpx 28rpx;
+.profit-box {
   background: #fff;
-  border-radius: 28rpx;
-  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.03);
+  border-radius: 32rpx;
+  overflow: hidden;
+  margin-bottom: 32rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.02);
 
-  .panel-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 24rpx;
+  .profit-main {
+    padding: 32rpx;
+    background: linear-gradient(135deg, #ffffff 0%, #f6ffed 100%);
 
-    .title-group {
-      display: flex;
-      align-items: center;
-      gap: 12rpx;
-      flex-shrink: 0;
-
-      .theme-icon {
-        font-size: 40rpx;
-        color: #ffa940;
-      }
-
-      .title {
-        font-size: 30rpx;
-        font-weight: 700;
-        color: #1a1a1a;
-        letter-spacing: 0.5rpx;
-        white-space: nowrap;
-      }
-    }
-
-    .invite-code-pill {
-      display: flex;
-      align-items: center;
-      gap: 8rpx;
-      background: #fbfbfb;
-      padding: 8rpx 16rpx;
-      border-radius: 30rpx;
-      border: 1rpx solid #f0f0f0;
-      flex-shrink: 1;
-      max-width: 240rpx;
-      overflow: hidden;
-
-      .label {
-        font-size: 20rpx;
-        color: #bbbbbb;
-        white-space: nowrap;
-      }
-
-      .value {
-        font-size: 24rpx;
-        font-weight: 700;
-        color: #333;
-        font-family: 'DIN Alternate', sans-serif;
-        white-space: nowrap;
-      }
-
-      .icon-copy {
-        font-size: 24rpx;
-        color: $uni-color-primary;
-        flex-shrink: 0;
-      }
-    }
-  }
-
-  .slider-container {
-    background: #ffffff;
-    border: 1rpx solid #f6f6f6;
-    border-radius: 20rpx;
-    padding: 32rpx 24rpx;
-    margin-bottom: 32rpx;
-    position: relative;
-
-    .slider-labels {
+    .profit-header {
       display: flex;
       justify-content: space-between;
-      margin-bottom: 16rpx;
+      align-items: center;
+      margin-bottom: 40rpx;
 
-      .label-item {
+      .title-tip {
+        background: $uni-color-primary;
+        color: #fff;
+        font-size: 20rpx;
+        padding: 4rpx 12rpx;
+        border-radius: 8rpx;
+        font-weight: 500;
+      }
+
+      .invite-code {
+        display: flex;
+        align-items: center;
+        gap: 8rpx;
+        font-size: 24rpx;
+        color: #999;
+        background: rgba(255, 255, 255, 0.8);
+        padding: 8rpx 20rpx;
+        border-radius: 30rpx;
+        border: 1rpx solid #f0f0f0;
+        .iconfont { font-size: 24rpx; color: $uni-color-primary; }
+      }
+    }
+
+    .distribution-area {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 20rpx;
+      margin-bottom: 40rpx;
+
+      .dist-card {
+        width: 180rpx;
+        height: 130rpx;
+        background: #fff;
+        border-radius: 20rpx;
         display: flex;
         flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        border: 2rpx solid #eee;
+        transition: all 0.3s;
+        
+        &.dist-active {
+          border-color: $uni-color-primary;
+          box-shadow: 0 8rpx 20rpx rgba(82, 196, 26, 0.1);
+          transform: translateY(-4rpx);
+          .dist-label { color: $uni-color-primary; font-weight: 600; }
+          .dist-value .num { color: $uni-color-primary; }
+        }
+
+        .dist-label { font-size: 22rpx; color: #999; margin-bottom: 8rpx; }
+        .dist-value {
+          display: flex;
+          align-items: baseline;
+          .num { font-size: 36rpx; font-weight: bold; color: #333; }
+          .unit { font-size: 18rpx; color: #999; margin-left: 2rpx; }
+        }
+      }
+
+      .dist-connector {
         flex: 1;
-
-        .role {
-          font-size: 22rpx;
-          color: #999;
-          margin-bottom: 4rpx;
-          white-space: nowrap;
-        }
-
-        .percent {
-          font-size: 40rpx;
-          font-weight: 800;
-          color: #333;
-          font-family: 'DIN Alternate', sans-serif;
-        }
-
-        &.text-right {
-          text-align: right;
-
-          .percent {
-            color: $uni-color-primary;
-          }
-        }
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8rpx;
+        .dots { width: 40rpx; height: 2rpx; background-color: #eee; }
+        .iconfont { font-size: 28rpx; color: #ccc; }
       }
     }
 
-    .slider-wrapper {
-      padding: 12rpx 0;
-      
-      :deep(slider) {
-        margin: 0;
-      }
-    }
-
-    .slider-tips {
-      display: flex;
-      align-items: flex-start;
-      gap: 12rpx;
-      margin-top: 24rpx;
-      padding: 16rpx 20rpx;
-      background: #fffbe6;
-      border-radius: 12rpx;
-      
-      .icon-info {
-        font-size: 24rpx;
-        color: #faad14;
-        margin-top: 4rpx;
-      }
-
-      text {
-        font-size: 22rpx;
-        color: #d48806;
-        line-height: 1.5;
-        font-weight: 400;
+    .slider-box {
+      .slider-marks {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 10rpx;
+        padding: 0 10rpx;
+        text { font-size: 20rpx; color: #ccc; }
       }
     }
   }
 
-  .profit-actions {
+  .profit-footer {
     display: flex;
-    align-items: center;
-    border-top: 1rpx solid #f8f8f8;
-    padding-top: 32rpx;
-
-    .action-item {
+    border-top: 1rpx solid #f0f0f0;
+    .footer-btn {
       flex: 1;
+      height: 88rpx;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 12rpx;
-      
-      .iconfont {
-        font-size: 34rpx;
-        color: #444;
-      }
-
-      text {
-        font-size: 28rpx;
-        color: #333;
-        font-weight: 600;
-        white-space: nowrap;
-      }
-
-      &:active {
-        opacity: 0.6;
-        background: #fcfcfc;
-      }
-    }
-
-    .divider {
-      width: 1rpx;
-      height: 32rpx;
-      background: #f0f0f0;
+      font-size: 28rpx;
+      color: $uni-color-primary;
+      font-weight: 500;
+      &.secondary { color: #666; border-left: 1rpx solid #f0f0f0; }
+      &:active { background: #fafafa; }
     }
   }
 }
@@ -808,221 +670,33 @@ onShow(() => {
   border-radius: 24rpx;
   padding: 32rpx;
   margin-bottom: 24rpx;
-  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.02);
 
   .section-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
     margin-bottom: 32rpx;
-
-    .title {
-      font-size: 32rpx;
-      font-weight: 600;
-      color: #333;
-    }
-
-    .more {
-      display: flex;
-      align-items: center;
-      font-size: 26rpx;
-      color: #999;
-
-      .iconfont {
-        font-size: 24rpx;
-        margin-left: 4rpx;
-      }
-    }
+    .title { font-size: 30rpx; font-weight: 600; color: #333; }
   }
 }
 
-.order-menu {
-  display: flex;
-  justify-content: space-between;
-
-  .menu-item {
+.grid-services {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 32rpx 0;
+  .grid-item {
     display: flex;
     flex-direction: column;
     align-items: center;
-    flex: 1;
-
-    .icon-wrap {
-      position: relative;
-      margin-bottom: 12rpx;
-
-      .iconfont {
-        font-size: 52rpx;
-      }
-
-      .badge {
-        position: absolute;
-        top: -10rpx;
-        right: -10rpx;
-        background: #ff4d4f;
-        color: #fff;
-        font-size: 20rpx;
-        padding: 0 8rpx;
-        height: 28rpx;
-        line-height: 28rpx;
-        border-radius: 14rpx;
-        min-width: 28rpx;
-        text-align: center;
-        border: 2rpx solid #fff;
-      }
-    }
-
-    .label {
-      font-size: 24rpx;
-      color: #666;
-    }
-  }
-}
-
-.invite-section {
-  padding: 0;
-  overflow: hidden;
-
-  .invite-banner {
-    background: linear-gradient(90deg, #fff2e8 0%, #fff7e6 100%);
-    padding: 24rpx 32rpx;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-
-    .banner-title {
-      font-size: 30rpx;
-      font-weight: 600;
-      color: #ff7a45;
-      margin-bottom: 4rpx;
-    }
-
-    .banner-desc {
-      font-size: 22rpx;
-      color: #fa8c16;
-    }
-
-    .banner-btn {
-      background: #fa8c16;
-      color: #fff;
-      font-size: 24rpx;
-      padding: 8rpx 24rpx;
-      border-radius: 30rpx;
-    }
-  }
-
-  .invite-code-container {
-    padding: 32rpx;
-    display: flex;
-    align-items: center;
-
-    .code-box {
-      flex: 1;
+    gap: 12rpx;
+    .grid-icon-wrap {
+      width: 84rpx;
+      height: 84rpx;
+      border-radius: 24rpx;
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      background: #fdfdfd;
-      border: 1rpx dashed #d9d9d9;
-      padding: 16rpx 24rpx;
-      border-radius: 12rpx;
-
-      .code-main {
-        display: flex;
-        align-items: center;
-        gap: 16rpx;
-
-        .label {
-          font-size: 24rpx;
-          color: #999;
-        }
-
-        .value {
-          font-size: 32rpx;
-          font-weight: bold;
-          color: #333;
-          letter-spacing: 2rpx;
-        }
-      }
-
-      .copy-btn {
-        font-size: 24rpx;
-        color: $uni-color-primary;
-        font-weight: 500;
-      }
+      justify-content: center;
+      .iconfont { font-size: 40rpx; }
     }
-
-    .divider {
-      width: 1rpx;
-      height: 60rpx;
-      background: #eee;
-      margin: 0 32rpx;
-    }
-
-    .share-info {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 4rpx;
-
-      .share-label {
-        font-size: 22rpx;
-        color: #999;
-      }
-
-      .share-value {
-        font-size: 28rpx;
-        color: #333;
-        font-weight: 600;
-      }
-      
-      .iconfont {
-        font-size: 20rpx;
-        color: #ccc;
-      }
-    }
-  }
-}
-
-.service-section {
-  padding-bottom: 12rpx;
-}
-
-.service-list {
-  .service-cell {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 36rpx 0;
-    border-bottom: 1rpx solid #fafafa;
-
-    &:last-child {
-      border-bottom: none;
-    }
-
-    .cell-left {
-      display: flex;
-      align-items: center;
-
-      .cell-icon {
-        font-size: 40rpx;
-        margin-right: 28rpx;
-      }
-
-      .cell-label {
-        font-size: 30rpx;
-        font-weight: 500;
-        color: #333;
-      }
-    }
-
-    .iconfont.icon-right {
-      font-size: 24rpx;
-      color: #999;
-      opacity: 0.4;
-    }
-
-    &:active {
-      opacity: 0.6;
-    }
+    .grid-label { font-size: 24rpx; color: #666; }
+    &:active { opacity: 0.7; }
   }
 }
 
