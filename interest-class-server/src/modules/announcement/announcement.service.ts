@@ -1,19 +1,32 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { AnnouncementRepository } from './repositories/announcement.repository';
 import { CreateAnnouncementDto } from './dto/create-announcement.dto';
 import { UpdateAnnouncementDto } from './dto/update-announcement.dto';
 import { AnnouncementEntity } from './entities/announcement.entity';
+import { UserContextService } from '@/common/services/user-context.service';
 
 @Injectable()
 export class AnnouncementService {
   constructor(
     private readonly announcementRepository: AnnouncementRepository,
+    private readonly userContextService: UserContextService,
   ) {}
 
   /**
-   * 创建公告
+   * 仅管理员可操作
+   */
+  private assertAdmin(): void {
+    const roles = this.userContextService.get<string[]>('roles') || [];
+    if (!roles.includes('admin')) {
+      throw new ForbiddenException('需要管理员权限');
+    }
+  }
+
+  /**
+   * 创建公告（仅管理员）
    */
   async create(dto: CreateAnnouncementDto): Promise<string> {
+    this.assertAdmin();
     const announcement = this.announcementRepository.create(dto);
     const saved = await this.announcementRepository.save(announcement);
     return (saved as any).id;
@@ -38,9 +51,10 @@ export class AnnouncementService {
   }
 
   /**
-   * 更新公告
+   * 更新公告（仅管理员）
    */
   async update(id: string, dto: UpdateAnnouncementDto): Promise<boolean> {
+    this.assertAdmin();
     const announcement = await this.announcementRepository.findOneById(id);
     if (!announcement) {
       throw new BadRequestException('公告不存在');
@@ -50,9 +64,10 @@ export class AnnouncementService {
   }
 
   /**
-   * 删除公告（软删除）
+   * 删除公告（仅管理员，软删除）
    */
   async remove(id: string): Promise<boolean> {
+    this.assertAdmin();
     const announcement = await this.announcementRepository.findOneById(id);
     if (!announcement) {
       throw new BadRequestException('公告不存在');

@@ -284,18 +284,6 @@
 			}
 		},
 		{
-			"path": "pages/institution/banner-list/index",
-			"style": {
-				"navigationBarTitleText": "Banner 管理"
-			}
-		},
-		{
-			"path": "pages/institution/banner-edit/index",
-			"style": {
-				"navigationBarTitleText": "编辑 Banner"
-			}
-		},
-		{
 			"path": "pages/institution/review-list/index",
 			"style": {
 				"navigationBarTitleText": "用户评价"

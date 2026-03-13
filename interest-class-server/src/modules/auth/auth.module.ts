@@ -11,6 +11,7 @@ import { InstitutionEntity } from '@/modules/institution/entities/institution.en
 import { InstitutionRepository } from '@/modules/institution/repositories/institution.repository';
 import { InstitutionModule } from '@/modules/institution/institution.module';
 import { TeacherModule } from '@/modules/teacher/teacher.module';
+import { InviteModule } from '@/modules/invite/invite.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { TeacherModule } from '@/modules/teacher/teacher.module';
     ]),
     forwardRef(() => InstitutionModule),
     forwardRef(() => TeacherModule),
+    forwardRef(() => InviteModule),
   ],
   controllers: [AuthController],
   providers: [

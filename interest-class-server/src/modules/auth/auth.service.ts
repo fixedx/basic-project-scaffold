@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, BadRequestException, Inject, forwardRef } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { DataSource } from 'typeorm';
 import axios from 'axios';
@@ -13,6 +13,7 @@ import { UserInstitutionRepository } from './repositories/user-institution.repos
 import { InstitutionService } from '@/modules/institution/institution.service';
 import { verifyPassword } from '@/utils/crypto.util';
 import { TeacherUserRepository } from '@/modules/teacher/repositories/teacher-user.repository';
+import { InviteService } from '@/modules/invite/invite.service';
 
 /**
  * 微信登录响应接口
@@ -34,6 +35,7 @@ export class AuthService {
     private userInstitutionRepository: UserInstitutionRepository,
     private institutionService: InstitutionService,
     private teacherUserRepository: TeacherUserRepository,
+    @Inject(forwardRef(() => InviteService)) private inviteService: InviteService,
   ) {}
 
   /**
@@ -107,7 +109,14 @@ export class AuthService {
     // 3. 生成 JWT token
     const token = this.generateToken(user);
 
-    // 4. 返回登录结果
+    // 4. 首次登录自动生成邀请码（幂等，不阻塞登录主流程）
+    try {
+      await this.inviteService.getOrCreateInviteCode(user.id);
+    } catch (err: any) {
+      console.warn(`自动生成邀请码失败（不影响登录）: ${err?.message}`);
+    }
+
+    // 5. 返回登录结果
     return {
       token,
       userInfo: {
@@ -374,7 +383,14 @@ export class AuthService {
     // 2. 生成 JWT token（普通家长角色，与微信登录一致）
     const token = this.generateToken(user);
 
-    // 3. 返回登录结果
+    // 3. 首次登录自动生成邀请码（幂等，不阻塞登录主流程）
+    try {
+      await this.inviteService.getOrCreateInviteCode(user.id);
+    } catch (err: any) {
+      console.warn(`自动生成邀请码失败（不影响登录）: ${err?.message}`);
+    }
+
+    // 4. 返回登录结果
     return {
       token,
       userInfo: {

@@ -45,7 +45,7 @@ const AUTH_WHITELIST_RULES: Array<{ pattern: RegExp; methods?: string[] }> = [
   
   // ==================== 浏览类接口（不需要登录） ====================
   { pattern: /^\/api\/home(\/.*)?\/?$/ },             // 首页相关（所有子路径）
-  { pattern: /^\/api\/banner(\/.*)?\/?$/ },           // 轮播图（所有子路径）
+  { pattern: /^\/api\/banner(\/.*)?\/?$/, methods: ['GET'] }, // 轮播图（仅 GET，管理操作需管理员权限）
   { pattern: /^\/api\/courses\/?$/, methods: ['GET'] },          // 课程列表（仅 GET）
   { pattern: /^\/api\/courses\/\d+\/?$/, methods: ['GET'] }, // 课程详情（仅数字ID，仅 GET）
   { pattern: /^\/api\/review\/course\/\d+\/?$/, methods: ['GET'] },       // 课程评价列表（仅 GET）
@@ -72,7 +72,9 @@ const AUTH_WHITELIST_RULES: Array<{ pattern: RegExp; methods?: string[] }> = [
   { pattern: /^\/api\/invite\/available\/?$/, methods: ['GET'] }, // 获取可用邀请码列表（选择邀请码时调用）
   
   // ==================== 公告相关（公开接口） ====================
+  { pattern: /^\/api\/announcement\/?$/, methods: ['GET'] },         // 获取公告列表（公开浏览）
   { pattern: /^\/api\/announcement\/active\/?$/, methods: ['GET'] }, // 获取生效中的公告（首页展示）
+  { pattern: /^\/api\/announcement\/\d+\/?$/, methods: ['GET'] },    // 获取公告详情（公开浏览）
 ];
 
 /**

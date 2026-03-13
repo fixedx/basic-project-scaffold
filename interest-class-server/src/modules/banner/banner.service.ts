@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { BannerRepository } from './repositories/banner.repository';
 import { CreateBannerDto } from './dto/create-banner.dto';
@@ -16,10 +16,21 @@ export class BannerService {
   ) {}
 
   /**
-   * 创建 Banner
+   * 仅管理员可操作
+   */
+  private assertAdmin(): void {
+    const roles = this.userContextService.get<string[]>('roles') || [];
+    if (!roles.includes('admin')) {
+      throw new ForbiddenException('需要管理员权限');
+    }
+  }
+
+  /**
+   * 创建 Banner（仅管理员）
    */
   @Transactional()
   async create(dto: CreateBannerDto): Promise<string> {
+    this.assertAdmin();
     const banner = this.bannerRepository.create({
       ...dto,
       status: dto.status || 'active',
@@ -55,10 +66,11 @@ export class BannerService {
   }
 
   /**
-   * 更新 Banner
+   * 更新 Banner（仅管理员）
    */
   @Transactional()
   async update(id: string, dto: UpdateBannerDto): Promise<void> {
+    this.assertAdmin();
     const banner = await this.bannerRepository.findOneById(id);
     if (!banner) {
       throw new NotFoundException('Banner不存在');
@@ -68,10 +80,11 @@ export class BannerService {
   }
 
   /**
-   * 删除 Banner（软删除）
+   * 删除 Banner（仅管理员，软删除）
    */
   @Transactional()
   async remove(id: string): Promise<void> {
+    this.assertAdmin();
     const banner = await this.bannerRepository.findOneById(id);
     if (!banner) {
       throw new NotFoundException('Banner不存在');
@@ -81,10 +94,11 @@ export class BannerService {
   }
 
   /**
-   * 批量更新排序
+   * 批量更新排序（仅管理员）
    */
   @Transactional()
   async updateSort(dto: SortBannerDto): Promise<void> {
+    this.assertAdmin();
     await this.bannerRepository.updateSortBatch(dto.items);
   }
 }
