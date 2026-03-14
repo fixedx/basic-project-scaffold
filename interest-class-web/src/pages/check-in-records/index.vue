@@ -145,10 +145,12 @@ const formatDate = (dateStr: string) => {
 .page {
   min-height: 100vh;
   background-color: $uni-bg-color-grey;
+  padding-top: 24rpx;
+  box-sizing: border-box;
 }
 
 .order-info {
-  margin: 24rpx 32rpx;
+  margin: 0 32rpx 24rpx 32rpx;
   padding: 32rpx;
   background-color: $uni-bg-color;
   border-radius: 16rpx;
