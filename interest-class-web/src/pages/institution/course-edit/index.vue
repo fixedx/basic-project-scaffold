@@ -544,170 +544,35 @@ onLoad(async (options: any) => {
 
 .form-container {
   padding: 24rpx;
+  padding-bottom: 200rpx;
 }
 
+// 移除已失效的 @extend，直接在模板中使用公共类名
+// 这里保留自定义样式的占位，如果需要额外扩展可以在此编写
 .section {
-  margin-bottom: 24rpx;
-  padding: 32rpx;
-  background-color: #fff;
-  border-radius: 24rpx;
-  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.04);
-
-  &:last-child {
-    margin-bottom: 0;
-  }
-
-  &-title {
-    font-size: 32rpx;
-    font-weight: 600;
-    color: #1d2129;
-    margin-bottom: 32rpx;
-    display: flex;
-    align-items: center;
-    line-height: 1.4;
-
-    &::before {
-      content: '';
-      width: 8rpx;
-      height: 32rpx;
-      background: $uni-color-primary;
-      border-radius: 4rpx;
-      margin-right: 16rpx;
-    }
-  }
 }
 
 .form-group {
-  margin-bottom: 32rpx;
-
-  &:last-child {
-    margin-bottom: 0;
-  }
 }
 
 .form-label {
-  font-size: 28rpx;
-  font-weight: 500;
-  color: #4e5969;
-  margin-bottom: 16rpx;
-  display: flex;
-  align-items: center;
-
-  &.required::after {
-    content: '*';
-    color: #f53f3f;
-    margin-left: 8rpx;
-    font-size: 32rpx;
-    line-height: 1;
-    transform: translateY(4rpx);
-  }
 }
 
 .form-tip {
-  font-size: 24rpx;
-  color: #86909c;
-  margin-top: 12rpx;
-  line-height: 1.5;
-}
-
-// 输入框样式：回归底部边框风格
-:deep(.wd-input) {
-  padding: 0 !important;
-  background: transparent !important;
-  
-  &::after {
-    display: none !important;
-  }
-
-  .wd-input__inner {
-    padding: 16rpx 0 !important;
-    font-size: 28rpx !important;
-    color: #1d2129 !important;
-    background: transparent !important;
-    border-bottom: 1rpx solid #e5e6eb !important;
-    border-radius: 0 !important;
-    transition: all 0.3s;
-
-    &::placeholder {
-      color: #c9cdd4;
-    }
-
-    &:focus {
-      border-bottom-color: $uni-color-primary !important;
-    }
-  }
-}
-
-:deep(.wd-textarea) {
-  padding: 0 !important;
-  background: transparent !important;
-  
-  &::after {
-    display: none !important;
-  }
-
-  .wd-textarea__inner {
-    padding: 16rpx 0 !important;
-    font-size: 28rpx !important;
-    color: #1d2129 !important;
-    background: transparent !important;
-    border-bottom: 1rpx solid #e5e6eb !important;
-    border-radius: 0 !important;
-    min-height: 200rpx !important;
-    line-height: 1.6 !important;
-    transition: all 0.3s;
-
-    &::placeholder {
-      color: #c9cdd4;
-    }
-
-    &:focus {
-      border-bottom-color: $uni-color-primary !important;
-    }
-  }
 }
 
 // 标签组优化：圆角胶囊风格
 .tag-group {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 20rpx;
+  @extend .tag-group;
 }
 
 .tag-item {
-  padding: 12rpx 32rpx;
-  font-size: 26rpx;
-  border-radius: 100rpx;
-  background-color: #f2f3f5;
-  color: #4e5969;
-  border: 2rpx solid transparent;
-  transition: all 0.3s;
-
-  &.tag-active {
-    background-color: rgba($uni-color-primary, 0.1);
-    color: $uni-color-primary;
-    border-color: $uni-color-primary;
-    font-weight: 500;
-  }
+  @extend .tag-item;
 }
 
 // 提示框优化
 .tip-box {
-  display: flex;
-  align-items: flex-start;
-  padding: 24rpx;
-  border-radius: 12rpx;
-  margin-bottom: 32rpx;
-  
-  &.tip-warning {
-    background-color: #fff7e6;
-    border: 1rpx solid #ffe8c9;
-  }
-  
-  &.tip-info {
-    background-color: #e6f7ff;
-    border: 1rpx solid #bae7ff;
-  }
+  @extend .tip-box;
 }
 
 .tip-icon {

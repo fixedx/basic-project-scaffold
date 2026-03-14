@@ -1,47 +1,48 @@
 <template>
   <view class="page">
-    <view class="form-container">
-      <!-- 评分 -->
-      <view class="form-group">
-        <view class="form-label required">评分</view>
-        <view class="rating-group">
-          <view
-            v-for="star in 5"
-            :key="star"
-            class="star"
-            @click="handleRatingChange(star)"
-          >
-            <text 
-              class="iconfont" 
-              :class="star <= form.rating ? 'icon-flag' : 'icon-flag'" 
-              :style="{ fontSize: '60rpx', color: star <= form.rating ? '#faad14' : '#d9d9d9' }"
-            ></text>
+    <view class="container">
+      <view class="card-box">
+        <!-- 评分 -->
+        <view class="form-group">
+          <view class="form-label required">评分</view>
+          <view class="rating-group">
+            <view
+              v-for="star in 5"
+              :key="star"
+              class="star"
+              @click="handleRatingChange(star)"
+            >
+              <text 
+                class="iconfont icon-favorites-fill" 
+                :style="{ fontSize: '60rpx', color: star <= form.rating ? '#faad14' : '#f0f0f0' }"
+              ></text>
+            </view>
           </view>
+          <text class="rating-text">{{ getRatingText(form.rating) }}</text>
         </view>
-        <text class="rating-text">{{ getRatingText(form.rating) }}</text>
-      </view>
 
-      <!-- 评价内容 -->
-      <view class="form-group">
-        <view class="form-label required">评价内容</view>
-        <wd-textarea
-          v-model="form.content"
-          placeholder="请分享您的上课体验，帮助其他家长了解课程"
-          :maxlength="500"
-          show-word-limit
-          :auto-height="true"
-        />
-      </view>
+        <!-- 评价内容 -->
+        <view class="form-group">
+          <view class="form-label required">评价内容</view>
+          <wd-textarea
+            v-model="form.content"
+            placeholder="请分享您的上课体验，帮助其他家长了解课程"
+            :maxlength="500"
+            show-word-limit
+            :auto-height="true"
+          />
+        </view>
 
-      <!-- 评价图片 -->
-      <view class="form-group">
-        <view class="form-label">评价图片</view>
-        <FileUpload
-          v-model="form.images"
-          :limit="9"
-          :max-size="5 * 1024 * 1024"
-          path-prefix="reviews"
-        />
+        <!-- 评价图片 -->
+        <view class="form-group">
+          <view class="form-label">评价图片</view>
+          <FileUpload
+            v-model="form.images"
+            :limit="9"
+            path-prefix="reviews"
+            :is-public="true"
+          />
+        </view>
       </view>
     </view>
 
@@ -174,24 +175,8 @@ const handleSubmit = async () => {
   background-color: $uni-bg-color-grey;
 }
 
-.form-container {
-  padding: 24rpx 32rpx 160rpx;
-}
-
-.form-group {
-  margin-bottom: 32rpx;
-}
-
-.form-label {
-  font-size: 28rpx;
-  color: $uni-text-color;
-  margin-bottom: 16rpx;
-  
-  &.required::before {
-    content: '*';
-    color: $uni-color-error;
-    margin-right: 8rpx;
-  }
+.container {
+  padding: 24rpx 32rpx 180rpx;
 }
 
 .rating-group {
@@ -200,12 +185,11 @@ const handleSubmit = async () => {
   justify-content: center;
   gap: 24rpx;
   padding: 32rpx 0;
-  background-color: $uni-bg-color;
+  background-color: #f7f8fa;
   border-radius: 16rpx;
 }
 
 .star {
-  cursor: pointer;
   transition: transform 0.2s;
   
   &:active {
