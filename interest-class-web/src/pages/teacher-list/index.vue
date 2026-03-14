@@ -61,10 +61,7 @@
       </view>
 
       <!-- 空状态 -->
-      <view v-else class="empty-state">
-        <text class="empty-icon">👨‍🏫</text>
-        <text class="empty-text">暂无教师信息</text>
-      </view>
+      <EmptyState v-else icon="icon-customer" text="暂无教师信息" />
     </view>
   </view>
 </template>
@@ -76,6 +73,7 @@ import { teacherApi, type TeacherInfo } from '@/api/teacher'
 import { showErrorToast } from '@/utils/toast'
 import AsyncImage from '@/components/AsyncImage/index.vue'
 import Loading from '@/components/Loading/index.vue'
+import EmptyState from '@/components/EmptyState/index.vue'
 
 const loading = ref(true)
 const institutionId = ref('')
@@ -245,24 +243,6 @@ const goToDetail = (id: string) => {
   .iconfont {
     font-size: 28rpx;
     color: $uni-text-color-disable;
-  }
-}
-
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 60vh;
-  gap: 16rpx;
-
-  .empty-icon {
-    font-size: 80rpx;
-  }
-
-  .empty-text {
-    font-size: 28rpx;
-    color: $uni-text-color-tertiary;
   }
 }
 </style>

@@ -84,10 +84,11 @@
     </view>
 
     <!-- 空状态 -->
-    <view class="empty-state" v-if="!loading && !booking">
-      <text class="iconfont icon-calendar"></text>
-      <text class="empty-text">预约不存在</text>
-    </view>
+    <EmptyState 
+      v-if="!loading && !booking" 
+      icon="icon-calendar" 
+      text="预约不存在" 
+    />
 
     <!-- 底部操作栏 -->
     <PageFooter v-if="canSubmit">
@@ -111,6 +112,7 @@ import { courseApi, type Course } from '@/api/course'
 import { scheduleApi, type Schedule } from '@/api/schedule'
 import Loading from '@/components/Loading/index.vue'
 import PageFooter from '@/components/PageFooter/index.vue'
+import EmptyState from '@/components/EmptyState/index.vue'
 import { showSuccessToast, showErrorToast } from '@/utils/toast'
 
 // 页面参数
@@ -475,25 +477,6 @@ function formatTime(timeStr: string | undefined): string {
     font-size: 26rpx;
     color: #d46b08;
     flex: 1;
-  }
-}
-
-// 空状态
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding-top: 200rpx;
-  
-  .iconfont {
-    font-size: 120rpx;
-    color: $uni-text-color-tertiary;
-    margin-bottom: 24rpx;
-  }
-  
-  .empty-text {
-    font-size: 28rpx;
-    color: $uni-text-color-secondary;
   }
 }
 </style>

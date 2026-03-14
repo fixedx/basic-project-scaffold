@@ -79,11 +79,11 @@
     </view>
 
     <!-- 空状态 -->
-    <view v-else class="empty-state">
-      <text class="empty-icon">📚</text>
-      <text class="empty-title">暂无授课课程</text>
-      <text class="empty-desc">您还未被分配任何课程的排课</text>
-    </view>
+    <EmptyState 
+      v-else 
+      icon="icon-catalog" 
+      text="暂无授课课程" 
+    />
   </view>
 </template>
 
@@ -92,6 +92,7 @@ import { ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { teacherApi, type TeacherCourse } from '@/api/teacher'
 import AsyncImage from '@/components/AsyncImage/index.vue'
+import EmptyState from '@/components/EmptyState/index.vue'
 
 const loading = ref(true)
 const courseList = ref<TeacherCourse[]>([])
@@ -309,31 +310,6 @@ onShow(() => {
     font-size: 22rpx;
     color: $uni-color-primary;
     font-weight: 500;
-  }
-}
-
-/* 空状态 */
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 160rpx 0;
-
-  .empty-icon {
-    font-size: 96rpx;
-    margin-bottom: 24rpx;
-  }
-
-  .empty-title {
-    font-size: 30rpx;
-    color: $uni-text-color;
-    font-weight: 500;
-    margin-bottom: 12rpx;
-  }
-
-  .empty-desc {
-    font-size: 26rpx;
-    color: $uni-text-color-tertiary;
   }
 }
 </style>

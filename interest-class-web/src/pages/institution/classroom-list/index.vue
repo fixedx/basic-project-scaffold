@@ -78,11 +78,11 @@
       </view>
 
       <!-- 空状态 -->
-      <view v-else class="empty-state">
-        <text class="empty-icon">🏫</text>
-        <text class="empty-text">暂无教室</text>
-        <text class="empty-tip">点击右下角按钮添加教室</text>
-      </view>
+      <EmptyState 
+        v-else 
+        icon="icon-store" 
+        text="暂无教室" 
+      />
 
       <!-- 添加按钮 -->
       <view class="fab" @click="handleAdd">
@@ -98,6 +98,7 @@ import { onLoad } from '@dcloudio/uni-app'
 import { useMessage } from 'wot-design-uni'
 import { classroomApi, type ClassroomInfo } from '@/api/classroom'
 import Loading from '@/components/Loading/index.vue'
+import EmptyState from '@/components/EmptyState/index.vue'
 const message = useMessage()
 
 const loading = ref(true)
@@ -346,30 +347,6 @@ const handleDelete = async (id: string, name: string) => {
   display: flex;
   gap: 16rpx;
   justify-content: flex-end;
-}
-
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 160rpx 32rpx;
-}
-
-.empty-icon {
-  font-size: 120rpx;
-  margin-bottom: 32rpx;
-}
-
-.empty-text {
-  font-size: 32rpx;
-  color: $uni-text-color-secondary;
-  margin-bottom: 16rpx;
-}
-
-.empty-tip {
-  font-size: 28rpx;
-  color: $uni-text-color-tertiary;
 }
 
 .fab {

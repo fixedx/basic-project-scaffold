@@ -177,9 +177,7 @@
               <view class="review-content">{{ review.content }}</view>
             </view>
           </view>
-          <view class="empty-state" v-else>
-            <text>暂无评价</text>
-          </view>
+          <EmptyState v-else icon="icon-catalog" text="暂无评价" />
         </view>
 
         <!-- 购课须知 -->
@@ -298,6 +296,7 @@ import { showErrorToast, showSuccessToast } from '@/utils/toast'
 import { getToken } from '@/utils/request'
 import AsyncImage from '@/components/AsyncImage/index.vue'
 import PageFooter from '@/components/PageFooter/index.vue'
+import EmptyState from '@/components/EmptyState/index.vue'
 import Loading from '@/components/Loading/index.vue'
 import InstitutionCard from '@/components/InstitutionCard/index.vue'
 
@@ -894,13 +893,6 @@ onMounted(() => {
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   overflow: hidden;
-}
-
-.empty-state {
-  text-align: center;
-  padding: 32rpx 0;
-  color: #999;
-  font-size: 28rpx;
 }
 
 // 须知

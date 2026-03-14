@@ -85,10 +85,11 @@
     </view>
 
     <!-- 空状态 -->
-    <view class="empty-state" v-if="!loading && !booking">
-      <text class="iconfont icon-calendar" style="font-size: 240rpx; color: #d9d9d9;"></text>
-      <text class="empty-text">预约不存在</text>
-    </view>
+    <EmptyState 
+      v-if="!loading && !booking" 
+      icon="icon-calendar" 
+      text="预约不存在" 
+    />
 
     <!-- 底部操作栏 -->
     <PageFooter v-if="booking && canModify">
@@ -120,6 +121,7 @@ import { onLoad, onPullDownRefresh } from '@dcloudio/uni-app'
 import { bookingApi, type Booking } from '@/api/booking'
 import Loading from '@/components/Loading/index.vue'
 import PageFooter from '@/components/PageFooter/index.vue'
+import EmptyState from '@/components/EmptyState/index.vue'
 
 const bookingId = ref('')
 const booking = ref<Booking | null>(null)
@@ -351,20 +353,6 @@ const getStatusText = (status: string) => {
     font-size: 28rpx;
     color: $uni-text-color-secondary;
   }
-}
-
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 120rpx 0;
-}
-
-.empty-text {
-  margin-top: 24rpx;
-  font-size: 28rpx;
-  color: $uni-text-color-tertiary;
 }
 
 .footer-actions {

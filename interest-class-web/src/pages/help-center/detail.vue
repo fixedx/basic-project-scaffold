@@ -55,10 +55,11 @@
     </view>
 
     <!-- 文章不存在 -->
-    <view v-else class="empty-state">
-      <text class="iconfont icon-info empty-icon"></text>
-      <text class="empty-text">文章不存在</text>
-    </view>
+    <EmptyState
+      v-else
+      icon="icon-info"
+      text="文章不存在"
+    />
 
     <view class="safe-area"></view>
   </view>
@@ -67,6 +68,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
+import EmptyState from '@/components/EmptyState/index.vue'
 import { helpData } from './help-data'
 
 const categoryId = ref('')
@@ -326,26 +328,6 @@ onLoad((options) => {
   font-size: 24rpx;
   color: $uni-text-color-disable;
   margin-left: 16rpx;
-}
-
-/* 空状态 */
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 200rpx 64rpx;
-}
-
-.empty-icon {
-  font-size: 80rpx;
-  color: $uni-text-color-disable;
-  margin-bottom: 24rpx;
-}
-
-.empty-text {
-  font-size: 28rpx;
-  color: $uni-text-color-tertiary;
 }
 
 .safe-area {

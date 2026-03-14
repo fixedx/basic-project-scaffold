@@ -76,11 +76,7 @@
       </view>
 
       <!-- 空状态 -->
-      <view v-else class="empty-state">
-        <text class="empty-icon">📅</text>
-        <text class="empty-text">暂无排课</text>
-        <text class="empty-tip">点击右下角"+"单个创建，或点击上方"批量排课"</text>
-      </view>
+      <EmptyState v-else icon="icon-calendar" text="暂无排课" />
 
       <!-- 悬浮添加按钮 -->
       <view class="fab" @click="handleAdd">
@@ -96,6 +92,7 @@ import { onLoad, onShow } from '@dcloudio/uni-app'
 import { scheduleApi } from '@/api'
 import type { Schedule } from '@/api/schedule'
 import Loading from '@/components/Loading/index.vue'
+import EmptyState from '@/components/EmptyState/index.vue'
 
 // 页面参数
 const courseId = ref('')
@@ -399,30 +396,6 @@ onShow(() => {
 .action-btns {
   display: flex;
   gap: 16rpx;
-}
-
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 160rpx 32rpx;
-}
-
-.empty-icon {
-  font-size: 120rpx;
-  margin-bottom: 32rpx;
-}
-
-.empty-text {
-  font-size: 32rpx;
-  color: $uni-text-color-secondary;
-  margin-bottom: 16rpx;
-}
-
-.empty-tip {
-  font-size: 28rpx;
-  color: $uni-text-color-tertiary;
 }
 
 .fab {

@@ -64,11 +64,11 @@
     </view>
 
     <!-- 空状态 -->
-    <view v-else class="empty-state">
-      <text class="empty-icon">👨‍🎓</text>
-      <text class="empty-title">暂无学员</text>
-      <text class="empty-desc">学员通过预约您的课程后将出现在这里</text>
-    </view>
+    <EmptyState 
+      v-else 
+      icon="icon-customer" 
+      text="暂无学员" 
+    />
   </view>
 </template>
 
@@ -76,6 +76,7 @@
 import { ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { teacherApi, type TeacherStudent } from '@/api/teacher'
+import EmptyState from '@/components/EmptyState/index.vue'
 
 const loading = ref(true)
 const studentList = ref<TeacherStudent[]>([])
@@ -287,31 +288,6 @@ onShow(() => {
 
   &:active {
     opacity: 0.7;
-  }
-}
-
-/* 空状态 */
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 160rpx 0;
-
-  .empty-icon {
-    font-size: 96rpx;
-    margin-bottom: 24rpx;
-  }
-
-  .empty-title {
-    font-size: 30rpx;
-    color: $uni-text-color;
-    font-weight: 500;
-    margin-bottom: 12rpx;
-  }
-
-  .empty-desc {
-    font-size: 26rpx;
-    color: $uni-text-color-tertiary;
   }
 }
 </style>

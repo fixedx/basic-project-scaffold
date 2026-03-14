@@ -64,10 +64,7 @@
       </view>
 
       <!-- 无数据 -->
-      <view class="empty-state" v-if="!loading && reviews.length === 0">
-        <text class="iconfont icon-comment" style="font-size: 200rpx; color: #d9d9d9;"></text>
-        <text class="empty-text">暂无评价</text>
-      </view>
+      <EmptyState v-if="!loading && reviews.length === 0" icon="icon-favorites" text="暂无评价" />
     </view>
 
     <!-- 加载中 -->
@@ -87,6 +84,7 @@ import { ref, onMounted } from 'vue'
 import { onLoad, onPullDownRefresh, onReachBottom } from '@dcloudio/uni-app'
 import { reviewApi, type Review } from '@/api/review'
 import AsyncImage from '@/components/AsyncImage/index.vue'
+import EmptyState from '@/components/EmptyState/index.vue'
 
 // 筛选标签
 const filterTabs = [
@@ -337,20 +335,6 @@ const previewImage = (urls: string[], current: number) => {
   font-size: 24rpx;
   color: $uni-text-color-secondary;
   line-height: 1.6;
-}
-
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 120rpx 0;
-}
-
-.empty-text {
-  margin-top: 24rpx;
-  font-size: 28rpx;
-  color: $uni-text-color-tertiary;
 }
 
 .loading-more,

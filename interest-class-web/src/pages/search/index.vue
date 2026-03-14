@@ -82,11 +82,11 @@
       </view>
 
       <!-- 全部为空 -->
-      <view class="empty-state" v-if="institutions.length === 0 && courses.length === 0 && !loading">
-        <text class="iconfont icon-search" style="font-size: 80rpx; color: #ddd;"></text>
-        <text class="empty-text">未找到"{{ keyword }}"相关结果</text>
-        <text class="empty-tip">换个关键词试试</text>
-      </view>
+      <EmptyState 
+        v-if="institutions.length === 0 && courses.length === 0 && !loading"
+        icon="icon-search" 
+        :text="'未找到\"' + keyword + '\"相关结果'" 
+      />
     </view>
 
     <!-- 未搜索状态 -->
@@ -121,6 +121,7 @@ import { courseApi } from '@/api/course'
 import type { Institution } from '@/api/institution'
 import type { CourseInfo } from '@/api/course'
 import CourseCard from '@/components/CourseCard/index.vue'
+import EmptyState from '@/components/EmptyState/index.vue'
 import { useEnums } from '@/composables/useEnums'
 import { getUserLocation } from '@/utils/distance'
 
@@ -342,25 +343,6 @@ onMounted(async () => {
     font-size: 24rpx;
     margin-left: 4rpx;
   }
-}
-
-/* ====== 空状态 ====== */
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 160rpx 0;
-  gap: 16rpx;
-}
-
-.empty-text {
-  font-size: 28rpx;
-  color: $uni-text-color-secondary;
-}
-
-.empty-tip {
-  font-size: 24rpx;
-  color: $uni-text-color-tertiary;
 }
 
 /* ====== 初始状态（热门搜索） ====== */

@@ -105,11 +105,12 @@
       </view>
 
       <!-- 空状态 -->
-      <view v-else-if="!loading" class="empty-state">
-        <text class="iconfont icon-connections empty-icon"></text>
-        <text class="empty-text">暂无学员数据</text>
-        <text class="empty-hint">学员通过下单购课后会出现在这里</text>
-      </view>
+      <EmptyState
+        v-else-if="!loading"
+        icon="icon-customer"
+        text="暂无学员数据"
+        desc="学员通过下单购课后会出现在这里"
+      />
 
       <!-- 加载中 / 没有更多 -->
       <view v-if="loading" class="loading-more">
@@ -128,6 +129,7 @@ import { ref, computed } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { institutionApi, type StudentInfo } from '@/api/institution'
 import AsyncImage from '@/components/AsyncImage/index.vue'
+import EmptyState from '@/components/EmptyState/index.vue'
 
 const keyword = ref('')
 const studentList = ref<StudentInfo[]>([])
@@ -480,30 +482,6 @@ const getOrderStatusText = (status: string) => {
         }
       }
     }
-  }
-}
-
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 120rpx 0;
-
-  .empty-icon {
-    font-size: 120rpx;
-    color: $uni-text-color-disable;
-    margin-bottom: 24rpx;
-  }
-
-  .empty-text {
-    font-size: 30rpx;
-    color: $uni-text-color-tertiary;
-    margin-bottom: 12rpx;
-  }
-
-  .empty-hint {
-    font-size: 24rpx;
-    color: $uni-text-color-disable;
   }
 }
 

@@ -26,9 +26,7 @@
     </view>
 
     <!-- 空状态 -->
-    <view v-if="articles.length === 0" class="empty-state">
-      <text class="empty-text">暂无帮助文章</text>
-    </view>
+    <EmptyState v-if="articles.length === 0" icon="icon-notice" text="暂无帮助文章" />
 
     <view class="safe-area"></view>
   </view>
@@ -38,6 +36,7 @@
 import { ref, computed } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { helpData, type HelpCategory, type HelpArticle } from './help-data'
+import EmptyState from '@/components/EmptyState/index.vue'
 
 const categoryId = ref('')
 
@@ -194,18 +193,6 @@ onLoad((options) => {
   font-size: 24rpx;
   color: $uni-text-color-disable;
   margin-left: 16rpx;
-}
-
-.empty-state {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 120rpx 64rpx;
-}
-
-.empty-text {
-  font-size: 28rpx;
-  color: $uni-text-color-tertiary;
 }
 
 .safe-area {

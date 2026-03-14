@@ -81,10 +81,7 @@
       </view>
 
       <!-- 空状态 -->
-      <view class="empty-state" v-if="!loading && courses.length === 0">
-        <text class="iconfont icon-shopping" style="font-size: 80rpx; color: #ddd;"></text>
-        <text class="empty-text">暂无课程数据</text>
-      </view>
+      <EmptyState v-if="!loading && courses.length === 0" icon="icon-catalog" text="暂无课程数据" />
     </view>
   </view>
 </template>
@@ -96,6 +93,7 @@ import { courseApi, type Course } from '@/api'
 import { showErrorToast } from '@/utils/toast'
 import { formatDistance, getUserLocation } from '@/utils/distance'
 import CourseCard from '@/components/CourseCard/index.vue'
+import EmptyState from '@/components/EmptyState/index.vue'
 
 // 导航栏配置
 const config = reactive({
@@ -407,19 +405,5 @@ onReachBottom(() => {
   text-align: center;
   color: #999;
   font-size: 24rpx;
-}
-
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 120rpx 0;
-  gap: 16rpx;
-  
-  .empty-text {
-    color: #999;
-    font-size: 28rpx;
-  }
 }
 </style>

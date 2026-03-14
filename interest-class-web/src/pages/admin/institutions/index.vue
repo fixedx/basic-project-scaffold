@@ -32,10 +32,11 @@
         <Loading text="加载中..." />
       </view>
 
-      <view v-else-if="institutions.length === 0" class="empty-state">
-        <text class="empty-icon">🏢</text>
-        <text class="empty-text">暂无机构数据</text>
-      </view>
+      <EmptyState
+        v-else-if="institutions.length === 0"
+        icon="icon-store"
+        text="暂无机构数据"
+      />
 
       <view v-else class="institution-list">
         <view
@@ -351,23 +352,6 @@ onLoad((options) => {
   &.status-frozen {
     background-color: $uni-bg-color-grey;
     color: $uni-text-color-tertiary;
-  }
-}
-
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 160rpx 32rpx;
-
-  .empty-icon {
-    font-size: 120rpx;
-    margin-bottom: 32rpx;
-  }
-  .empty-text {
-    font-size: 32rpx;
-    color: $uni-text-color-secondary;
   }
 }
 

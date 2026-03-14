@@ -117,10 +117,11 @@
     </view>
 
     <!-- 空状态 -->
-    <view class="empty-state" v-else-if="!loading">
-      <text class="iconfont icon-order" style="font-size: 240rpx; color: #d9d9d9;"></text>
-      <text class="empty-text">订单不存在</text>
-    </view>
+    <EmptyState 
+      v-else-if="!loading" 
+      icon="icon-order" 
+      text="订单不存在" 
+    />
 
     <!-- 底部支付栏 -->
     <PageFooter v-if="order && !isExpired">
@@ -151,6 +152,7 @@ import { paymentApi } from '@/api/payment'
 import { showErrorToast, showSuccessToast } from '@/utils/toast'
 import Loading from '@/components/Loading/index.vue'
 import PageFooter from '@/components/PageFooter/index.vue'
+import EmptyState from '@/components/EmptyState/index.vue'
 
 const orderId = ref('')
 const order = ref<Order | null>(null)
@@ -376,20 +378,6 @@ const goBack = () => {
     color: $uni-text-color-secondary;
     margin-bottom: 48rpx;
     text-align: center;
-  }
-}
-
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding-top: 200rpx;
-  
-  .empty-text {
-    margin-top: 24rpx;
-    color: $uni-text-color-secondary;
-    font-size: 28rpx;
   }
 }
 

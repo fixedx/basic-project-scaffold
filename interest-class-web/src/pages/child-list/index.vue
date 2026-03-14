@@ -8,12 +8,13 @@
     <!-- 宝贝列表 -->
     <view class="list-container" v-else>
       <!-- 空状态 -->
-      <view class="empty-state" v-if="children.length === 0">
-        <text class="iconfont icon-baby empty-icon"></text>
-        <text class="empty-text">还没有添加宝贝</text>
-        <text class="empty-tip">添加宝贝信息，预约课程更便捷</text>
-        <wd-button type="primary" @click="handleAdd">添加宝贝</wd-button>
-      </view>
+      <EmptyState 
+        v-if="children.length === 0"
+        icon="icon-baby"
+        text="还没有添加宝贝"
+        action-text="添加宝贝"
+        @click="handleAdd"
+      />
 
       <!-- 列表 -->
       <view class="child-list" v-else>
@@ -86,6 +87,7 @@ import { showErrorToast } from '@/utils/toast'
 import AsyncImage from '@/components/AsyncImage/index.vue'
 import PageFooter from '@/components/PageFooter/index.vue'
 import Loading from '@/components/Loading/index.vue'
+import EmptyState from '@/components/EmptyState/index.vue'
 
 const children = ref<Child[]>([])
 const loading = ref(false)
@@ -156,33 +158,6 @@ const handleEdit = (child: Child) => {
   text {
     margin-top: 20rpx;
     color: $uni-text-color-secondary;
-  }
-}
-
-// 空状态
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding-top: 200rpx;
-  
-  .empty-icon {
-    font-size: 160rpx;
-    color: $uni-text-color-disable;
-    margin-bottom: 32rpx;
-  }
-  
-  .empty-text {
-    font-size: 32rpx;
-    color: $uni-text-color;
-    margin-bottom: 16rpx;
-  }
-  
-  .empty-tip {
-    font-size: 26rpx;
-    color: $uni-text-color-secondary;
-    margin-bottom: 48rpx;
   }
 }
 
