@@ -267,11 +267,17 @@
       v-model="showChildPicker"
       :actions="childActions"
       cancel-text="取消"
+      :z-index="2000"
       @select="handleChildSelect"
     />
 
     <!-- 月份选择器弹窗 -->
-    <wd-popup v-model="showMonthPicker" position="bottom" :safe-area-inset-bottom="true">
+    <wd-popup 
+      v-model="showMonthPicker" 
+      position="bottom" 
+      :safe-area-inset-bottom="true"
+      :z-index="2000"
+    >
       <view class="month-picker-container">
         <view class="picker-header">
           <text class="picker-cancel" @click="showMonthPicker = false">取消</text>

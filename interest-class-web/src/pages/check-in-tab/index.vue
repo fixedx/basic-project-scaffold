@@ -140,7 +140,12 @@
     </view>
 
     <!-- 补卡弹窗 -->
-    <wd-popup v-model="showMakeupModal" position="bottom" custom-class="makeup-popup">
+    <wd-popup 
+      v-model="showMakeupModal" 
+      position="bottom" 
+      custom-class="makeup-popup"
+      :z-index="2000"
+    >
       <view class="makeup-modal">
         <view class="modal-header">
           <text class="modal-title">申请补卡</text>
@@ -188,7 +193,7 @@
       v-model="showCourseSheet" 
       :actions="courseActions" 
       cancel-text="取消"
-      :z-index="1000"
+      :z-index="2000"
       @select="handleCourseSelect"
     />
 

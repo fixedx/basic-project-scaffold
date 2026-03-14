@@ -121,7 +121,12 @@
     </view>
     
     <!-- 提现弹窗 -->
-    <wd-popup v-model="showWithdrawPopup" position="bottom" custom-style="border-radius: 24rpx 24rpx 0 0">
+    <wd-popup 
+      v-model="showWithdrawPopup" 
+      position="bottom" 
+      custom-style="border-radius: 24rpx 24rpx 0 0"
+      :z-index="2000"
+    >
       <view class="withdraw-popup">
         <view class="popup-header">
           <text class="popup-title">申请提现</text>
