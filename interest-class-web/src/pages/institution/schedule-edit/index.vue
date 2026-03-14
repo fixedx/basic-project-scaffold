@@ -131,7 +131,7 @@
     </PageFooter>
 
     <!-- 课程选择弹窗 -->
-    <wd-popup v-model="showCoursePicker" position="bottom" :closable="true" :z-index="1000" custom-style="z-index: 1000;">
+    <wd-popup v-model="showCoursePicker" position="bottom" :closable="true">
       <view class="picker-popup">
         <view class="popup-title">选择课程</view>
         <view v-if="courseList.length > 0" class="picker-list">
@@ -153,7 +153,7 @@
     </wd-popup>
 
     <!-- 教师选择弹窗 -->
-    <wd-popup v-model="showTeacherPicker" position="bottom" :closable="true" :z-index="1000" custom-style="z-index: 1000;">
+    <wd-popup v-model="showTeacherPicker" position="bottom" :closable="true">
       <view class="picker-popup">
         <view class="popup-title">选择教师</view>
         <view v-if="teacherList.length > 0" class="picker-list">
@@ -176,7 +176,7 @@
     </wd-popup>
 
     <!-- 教室选择弹窗 -->
-    <wd-popup v-model="showClassroomPicker" position="bottom" :closable="true" :z-index="1000" custom-style="z-index: 1000;">
+    <wd-popup v-model="showClassroomPicker" position="bottom" :closable="true">
       <view class="picker-popup">
         <view class="popup-title">选择教室</view>
         <view v-if="classroomList.length > 0" class="picker-list">

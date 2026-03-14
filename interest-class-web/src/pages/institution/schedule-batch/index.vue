@@ -64,7 +64,7 @@
           <view class="form-label required">上课时间</view>
           <view class="time-row">
             <view class="time-picker-wrapper">
-              <wd-picker :z-index="1000"
+              <wd-picker
                 v-model="form.start_time"
                 :columns="timeColumns"
                 label="开始" label-width="80rpx" align-right
@@ -74,7 +74,7 @@
             </view>
             <text class="time-separator">至</text>
             <view class="time-picker-wrapper">
-              <wd-picker :z-index="1000"
+              <wd-picker
                 v-model="form.end_time"
                 :columns="timeColumns"
                 label="结束" label-width="80rpx" align-right
