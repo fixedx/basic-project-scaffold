@@ -484,23 +484,36 @@ export class OrderService {
         contact_phone: institution.contact_phone || undefined,
         address: institution.address || undefined,
         business_hours: undefined,
+        // ⭐ 锁定下单时的佣金公式，供后续审计复核
+        commission_type: (institution as any).commission_type || 'percentage',
+        commission_value: Number((institution as any).commission_value) || 0,
       },
       course_snapshot: {
         id: course.id,
         title: course.title,
         subtitle: course.subtitle || undefined,
         type: course.type || 'standard', // 课程类型：trial-试听课, standard-正式课
-        age_range_min: undefined,
-        age_range_max: undefined,
+        // ⭐ 修复：原来硬编码 undefined，实际应取课程年龄范围
+        age_range_min: course.min_age || undefined,
+        age_range_max: course.max_age || undefined,
+        // ⭐ 锁定单节课时长（课程级字段）
+        lesson_duration: course.lesson_duration || undefined,
+        // ⭐ 锁定下单时的返现比例，与 cashback_amount 配套供审计
+        cashback_ratio: amountResult.cashback_ratio || undefined,
       },
       sku_snapshot: {
         id: sku.id,
         name: sku.name,
         original_price: sku.total_price,
-        class_count: sku.total_lessons || undefined,
-        class_duration: undefined,
+        class_count: sku.total_lessons || 0,
+        // ⭐ 修复：原来硬编码 undefined，应取课程的单节课时长
+        class_duration: course.lesson_duration || 0,
         cashback_type: sku.cashback_type,
         cashback_value: sku.cashback_value,
+        // ⭐ 锁定购买时的退款政策，防止机构事后修改影响历史订单
+        is_refundable: sku.is_refundable,
+        // ⭐ 锁定购买时的有效期（天）
+        validity_days: sku.validity_days || undefined,
       },
     });
 
@@ -723,6 +736,11 @@ export class OrderService {
     // 只有已确认或退款被拒绝的订单才能申请退款
     if (order.status !== 'confirmed' && order.status !== 'refund_rejected') {
       throw new BadRequestException('只能对已确认或退款被拒绝的订单申请退款');
+    }
+
+    // ⭐ 检查 SKU 快照中的退款政策（锁定购买时的约定，防止机构事后改规则）
+    if (order.sku_snapshot?.is_refundable === false) {
+      throw new BadRequestException('该课程规格不支持退款');
     }
 
     order.status = 'refund_pending';

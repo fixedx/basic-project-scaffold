@@ -235,6 +235,10 @@ export class OrderEntity extends BaseEntity {
     contact_phone?: string;
     address?: string;
     business_hours?: string;
+    /** 下单时生效的佣金类型（percentage/fixed_amount），用于后续审计 */
+    commission_type?: string;
+    /** 下单时生效的佣金数值，用于后续审计 */
+    commission_value?: number;
   };
 
   @Column({ type: 'jsonb', nullable: true, comment: '课程信息快照' })
@@ -242,10 +246,13 @@ export class OrderEntity extends BaseEntity {
     id: string;
     title: string;
     subtitle?: string;
-    cover_img?: string;
     type?: string; // trial-试听课, standard-正式课
     age_range_min?: number;
     age_range_max?: number;
+    /** 单节课时长（分钟） */
+    lesson_duration?: number;
+    /** 下单时课程返现比例（%），与 cashback_amount 配套存储用于审计 */
+    cashback_ratio?: number;
   };
 
   @Column({ type: 'jsonb', nullable: true, comment: 'SKU信息快照' })
@@ -257,6 +264,10 @@ export class OrderEntity extends BaseEntity {
     class_duration: number;
     cashback_type: string;
     cashback_value: number;
+    /** 下单时 SKU 的退款政策快照，锁定购买时的约定，防止机构事后修改 */
+    is_refundable?: boolean;
+    /** 下单时课程有效期（天），锁定购买时的约定 */
+    validity_days?: number;
   };
 
   @Column({ type: 'boolean', default: false, comment: '是否已评价' })
