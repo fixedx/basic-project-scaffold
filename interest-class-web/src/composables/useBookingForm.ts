@@ -56,6 +56,7 @@ export function useBookingForm() {
   const amountResult = ref<OrderAmountResult>({
     is_trial: false,
     original_price: 0,
+    display_price: 0,
     cashback_ratio: 10,
     online_pay_base: 0,
     invite_discount: 0,
@@ -92,6 +93,8 @@ export function useBookingForm() {
   const userBalance = computed(() => amountResult.value.user_balance)
   const skuCashbackAmount = computed(() => amountResult.value.max_cashback_amount)
   const skuDiscountAmount = computed(() => amountResult.value.max_discount_amount)
+  // 含佣金的展示价格，直接取后端计算结果
+  const displayPrice = computed(() => amountResult.value.display_price)
 
   // --- 工具函数 ---
   const formatPrice = (price: number | string) => (Number(price) || 0).toFixed(2)
@@ -300,7 +303,7 @@ export function useBookingForm() {
     // 计算金额
     isTrialSku, onlinePayBase, balanceDeductAmount, totalDiscount,
     onlinePayAmount, offlinePayAmount, commissionAmount, finalPrice,
-    inviteDiscount, userBalance, skuCashbackAmount, skuDiscountAmount,
+    inviteDiscount, userBalance, skuCashbackAmount, skuDiscountAmount, displayPrice,
     // 工具
     formatPrice, getDayOfWeekLabel, formatTimeRange,
     // 方法

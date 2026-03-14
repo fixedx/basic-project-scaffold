@@ -12,6 +12,8 @@
         :selected-sku="selectedSku"
         :sku-cashback-amount="skuCashbackAmount"
         :sku-discount-amount="skuDiscountAmount"
+        :display-price="displayPrice"
+        :format-price="formatPrice"
       />
 
       <!-- 机构信息 -->
@@ -90,7 +92,7 @@
         :selected-sku="selectedSku"
         :is-trial-sku="isTrialSku"
         :course="course"
-        :commission-amount="commissionAmount"
+        :display-price="displayPrice"
         :invite-discount="inviteDiscount"
         :model-use-balance="useBalance"
         :balance-deduct-amount="balanceDeductAmount"
@@ -148,7 +150,7 @@
             <text class="offline-tip">尾款 ￥{{ formatPrice(offlinePayAmount) }} 到店支付</text>
           </view>
           <view class="price-detail" v-else-if="totalDiscount > 0">
-            <text class="origin-price">原价 ￥{{ formatPrice(selectedSku.total_price) }}</text>
+            <text class="origin-price">原价 ￥{{ formatPrice(displayPrice || selectedSku.total_price) }}</text>
             <text class="discount-info">已优惠 ￥{{ formatPrice(totalDiscount) }}</text>
           </view>
         </view>
@@ -185,7 +187,7 @@ const {
   form,
   isTrialSku, onlinePayBase, balanceDeductAmount, totalDiscount,
   onlinePayAmount, offlinePayAmount, commissionAmount, finalPrice,
-  inviteDiscount, userBalance, skuCashbackAmount, skuDiscountAmount,
+  inviteDiscount, userBalance, skuCashbackAmount, skuDiscountAmount, displayPrice,
   formatPrice, getDayOfWeekLabel, formatTimeRange,
   handleValidateInvite, goSelectInviteCode, clearInviteCode,
   selectSchedule, handleSubmit, handleBack, showAgreement, goToAddChild,

@@ -195,7 +195,8 @@ export class OrderService {
     const finalOnlinePayAmountFen = onlinePayAmountFen + commissionAmountFen;
     const finalPaidAmountFen = finalOnlinePayAmountFen + offlinePayAmountFen;
 
-    const onlinePayBase = MoneyMath.fen2yuan(onlinePayBaseFen);
+    // 佣金已折入 online_pay_base，前端无需单独展示服务费
+    const onlinePayBase = MoneyMath.fen2yuan(onlinePayBaseFen + commissionAmountFen);
     const inviteDiscount = MoneyMath.fen2yuan(inviteDiscountFen);
     const balanceDeduct = MoneyMath.fen2yuan(balanceDeductFen);
     const totalDiscount = MoneyMath.fen2yuan(totalDiscountFen);
@@ -210,6 +211,7 @@ export class OrderService {
     return {
       is_trial: isTrialCourse,
       original_price: originalPrice,
+      display_price: MoneyMath.fen2yuan(originalPriceFen + commissionAmountFen), // 含佣金的展示价格，供前端直接展示用
       cashback_ratio: cashbackRatio,
       online_pay_base: onlinePayBase,
       invite_discount: inviteDiscount,

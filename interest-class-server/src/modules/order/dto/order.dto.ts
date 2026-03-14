@@ -33,6 +33,8 @@ export interface OrderAmountResult {
   is_trial: boolean;
   /** 课程总价 */
   original_price: number;
+  /** 用户展示价格（原价 + 平台佣金），前端直接展示此字段 */
+  display_price: number;
   /** 返现比例 */
   cashback_ratio: number;
   /** 线上定金基数（课程总价 × 返现比例） */

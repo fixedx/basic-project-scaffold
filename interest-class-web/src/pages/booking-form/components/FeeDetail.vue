@@ -2,18 +2,14 @@
   <view class="fee-detail-section">
     <view class="section-title">费用明细</view>
     <view class="fee-detail">
-      <!-- 课程总价 -->
+      <!-- 课程总价（含平台服务费）-->
       <view class="fee-row">
         <text class="fee-label">课程总价</text>
-        <text class="fee-value">￥{{ formatPrice(selectedSku.total_price) }}</text>
+        <text class="fee-value">￥{{ formatPrice(displayPrice || selectedSku.total_price) }}</text>
       </view>
 
-      <!-- 体验课：全额线上支付 -->
+      <!-- 体验课：全额线上支付（onlinePayBase 已含服务费）-->
       <template v-if="isTrialSku">
-        <view class="fee-row" v-if="commissionAmount > 0">
-          <text class="fee-label">平台服务费</text>
-          <text class="fee-value">+￥{{ formatPrice(commissionAmount) }}</text>
-        </view>
         <view class="fee-row" v-if="modelUseBalance && balanceDeductAmount > 0">
           <text class="fee-label">余额抵扣</text>
           <text class="fee-value discount">-￥{{ formatPrice(balanceDeductAmount) }}</text>
@@ -26,15 +22,11 @@
         <view class="fee-tip">体验课需全额线上支付</view>
       </template>
 
-      <!-- 正式课：拆分线上/线下 -->
+      <!-- 正式课：拆分线上/线下（onlinePayBase 已含服务费）-->
       <template v-else>
         <view class="fee-row">
-          <text class="fee-label">线上定金（{{ course.cashback_ratio || 10 }}%）</text>
+          <text class="fee-label">线上定金</text>
           <text class="fee-value">￥{{ formatPrice(onlinePayBase) }}</text>
-        </view>
-        <view class="fee-row" v-if="commissionAmount > 0">
-          <text class="fee-label">平台服务费</text>
-          <text class="fee-value">+￥{{ formatPrice(commissionAmount) }}</text>
         </view>
         <view class="fee-row" v-if="inviteDiscount > 0">
           <text class="fee-label">邀请码优惠</text>
@@ -53,7 +45,7 @@
           <text class="fee-label">线下支付（尾款）</text>
           <text class="fee-value">￥{{ formatPrice(offlinePayAmount) }}</text>
         </view>
-        <view class="fee-tip">线上支付含定金及服务费，线下尾款请到店支付给机构</view>
+        <view class="fee-tip">线上支付含定金，线下尾款请到店支付给机构</view>
       </template>
     </view>
   </view>
@@ -67,7 +59,7 @@ interface Props {
   selectedSku: CourseSku
   isTrialSku: boolean
   course: Course
-  commissionAmount: number
+  displayPrice: number
   inviteDiscount: number
   modelUseBalance: boolean
   balanceDeductAmount: number

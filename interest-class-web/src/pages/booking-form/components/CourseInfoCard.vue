@@ -9,7 +9,7 @@
       <text class="sku-name">{{ selectedSku.name }}</text>
       <view class="price-box">
         <text class="symbol">¥</text>
-        <text class="price">{{ selectedSku.total_price }}</text>
+        <text class="price">{{ formatPrice(displayPrice || selectedSku.total_price) }}</text>
       </view>
     </view>
 
@@ -28,6 +28,8 @@ interface Props {
   selectedSku: CourseSku | null
   skuCashbackAmount: number
   skuDiscountAmount: number
+  displayPrice: number
+  formatPrice: (val: number | string) => string
 }
 
 defineProps<Props>()
