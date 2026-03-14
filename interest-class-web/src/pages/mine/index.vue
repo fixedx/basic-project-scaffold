@@ -130,6 +130,12 @@
           <text class="title">常用服务</text>
         </view>
         <view class="grid-services">
+          <view class="grid-item" @click="goToOrders('all')">
+            <view class="grid-icon-wrap" style="background: rgba(82, 196, 26, 0.1);">
+              <text class="iconfont icon-order" style="color: #52c41a;"></text>
+            </view>
+            <text class="grid-label">我的订单</text>
+          </view>
           <view class="grid-item" @click="goToBookings">
             <view class="grid-icon-wrap" style="background: rgba(89, 126, 247, 0.1);">
               <text class="iconfont icon-calendar" style="color: #597ef7;"></text>
