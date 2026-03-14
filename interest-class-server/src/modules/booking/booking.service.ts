@@ -280,7 +280,17 @@ export class BookingService {
       .andWhere('entity.user_id = :userId', { userId });
 
     if (status) {
-      queryBuilder.andWhere('entity.status = :status', { status });
+      const statuses = status
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean);
+      if (statuses.length === 1) {
+        queryBuilder.andWhere('entity.status = :status', {
+          status: statuses[0],
+        });
+      } else {
+        queryBuilder.andWhere('entity.status IN (:...statuses)', { statuses });
+      }
     }
 
     // 分页兼容模式：有分页参数就分页，否则返回数组
@@ -322,7 +332,17 @@ export class BookingService {
       .andWhere('entity.institution_id = :institutionId', { institutionId });
 
     if (status) {
-      queryBuilder.andWhere('entity.status = :status', { status });
+      const statuses = status
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean);
+      if (statuses.length === 1) {
+        queryBuilder.andWhere('entity.status = :status', {
+          status: statuses[0],
+        });
+      } else {
+        queryBuilder.andWhere('entity.status IN (:...statuses)', { statuses });
+      }
     }
 
     // 分页兼容模式

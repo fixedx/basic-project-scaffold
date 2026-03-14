@@ -16,6 +16,7 @@ export interface InstitutionStatsDto {
   pendingOrderCount: number; // 待确认订单数
   refundingOrderCount: number; // 退款处理中订单数
   pendingCancelBookingCount: number; // 取消预约待审核数
+  pendingChangeBookingCount: number; // 修改预约待审核数
 
   // === 评价数据 ===
   avgRating: number; // 平均评分

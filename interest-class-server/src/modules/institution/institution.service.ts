@@ -689,6 +689,7 @@ export class InstitutionService {
       pendingOrderCount,
       refundingOrderCount,
       pendingCancelBookingCount,
+      pendingChangeBookingCount,
       teacherCount,
       classroomCount,
       completedOrderCount,
@@ -752,6 +753,13 @@ export class InstitutionService {
         .andWhere('entity.status = :status', { status: 'pending_cancel' })
         .getCount(),
 
+      // 9b. 修改预约待审核数（不受时间筛选）
+      this.bookingRepository
+        .getQuery()
+        .andWhere('entity.institution_id = :institutionId', { institutionId })
+        .andWhere('entity.status = :status', { status: 'pending_change' })
+        .getCount(),
+
       // 10. 教师数量（受时间筛选影响）
       teacherCountQb.getCount(),
 
@@ -798,6 +806,7 @@ export class InstitutionService {
       pendingOrderCount,
       refundingOrderCount,
       pendingCancelBookingCount,
+      pendingChangeBookingCount,
       avgRating: Number(institution.avg_rating) || 0,
       reviewCount: institution.review_count || 0,
     };

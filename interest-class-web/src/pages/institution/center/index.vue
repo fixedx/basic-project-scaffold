@@ -153,15 +153,17 @@
           <view v-if="stats.refundingOrderCount > 0" class="red-dot"></view>
         </view>
 
-        <view class="todo-item" @click="navigateToBookings">
+        <view class="todo-item" @click="navigateToBookingReview">
           <view class="todo-icon-wrap blue">
             <text class="iconfont icon-calendar-fill"></text>
           </view>
           <view class="todo-info">
-            <text class="todo-count" :class="{ 'has-pending': stats.pendingCancelBookingCount > 0 }">{{ stats.pendingCancelBookingCount || 0 }}</text>
-            <text class="todo-label">取消预约待审核</text>
+            <text class="todo-count" :class="{ 'has-pending': (stats.pendingCancelBookingCount + stats.pendingChangeBookingCount) > 0 }">
+              {{ (stats.pendingCancelBookingCount || 0) + (stats.pendingChangeBookingCount || 0) }}
+            </text>
+            <text class="todo-label">预约审核</text>
           </view>
-          <view v-if="stats.pendingCancelBookingCount > 0" class="red-dot"></view>
+          <view v-if="(stats.pendingCancelBookingCount || 0) + (stats.pendingChangeBookingCount || 0) > 0" class="red-dot"></view>
         </view>
       </view>
     </view>
@@ -375,7 +377,8 @@ const totalPendingCount = computed(() => {
   return (needsContract.value ? 1 : 0) +
     (stats.value.pendingOrderCount || 0) +
     (stats.value.refundingOrderCount || 0) +
-    (stats.value.pendingCancelBookingCount || 0)
+    (stats.value.pendingCancelBookingCount || 0) +
+    (stats.value.pendingChangeBookingCount || 0)
 })
 
 /**
@@ -528,13 +531,15 @@ const navigateToClassroomsWithPeriod = () => {
   navigateWithPeriod(`/pages/institution/classroom-list/index?institutionId=${institutionId}`)
 }
 
-const navigateToBookings = () => {
+const navigateToBookingReview = () => {
   const institutionId = institutionInfo.value.id || uni.getStorageSync('institutionId')
   if (!institutionId) {
     uni.showToast({ title: '未找到机构信息', icon: 'none' })
     return
   }
-  navigateTo(`/pages/institution/orders/index?tab=booking&status=pending_cancel`)
+  uni.navigateTo({
+    url: `/pages/institution/booking-list/index?institutionId=${institutionId}&tab=pending_review`,
+  })
 }
 
 const feedbackDialogRef = ref<InstanceType<typeof FeedbackDialog> | null>(null)
@@ -876,6 +881,7 @@ const handleLogout = () => {
       &.red { background: linear-gradient(135deg, #ff85c0 0%, #eb2f96 100%); }
       &.blue { background: linear-gradient(135deg, #69c0ff 0%, #1890ff 100%); }
       &.green { background: linear-gradient(135deg, #95de64 0%, #52c41a 100%); }
+      &.purple { background: linear-gradient(135deg, #b37feb 0%, #722ed1 100%); }
     }
 
     .todo-info {

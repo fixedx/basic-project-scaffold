@@ -189,6 +189,7 @@ export interface InstitutionStats {
   pendingOrderCount: number;
   refundingOrderCount: number;
   pendingCancelBookingCount: number;
+  pendingChangeBookingCount: number;
   // 评价数据
   avgRating: number;
   reviewCount: number;

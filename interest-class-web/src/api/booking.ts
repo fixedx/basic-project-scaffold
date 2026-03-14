@@ -15,8 +15,13 @@ export interface Booking {
   student_name: string
   student_phone: string
   student_age?: number
-  status: 'pending' | 'confirmed' | 'rejected' | 'cancelled' | 'completed' | 'pending_change'
+  status: 'pending' | 'confirmed' | 'rejected' | 'cancelled' | 'completed' | 'pending_change' | 'pending_cancel'
   pending_change_schedule_id?: string
+  start_time?: string
+  end_time?: string
+  day_of_week?: string
+  teacher_name?: string
+  classroom_name?: string
   booking_time?: string
   remark?: string
   reason?: string
@@ -137,6 +142,17 @@ export const bookingApi = {
       `/booking/${id}/change-schedule`,
       { new_schedule_id: newScheduleId }
     )
+  },
+
+  /**
+   * 审核取消预约请求（机构端）
+   */
+  reviewCancel(
+    id: string,
+    action: 'approve' | 'reject',
+    reason?: string
+  ) {
+    return put(`/booking/${id}/review-cancel`, { action, reason })
   },
 
   /**

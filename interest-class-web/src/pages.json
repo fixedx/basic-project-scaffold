@@ -215,6 +215,12 @@
 			}
 		},
 		{
+			"path": "pages/institution/booking-list/index",
+			"style": {
+				"navigationBarTitleText": "预约管理"
+			}
+		},
+		{
 			"path": "pages/institution/order-detail/index",
 			"style": {
 				"navigationBarTitleText": "订单详情",
