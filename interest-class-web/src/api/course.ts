@@ -9,6 +9,8 @@ export interface CourseSku {
   type?: 'standard' | 'trial'
   total_lessons: number
   total_price: number
+  /** 含佣金的展示价格，后端计算后返回，前端直接展示此字段 */
+  display_price?: number
   cashback_type: 'percentage' | 'fixed' | 'none'
   cashback_value: number
   online_pay_price?: number

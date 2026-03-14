@@ -29,6 +29,71 @@ export class CourseService {
   ) {}
 
   /**
+   * 批量为课程 SKU 添加 display_price（含佣金的展示价格）并更新 min_price。
+   * 这是全系统唯一的课程展示价格计算入口，与 calculateAmount 的佣金逻辑保持一致。
+   * HomeService / CourseService 统一调用此方法，禁止在其他地方重复计算佣金。
+   */
+  async addDisplayPricesToCourses(courses: any[]): Promise<void> {
+    if (!courses || courses.length === 0) return;
+
+    // 收集唯一机构 ID，批量查询佣金配置
+    const institutionIds = [...new Set(courses.map((c) => c.institution_id))];
+    const commRows = await this.dataSource.query(
+      `SELECT id, commission_type, commission_value FROM institutions WHERE id = ANY($1) AND is_delete = false`,
+      [institutionIds],
+    );
+    const commMap = new Map<string, { commission_type: string; commission_value: number }>(
+      commRows.map((r: any) => [
+        r.id,
+        { commission_type: r.commission_type || 'percentage', commission_value: Number(r.commission_value) || 0 },
+      ]),
+    );
+
+    for (const course of courses) {
+      const comm = commMap.get(course.institution_id);
+      if (!comm) continue;
+
+      const { commission_type, commission_value } = comm;
+
+      if (course.skus && course.skus.length > 0) {
+        // 有 SKU 数组（课程详情/列表）：逐个 SKU 计算 display_price，并更新 course.min_price
+        let minDisplayPriceFen = Infinity;
+
+        for (const sku of course.skus) {
+          const originalFen = MoneyMath.yuan2fen(Number(sku.total_price) || 0);
+          let commFen = 0;
+          if (commission_type === 'percentage') {
+            commFen = MoneyMath.ratioOfFen(originalFen, commission_value);
+          } else if (commission_type === 'fixed_amount') {
+            commFen = MoneyMath.yuan2fen(commission_value);
+          }
+          sku.display_price = MoneyMath.fen2yuan(originalFen + commFen);
+          if (originalFen + commFen < minDisplayPriceFen) {
+            minDisplayPriceFen = originalFen + commFen;
+          }
+        }
+
+        if (minDisplayPriceFen !== Infinity) {
+          course.min_price = MoneyMath.fen2yuan(minDisplayPriceFen);
+        }
+      } else if (course.min_price != null) {
+        // 无 SKU 数组但有 min_price（如首页 SQL 查询结果）：对 min_price 直接加佣金
+        // 数学上等价：min(display_price) = apply_commission(min(total_price))
+        // 百分比佣金：min(p*(1+r)) = min(p)*(1+r)  ✓
+        // 固定佣金：  min(p+f)    = min(p)+f        ✓
+        const originalFen = MoneyMath.yuan2fen(Number(course.min_price) || 0);
+        let commFen = 0;
+        if (commission_type === 'percentage') {
+          commFen = MoneyMath.ratioOfFen(originalFen, commission_value);
+        } else if (commission_type === 'fixed_amount') {
+          commFen = MoneyMath.yuan2fen(commission_value);
+        }
+        course.min_price = MoneyMath.fen2yuan(originalFen + commFen);
+      }
+    }
+  }
+
+  /**
    * 计算SKU价格
    */
   private calculateSkuPrices(
@@ -328,8 +393,10 @@ export class CourseService {
     // 处理分页和非分页两种返回格式
     if (Array.isArray(result)) {
       addMaxCashback(result);
+      await this.addDisplayPricesToCourses(result);
     } else if (result.data) {
       addMaxCashback(result.data);
+      await this.addDisplayPricesToCourses(result.data);
     }
     
     return result;
@@ -376,6 +443,9 @@ export class CourseService {
       (course as any).max_discount_amount = 0;
       (course as any).max_share_ratio = maxShareRatio;
     }
+
+    // 为每个 SKU 添加含佣金的展示价格
+    await this.addDisplayPricesToCourses([course]);
 
     return course;
   }

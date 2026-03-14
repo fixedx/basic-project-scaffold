@@ -3,6 +3,7 @@ import { DataSource } from 'typeorm';
 import axios from 'axios';
 import { BannerRepository } from '../banner/repositories/banner.repository';
 import { CourseRepository } from '../course/repositories/course.repository';
+import { CourseService } from '../course/course.service';
 import { InstitutionRepository } from '../institution/repositories/institution.repository';
 import { UserInviteCodeRepository } from '../invite/repositories/user-invite-code.repository';
 import { GetHomeDataDto } from '../common/dto/get-home-data.dto';
@@ -14,6 +15,7 @@ export class HomeService {
   constructor(
     private bannerRepository: BannerRepository,
     private courseRepository: CourseRepository,
+    private courseService: CourseService,
     private institutionRepository: InstitutionRepository,
     private userInviteCodeRepository: UserInviteCodeRepository,
     private dataSource: DataSource,  // 用于原生 PostGIS 查询
@@ -211,6 +213,9 @@ export class HomeService {
 
       const total = parseInt(countResult[0]?.total || '0', 10);
 
+      // 统一通过 CourseService 添加含佣金的展示价格（佣金计算逻辑集中在 CourseService.addDisplayPricesToCourses）
+      await this.courseService.addDisplayPricesToCourses(data);
+
       return {
         data,
         total,
@@ -332,6 +337,9 @@ export class HomeService {
         distance: null,  // 无用户位置时距离为 null
       };
     });
+
+    // 统一通过 CourseService 添加含佣金的展示价格（佣金计算逻辑集中在 CourseService.addDisplayPricesToCourses）
+    await this.courseService.addDisplayPricesToCourses(coursesWithInfo);
 
     return {
       data: coursesWithInfo,

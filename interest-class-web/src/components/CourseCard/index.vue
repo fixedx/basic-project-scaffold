@@ -150,7 +150,8 @@ const displayPrice = computed(() => {
     return price % 1 === 0 ? price.toFixed(0) : price.toFixed(2)
   }
   if (props.course.skus && props.course.skus.length > 0) {
-    const prices = props.course.skus.map(s => Number(s.total_price) || 0)
+    // 优先使用含佣金的 display_price，否则回退到 total_price
+    const prices = props.course.skus.map(s => Number(s.display_price ?? s.total_price) || 0)
     const min = Math.min(...prices)
     return min % 1 === 0 ? min.toFixed(0) : min.toFixed(2)
   }

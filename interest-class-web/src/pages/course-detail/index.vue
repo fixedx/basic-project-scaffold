@@ -39,7 +39,8 @@
             <view class="price-row" v-if="selectedSku">
               <view class="price-box">
                 <text class="currency">¥</text>
-                <text class="amount">{{ selectedSku.total_price }}</text>
+                <text class="amount">{{ selectedSku.display_price ?? selectedSku.total_price }}</text>
+                <text class="qi">起</text>
                 <text class="unit">/ {{ selectedSku.total_lessons }}节</text>
               </view>
               <view class="cashback-tags" v-if="skuCashbackAmount > 0">
@@ -86,7 +87,7 @@
               >
                 <view class="sku-name">{{ sku.name }}</view>
                 <view class="sku-detail">
-                  <text class="sku-price">¥{{ sku.total_price }}</text>
+                  <text class="sku-price">¥{{ sku.display_price ?? sku.total_price }}</text>
                   <text class="sku-lessons">{{ sku.total_lessons }}节</text>
                 </view>
               </view>
@@ -591,6 +592,14 @@ onMounted(() => {
     font-size: 48rpx;
     font-weight: bold;
     font-family: DINAlternate-Bold, sans-serif;
+  }
+
+  .qi {
+    font-size: 24rpx;
+    font-weight: bold;
+    color: #ff4d4f;
+    margin-left: 4rpx;
+    margin-right: 4rpx;
   }
 
   .unit {
