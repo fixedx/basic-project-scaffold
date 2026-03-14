@@ -120,6 +120,7 @@ export class OrderService {
 
     // 2. 处理邀请码立减
     let inviteDiscountFen = 0;
+    let capturedShareRatio: number | undefined; // ⭐ 快照下单时的让利比例
     if (dto.invite_code && course.cashback_enabled && !isTrialCourse) {
       try {
         const validation = await this.inviteService.validateInviteCode({
@@ -128,6 +129,7 @@ export class OrderService {
         });
         if (validation.valid) {
           const shareRatio = validation.inviteCode?.share_ratio || 50;
+          capturedShareRatio = shareRatio; // ⭐ 锁定下单时的让利比例
           const cashbackTotalFen = MoneyMath.percentOfFen(
             originalPriceFen,
             cashbackRatio,
@@ -225,6 +227,7 @@ export class OrderService {
       max_discount_amount: maxDiscountAmount,
       max_share_ratio: maxShareRatio,
       commission_amount: commissionAmount,
+      invite_share_ratio: capturedShareRatio, // ⭐ 下单时邀请码让利比例快照
     };
   }
 
@@ -283,19 +286,17 @@ export class OrderService {
       }
     }
 
-    // 验证邀请码（用于记录到订单中）
+    // 验证邀请码（用于记录到订单中，同时快照下单时的让利比例）
     let validInviteCode: string | undefined;
+    let validInviteShareRatio: number | undefined;
     if (dto.invite_code && amountResult.invite_discount > 0) {
       validInviteCode = dto.invite_code;
+      validInviteShareRatio = amountResult.invite_share_ratio; // ⭐ 快照下单时的让利比例
     }
 
-    // 计算SKU返现（旧的返现逻辑，保留兼容）
-    let cashbackAmount = 0;
-    if (sku.cashback_type === 'percentage') {
-      cashbackAmount = (amountResult.original_price * sku.cashback_value) / 100;
-    } else if (sku.cashback_type === 'fixed') {
-      cashbackAmount = sku.cashback_value;
-    }
+    // 返现金额 = 订单原价 × 课程返现比例（cashback_amount 字段语义：本单总返现池）
+    // 后续让利拆分（立减/邀请人收益）存储到 invite_discount_amount 等字段
+    const cashbackAmount = amountResult.max_cashback_amount;
 
     this.logger.log(
       `订单金额计算: 原价=${amountResult.original_price}, 返现比例=${amountResult.cashback_ratio}%, ` +
@@ -470,6 +471,7 @@ export class OrderService {
       expire_at: expireAt,
       // 邀友让利相关
       invite_code: validInviteCode,
+      invite_share_ratio: validInviteShareRatio, // ⭐ 下单时让利比例快照
       invite_discount_amount: amountResult.invite_discount,
       use_balance_amount: useBalanceAmount,
       // 课时信息
@@ -687,6 +689,8 @@ export class OrderService {
         order_amount: Number(order.original_price),
         cashback_ratio: Number(course.cashback_ratio) || 10,
         total_lessons: order.total_lessons || 0,
+        // ⭐ 优先使用下单时快照的让利比例，避免事后修改影响已有订单
+        share_ratio: order.invite_share_ratio !== undefined ? Number(order.invite_share_ratio) : undefined,
       });
 
       this.logger.log(

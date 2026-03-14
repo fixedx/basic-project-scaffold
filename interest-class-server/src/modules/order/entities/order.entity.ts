@@ -195,6 +195,15 @@ export class OrderEntity extends BaseEntity {
 
   @Column({
     type: 'decimal',
+    precision: 5,
+    scale: 2,
+    nullable: true,
+    comment: '下单时邀请码的让利比例快照（0-100），后续邀请订单结算以此为准，避免事后修改影响已有订单',
+  })
+  invite_share_ratio?: number;
+
+  @Column({
+    type: 'decimal',
     precision: 10,
     scale: 2,
     default: 0,

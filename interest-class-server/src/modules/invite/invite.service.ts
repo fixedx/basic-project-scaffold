@@ -343,6 +343,8 @@ export class InviteService implements OnModuleInit {
     order_amount: number;
     cashback_ratio: number;
     total_lessons: number;
+    /** 下单时快照的让利比例（优先使用，避免事后修改影响已有订单） */
+    share_ratio?: number;
   }): Promise<InviteOrderEntity> {
     const {
       invite_code,
@@ -375,7 +377,8 @@ export class InviteService implements OnModuleInit {
     }
 
     // 计算返现金额
-    const share_ratio = inviteCodeEntity.share_ratio;
+    // ⭐ 优先使用下单时快照的让利比例，防止邀请人事后修改比例影响已有订单
+    const share_ratio = data.share_ratio !== undefined ? data.share_ratio : inviteCodeEntity.share_ratio;
     const orderAmountFen = MoneyMath.yuan2fen(order_amount);
     const cashbackTotalFen = MoneyMath.percentOfFen(orderAmountFen, cashback_ratio);
     const discountAmountFen = MoneyMath.percentOfFen(cashbackTotalFen, share_ratio);

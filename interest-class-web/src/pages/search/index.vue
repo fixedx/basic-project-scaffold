@@ -85,7 +85,7 @@
       <EmptyState 
         v-if="institutions.length === 0 && courses.length === 0 && !loading"
         icon="icon-search" 
-        :text="'未找到\"' + keyword + '\"相关结果'" 
+        :text="`未找到“${keyword}”相关结果`" 
       />
     </view>
 

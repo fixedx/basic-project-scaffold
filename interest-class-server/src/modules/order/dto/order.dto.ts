@@ -61,6 +61,8 @@ export interface OrderAmountResult {
   max_share_ratio: number;
   /** 平台服务费金额 */
   commission_amount: number;
+  /** 下单时邀请码的让利比例快照（若使用了邀请码则存在）*/
+  invite_share_ratio?: number;
 }
 
 /**
