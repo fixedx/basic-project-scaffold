@@ -1,14 +1,5 @@
 <template>
   <view class="page">
-    <!-- 导航栏 -->
-    <view class="nav-bar">
-      <view class="nav-left" @click="handleBack">
-        <text class="iconfont icon-left"></text>
-      </view>
-      <text class="nav-title">签到记录</text>
-      <view class="nav-right"></view>
-    </view>
-
     <!-- 订单信息 -->
     <view class="order-info" v-if="orderInfo">
       <view class="course-info">
@@ -148,44 +139,12 @@ const formatDate = (dateStr: string) => {
   const day = String(date.getDate()).padStart(2, '0')
   return `${year}-${month}-${day}`
 }
-
-// 返回上一页
-const handleBack = () => {
-  uni.navigateBack()
-}
 </script>
 
 <style lang="scss" scoped>
 .page {
   min-height: 100vh;
   background-color: $uni-bg-color-grey;
-}
-
-.nav-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 32rpx;
-  height: 88rpx;
-  background-color: $uni-bg-color;
-  padding-top: var(--status-bar-height);
-  
-  .nav-left, .nav-right {
-    width: 80rpx;
-    display: flex;
-    align-items: center;
-  }
-  
-  .nav-left .iconfont {
-    font-size: 40rpx;
-    color: $uni-text-color;
-  }
-  
-  .nav-title {
-    font-size: 34rpx;
-    font-weight: bold;
-    color: $uni-text-color;
-  }
 }
 
 .order-info {

@@ -27,15 +27,13 @@
 			"path": "pages/check-in-tab/index",
 			"style": {
 				"navigationBarTitleText": "签到",
-				"navigationStyle": "custom",
 				"enablePullDownRefresh": true
 			}
 		},
 		{
 			"path": "pages/check-in-records/index",
 			"style": {
-				"navigationBarTitleText": "签到记录",
-				"navigationStyle": "custom"
+				"navigationBarTitleText": "签到记录"
 			}
 		},
 		{

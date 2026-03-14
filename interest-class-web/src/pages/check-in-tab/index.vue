@@ -2,11 +2,6 @@
   <view class="page">
     <view class="page-bg"></view>
     
-    <!-- 自定义导航栏 -->
-    <view class="nav-bar">
-      <text class="nav-title">课程签到</text>
-    </view>
-
     <!-- 加载状态 -->
     <view class="loading-container" v-if="loading">
       <Loading text="正在获取签到信息..." />
@@ -770,26 +765,8 @@ onUnmounted(() => {
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(180deg, #E6F7FF 0%, #F5F5F5 30%, #F5F5F5 100%);
   z-index: 0;
   pointer-events: none;
-}
-
-// 导航栏
-.nav-bar {
-  position: relative;
-  z-index: 10;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 88rpx;
-  padding-top: calc(var(--status-bar-height, 0px) + 20rpx);
-  
-  .nav-title {
-    font-size: 36rpx;
-    font-weight: 600;
-    color: $uni-text-color;
-  }
 }
 
 // 加载/空状态
@@ -799,7 +776,7 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: calc(100vh - 88rpx - var(--status-bar-height, 0));
+  height: 80vh;
 }
 
 .empty-content {
@@ -846,7 +823,6 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding-bottom: 60rpx;
 }
 
 .card-swiper {
