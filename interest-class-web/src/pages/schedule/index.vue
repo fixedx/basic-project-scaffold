@@ -958,7 +958,6 @@ onPullDownRefresh(async () => {
 .page {
   min-height: 100vh;
   background-color: $uni-bg-color-grey;
-  padding-bottom: 120rpx;
 }
 
 // 头部固定区域
@@ -1469,7 +1468,6 @@ onPullDownRefresh(async () => {
 .course-section {
   padding: 32rpx;
   background-color: #f5f7fa;
-  min-height: calc(100vh - 220rpx);
   border-radius: 40rpx 40rpx 0 0;
   margin-top: -24rpx; // 稍微向上覆盖一点日历
   position: relative;
@@ -1509,7 +1507,6 @@ onPullDownRefresh(async () => {
 .empty-state-wrapper {
   display: flex;
   justify-content: center;
-  padding: 120rpx 0;
 }
 
 // 课程列表优化
