@@ -91,6 +91,26 @@ export class PaymentService {
   private readonly logger = new Logger(PaymentService.name);
   private config: WechatPayConfig;
 
+  /**
+   * 解析订单应使用的返现比例。
+   * 优先使用下单快照；若历史脏数据缺少快照，则根据订单自身已锁定金额反推，
+   * 严禁回查当前课程配置，避免机构事后修改影响历史订单。
+   */
+  private resolveOrderCashbackRatio(order: any, baseAmount: number): number {
+    const snapshotRatio = Number(order?.course_snapshot?.cashback_ratio);
+    if (Number.isFinite(snapshotRatio) && snapshotRatio > 0) {
+      return snapshotRatio;
+    }
+
+    const lockedCashbackAmount = Number(order?.cashback_amount) || 0;
+    const lockedBaseAmount = Number(baseAmount) || 0;
+    if (lockedCashbackAmount > 0 && lockedBaseAmount > 0) {
+      return Number(((lockedCashbackAmount / lockedBaseAmount) * 100).toFixed(2));
+    }
+
+    return 0;
+  }
+
   constructor(
     private orderRepository: OrderRepository,
     private userRepository: UserRepository,
@@ -377,28 +397,33 @@ export class PaymentService {
         // 触发邀请返现逻辑（如果订单使用了邀请码）
         if (order.invite_code) {
           try {
-            const courseRows = await this.orderRepository.manager.query(
-              `SELECT cashback_ratio, cashback_enabled, institution_id FROM courses WHERE id = $1 AND is_delete = false`,
-              [order.course_id],
+            const inviteOrderAmount = Number(order.original_price);
+            const cashbackRatio = this.resolveOrderCashbackRatio(
+              order,
+              inviteOrderAmount,
             );
-            const course = courseRows?.[0];
-            const cashbackRatio =
-              course?.cashback_enabled ? Number(course.cashback_ratio) || 0 : 0;
-            const totalLessons =
-              Number(order.sku_snapshot?.class_count) ||
-              1;
+            if (cashbackRatio <= 0) {
+              this.logger.warn(`体验课订单 ${orderNo} 未找到有效返现快照，跳过邀请订单创建`);
+            } else {
+              const totalLessons =
+                Number(order.sku_snapshot?.class_count) ||
+                1;
 
-            await this.inviteService.createInviteOrder({
-              invite_code: order.invite_code,
-              invitee_id: order.user_id,
-              order_id: order.id,
-              course_id: order.course_id,
-              institution_id: course?.institution_id || order.institution_id || '',
-              order_amount: Number(order.paid_amount),
-              cashback_ratio: cashbackRatio,
-              total_lessons: totalLessons,
-            });
-            this.logger.log(`体验课邀请返现已创建: 订单=${orderNo}`);
+              await this.inviteService.createInviteOrder({
+                invite_code: order.invite_code,
+                invitee_id: order.user_id,
+                order_id: order.id,
+                course_id: order.course_id,
+                institution_id: order.institution_id || '',
+                order_amount: inviteOrderAmount,
+                cashback_ratio: cashbackRatio,
+                total_lessons: totalLessons,
+                share_ratio: order.invite_share_ratio !== undefined
+                  ? Number(order.invite_share_ratio)
+                  : undefined,
+              });
+              this.logger.log(`体验课邀请返现已创建: 订单=${orderNo}`);
+            }
           } catch (inviteError) {
             // 邀请返现失败不影响主流程
             this.logger.warn(`体验课邀请返现创建失败 (不影响订单): ${inviteError?.message}`);

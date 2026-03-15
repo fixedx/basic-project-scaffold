@@ -280,6 +280,8 @@ export class CourseService {
       max_age: dto.max_age ?? course.max_age,
       lesson_duration: dto.lesson_duration ?? course.lesson_duration,
       is_online: dto.is_online ?? course.is_online,
+      cashback_enabled: dto.cashback_enabled ?? course.cashback_enabled,
+      cashback_ratio: dto.cashback_ratio ?? course.cashback_ratio,
     });
 
     await this.courseRepository.save(course);

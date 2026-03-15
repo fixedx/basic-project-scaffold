@@ -78,6 +78,109 @@ await parentClient.post('/check-in', {
 
 ---
 
+### 错误 51: 下单后返现/邀请逻辑回查当前课程配置，导致历史订单被“穿透修改” ⚠️⚠️⚠️
+
+**错误现象**：
+```typescript
+// ❌ 错误：订单创建后，确认支付/支付回调时重新查询 courses.cashback_ratio
+const course = await this.courseRepository.findOneById(order.course_id);
+await this.inviteService.createInviteOrder({
+  order_id: order.id,
+  order_amount: Number(order.original_price),
+  cashback_ratio: Number(course.cashback_ratio) || 10,
+});
+
+// 结果：机构在订单创建后修改课程返现比例/开关，历史订单的邀请返现也跟着变
+```
+
+**根本原因**：
+- 订单创建时已经把 `cashback_amount`、`original_price`、`paid_amount`、`course_snapshot.cashback_ratio` 锁定到 `orders`
+- 但后续 `confirm-payment` / `payment notify` 创建邀请订单时，又重新读取了 `courses` 表当前配置
+- 导致“历史订单”被课程后续编辑穿透影响，破坏订单快照语义
+
+**正确写法**：
+```typescript
+// ✅ 正确：优先使用订单快照；快照缺失时，从订单自身锁定金额反推比例
+private resolveOrderCashbackRatio(order: OrderEntity, baseAmount: number): number {
+  const snapshotRatio = Number(order.course_snapshot?.cashback_ratio);
+  if (Number.isFinite(snapshotRatio) && snapshotRatio > 0) {
+    return snapshotRatio;
+  }
+
+  const lockedCashbackAmount = Number(order.cashback_amount) || 0;
+  const lockedBaseAmount = Number(baseAmount) || 0;
+  if (lockedCashbackAmount > 0 && lockedBaseAmount > 0) {
+    return Number(((lockedCashbackAmount / lockedBaseAmount) * 100).toFixed(2));
+  }
+
+  return 0;
+}
+
+await this.inviteService.createInviteOrder({
+  order_id: order.id,
+  order_amount: Number(order.original_price),
+  cashback_ratio: resolveOrderCashbackRatio(order, Number(order.original_price)),
+});
+```
+
+**规范**：
+- 订单创建之后的所有营销/返现/佣金/退款计算，必须优先使用 `orders` 表已锁定字段或快照字段
+- 禁止在支付确认、支付回调、退款、解锁返现等后续链路中回查当前 `courses` / `course_skus` 配置来重算历史订单
+- 若历史数据缺失快照，优先从订单自身金额字段反推，禁止回退到“当前课程配置”
+- 必须补回归测试：下单后修改课程返现配置，旧订单结果保持不变
+
+---
+
+### 错误 52: 下单后修改邀请码让利比例，支付确认/回调仍回退到当前 share_ratio ⚠️⚠️⚠️
+
+**错误现象**：
+```typescript
+// ❌ 错误：创建邀请订单时未传订单快照 share_ratio
+await this.inviteService.createInviteOrder({
+  invite_code: order.invite_code,
+  order_id: order.id,
+  order_amount: Number(order.original_price),
+  cashback_ratio: resolveOrderCashbackRatio(order, Number(order.original_price)),
+  // 缺少 share_ratio
+});
+
+// InviteService 会回退到邀请码当前 share_ratio
+const share_ratio = data.share_ratio !== undefined
+  ? data.share_ratio
+  : inviteCodeEntity.share_ratio;
+
+// 结果：邀请人下单后把让利比例从 60% 改成 10%，旧订单确认支付时
+// invite_order.share_ratio / discount_amount / actual_cashback 都被新比例污染
+```
+
+**根本原因**：
+- 订单创建时已经把 `invite_share_ratio` 锁定在 `orders` 表
+- 但后续 `confirm-payment` / `payment notify` 若漏传 `share_ratio`，`InviteService.createInviteOrder()` 会回退到邀请码当前比例
+- 导致历史订单的立减金额、邀请人收益被事后修改，破坏订单快照语义
+
+**正确写法**：
+```typescript
+await this.inviteService.createInviteOrder({
+  invite_code: order.invite_code,
+  invitee_id: order.user_id,
+  order_id: order.id,
+  course_id: order.course_id,
+  institution_id: order.institution_id || '',
+  order_amount: Number(order.original_price),
+  cashback_ratio: resolveOrderCashbackRatio(order, Number(order.original_price)),
+  share_ratio: order.invite_share_ratio !== undefined
+    ? Number(order.invite_share_ratio)
+    : undefined,
+});
+```
+
+**规范**：
+- 所有创建 `invite_order` 的链路，必须显式传入 `orders.invite_share_ratio`
+- 禁止依赖 `InviteService.createInviteOrder()` 的“回退到当前邀请码比例”来处理历史订单
+- 回归测试必须覆盖：下单后修改邀请码 `share_ratio`，旧订单的 `invite_order.share_ratio`、`discount_amount`、`actual_cashback` 保持不变
+
+---
+
 
 
 **错误现象**：

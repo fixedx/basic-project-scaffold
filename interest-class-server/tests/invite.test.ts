@@ -15,7 +15,7 @@ import {
   createInstitution, 
   loginInstitutionByPhone 
 } from './utils/test-helpers/institution.helper';
-import { createCourse, getCourse, onlineCourse } from './utils/test-helpers/course.helper';
+import { createCourse, getCourse, onlineCourse, updateCourse } from './utils/test-helpers/course.helper';
 import { createTeacher } from './utils/test-helpers/teacher.helper';
 import { createClassroom } from './utils/test-helpers/classroom.helper';
 import { createSchedule, getSchedules } from './utils/test-helpers/schedule.helper';
@@ -57,6 +57,7 @@ const e2eData = {
   // 返现相关
   cashbackRatio: 10, // 课程返现比例 10%
   shareRatio: 60,    // 邀请人让利比例 60%
+  updatedShareRatio: 10, // 下单后修改为 10%，旧订单仍应锁定 60%
   originalPrice: 1000, // 课程原价
   inviteDiscountAmount: 0, // 立减金额
   expectedCashback: 0, // 预期返现金额
@@ -454,6 +455,54 @@ async function testE2EOrderWithInviteCode() {
 }
 
 /**
+ * E2E测试2.5: 下单后机构修改课程返现配置，旧订单仍应使用下单快照
+ */
+async function testE2EEditCourseCashbackAfterOrder() {
+  if (!e2eData.institutionHelper || !e2eData.courseId || !e2eData.orderId) {
+    throw new Error('测试环境未初始化');
+  }
+
+  logger.info('下单后修改课程返现配置，验证历史订单不受影响...');
+
+  await updateCourse(e2eData.institutionHelper, e2eData.courseId, {
+    cashback_enabled: false,
+    cashback_ratio: 3,
+  });
+
+  const updatedCourse = await getCourse(e2eData.institutionHelper, e2eData.courseId);
+  if (updatedCourse.cashback_enabled !== false) {
+    throw new Error('课程返现开关修改失败，未成功关闭');
+  }
+  if (Number(updatedCourse.cashback_ratio) !== 3) {
+    throw new Error(`课程返现比例修改失败，实际: ${updatedCourse.cashback_ratio}`);
+  }
+
+  logger.info('课程返现配置已改为 cashback_enabled=false, cashback_ratio=3%');
+}
+
+/**
+ * E2E测试2.6: 下单后邀请人修改让利比例，旧订单仍应使用下单快照
+ */
+async function testE2EEditInviteShareRatioAfterOrder() {
+  if (!e2eData.inviterHelper || !e2eData.orderId) {
+    throw new Error('测试环境未初始化');
+  }
+
+  logger.info('下单后修改邀请码让利比例，验证历史订单不受影响...');
+
+  await e2eData.inviterHelper.put('/invite/share-ratio', {
+    share_ratio: e2eData.updatedShareRatio,
+  });
+
+  const updatedInviteCode = await e2eData.inviterHelper.get('/invite/code');
+  if (Number(updatedInviteCode.share_ratio) !== e2eData.updatedShareRatio) {
+    throw new Error(`邀请码让利比例修改失败，实际: ${updatedInviteCode.share_ratio}`);
+  }
+
+  logger.info(`邀请码当前让利比例已改为 ${e2eData.updatedShareRatio}%`);
+}
+
+/**
  * E2E测试3: 机构确认订单，验证邀请订单创建
  */
 async function testE2EConfirmOrder() {
@@ -487,8 +536,35 @@ async function testE2EConfirmOrder() {
   }
   
   logger.info(`邀请订单状态: ${inviteOrder.status}`);
-  logger.info(`返现总额: ${inviteOrder.total_cashback} 元`);
-  logger.info(`待解锁返现: ${inviteOrder.pending_cashback} 元`);
+  logger.info(`返现总额: ${inviteOrder.cashback_total} 元`);
+  logger.info(`邀请人实际返现: ${inviteOrder.actual_cashback} 元`);
+
+  const expectedCashbackTotal = Math.round((e2eData.originalPrice * e2eData.cashbackRatio / 100) * 100) / 100;
+  if (Math.abs(Number(inviteOrder.cashback_ratio) - e2eData.cashbackRatio) > 0.01) {
+    throw new Error(
+      `邀请订单返现比例应锁定为下单时快照 ${e2eData.cashbackRatio}%，实际 ${inviteOrder.cashback_ratio}%`,
+    );
+  }
+  if (Math.abs(Number(inviteOrder.share_ratio) - e2eData.shareRatio) > 0.01) {
+    throw new Error(
+      `邀请订单让利比例应锁定为下单时快照 ${e2eData.shareRatio}%，实际 ${inviteOrder.share_ratio}%`,
+    );
+  }
+  if (Math.abs(Number(inviteOrder.cashback_total) - expectedCashbackTotal) > 0.01) {
+    throw new Error(
+      `邀请订单返现总额应保持下单时金额 ${expectedCashbackTotal}，实际 ${inviteOrder.cashback_total}`,
+    );
+  }
+  if (Math.abs(Number(inviteOrder.discount_amount) - e2eData.inviteDiscountAmount) > 0.01) {
+    throw new Error(
+      `邀请订单立减金额应锁定为下单时金额 ${e2eData.inviteDiscountAmount}，实际 ${inviteOrder.discount_amount}`,
+    );
+  }
+  if (Math.abs(Number(inviteOrder.actual_cashback) - e2eData.expectedCashback) > 0.01) {
+    throw new Error(
+      `邀请人实际返现应锁定为下单时金额 ${e2eData.expectedCashback}，实际 ${inviteOrder.actual_cashback}`,
+    );
+  }
   
   logger.success('邀请订单创建验证通过！');
 }
@@ -636,6 +712,8 @@ const basicTests = [
 const e2eTests = [
   { name: 'E2E-初始化测试环境', fn: testE2EInitialize },
   { name: 'E2E-使用邀请码下单验证立减', fn: testE2EOrderWithInviteCode },
+  { name: 'E2E-下单后修改课程返现配置不影响旧订单', fn: testE2EEditCourseCashbackAfterOrder },
+  { name: 'E2E-下单后修改让利比例不影响旧订单', fn: testE2EEditInviteShareRatioAfterOrder },
   { name: 'E2E-机构确认订单验证邀请订单创建', fn: testE2EConfirmOrder },
   { name: 'E2E-签到上课验证返现解锁', fn: testE2ECheckInAndCashback },
   { name: 'E2E-完整上课验证最终返现', fn: testE2EFullCompletion },

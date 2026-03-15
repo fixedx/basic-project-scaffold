@@ -676,6 +676,26 @@ export class OrderService {
   }
 
   /**
+   * 解析订单应使用的返现比例。
+   * 优先使用下单快照；若历史脏数据缺少快照，则根据订单自身已锁定金额反推，
+   * 严禁回查当前课程配置，避免机构事后修改影响历史订单。
+   */
+  private resolveOrderCashbackRatio(order: OrderEntity, baseAmount: number): number {
+    const snapshotRatio = Number(order.course_snapshot?.cashback_ratio);
+    if (Number.isFinite(snapshotRatio) && snapshotRatio > 0) {
+      return snapshotRatio;
+    }
+
+    const lockedCashbackAmount = Number(order.cashback_amount) || 0;
+    const lockedBaseAmount = Number(baseAmount) || 0;
+    if (lockedCashbackAmount > 0 && lockedBaseAmount > 0) {
+      return Number(((lockedCashbackAmount / lockedBaseAmount) * 100).toFixed(2));
+    }
+
+    return 0;
+  }
+
+  /**
    * 创建邀请订单（如果使用了邀请码）
    */
   private async createInviteOrderIfNeeded(order: OrderEntity): Promise<void> {
@@ -684,11 +704,13 @@ export class OrderService {
     }
 
     try {
-      // 获取课程信息以获取返现比例
-      const course = await this.courseRepository.findOneById(order.course_id);
-      if (!course || !course.cashback_enabled) {
+      const cashbackRatio = this.resolveOrderCashbackRatio(
+        order,
+        Number(order.original_price),
+      );
+      if (cashbackRatio <= 0) {
         this.logger.warn(
-          `订单 ${order.order_no} 使用了邀请码但课程不支持返现`,
+          `订单 ${order.order_no} 未找到有效返现快照，跳过邀请订单创建`,
         );
         return;
       }
@@ -701,7 +723,7 @@ export class OrderService {
         institution_id: order.institution_id,
         // 返现基数使用课程原价，不含平台佣金；佣金按课程进度在退款中单独处理
         order_amount: Number(order.original_price),
-        cashback_ratio: Number(course.cashback_ratio) || 10,
+        cashback_ratio: cashbackRatio,
         total_lessons: order.total_lessons || 0,
         // ⭐ 优先使用下单时快照的让利比例，避免事后修改影响已有订单
         share_ratio: order.invite_share_ratio !== undefined ? Number(order.invite_share_ratio) : undefined,
