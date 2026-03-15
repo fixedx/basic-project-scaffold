@@ -1,9 +1,5 @@
 <template>
   <view class="institution-settle-page">
-    <!-- 顶部步骤条 -->
-    <view class="steps-wrapper">
-      <wd-steps :current="currentStep" :steps="steps" />
-    </view>
 
     <!-- 表单内容 -->
     <view class="form-content">
@@ -338,8 +334,8 @@
       position="bottom"
       :closable="true"
       :safe-area-inset-bottom="true"
-      :z-index="9999"
-      custom-style="height: 60%; border-radius: 32rpx 32rpx 0 0;"
+      :z-index="1000"
+      custom-style="padding-bottom: env(safe-area-inset-bottom); border-radius: 32rpx 32rpx 0 0;"
     >
       <view class="account-dialog">
         <view class="dialog-title">{{ editingAccountIndex === -1 ? '添加账号' : '编辑账号' }}</view>
@@ -353,7 +349,6 @@
               type="number"
               :maxlength="11"
               no-border
-              custom-class="dialog-input"
             />
           </view>
           
@@ -1120,11 +1115,6 @@ onMounted(async () => {
   padding-bottom: 120rpx;
 }
 
-.steps-wrapper {
-  background-color: $uni-bg-color;
-  padding: 32rpx;
-}
-
 .form-content {
   padding: 32rpx;
 }
@@ -1356,8 +1346,8 @@ onMounted(async () => {
 
 // 账号对话框
 .account-dialog {
-  padding: 32rpx;
-  height: 100%;
+  padding: 80rpx 32rpx 32rpx; // 顶部预留 80rpx 给关闭按钮
+  height: auto;
   display: flex;
   flex-direction: column;
 }
@@ -1381,7 +1371,6 @@ onMounted(async () => {
 .dialog-form-group {
   padding-bottom: 24rpx;
   margin-bottom: 24rpx;
-  border-bottom: 1rpx solid $uni-border-color-light;
 
   &:last-child {
     border-bottom: none;
@@ -1414,8 +1403,6 @@ onMounted(async () => {
 
 .dialog-actions {
   flex-shrink: 0;
-  padding-top: 32rpx;
-  border-top: 1rpx solid $uni-border-color-light;
   display: flex;
   gap: 16rpx;
 }
