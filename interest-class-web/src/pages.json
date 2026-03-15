@@ -398,13 +398,15 @@
 		{
 			"path": "pages/admin/reviews/index",
 			"style": {
-				"navigationBarTitleText": "审核管理"
+				"navigationBarTitleText": "审核管理",
+				"enablePullDownRefresh": true
 			}
 		},
 		{
 			"path": "pages/admin/institutions/index",
 			"style": {
-				"navigationBarTitleText": "机构管理"
+				"navigationBarTitleText": "机构管理",
+				"enablePullDownRefresh": true
 			}
 		},
 		{
@@ -428,7 +430,8 @@
 		{
 			"path": "pages/admin/orders/index",
 			"style": {
-				"navigationBarTitleText": "订单管理"
+				"navigationBarTitleText": "订单管理",
+				"enablePullDownRefresh": true
 			}
 		},
 		{
@@ -441,7 +444,8 @@
 		{
 			"path": "pages/admin/banners/index",
 			"style": {
-				"navigationBarTitleText": "横幅管理"
+				"navigationBarTitleText": "横幅管理",
+				"enablePullDownRefresh": true
 			}
 		},
 		{

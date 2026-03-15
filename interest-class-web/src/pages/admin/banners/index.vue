@@ -118,7 +118,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { onShow } from '@dcloudio/uni-app'
+import { onShow, onPullDownRefresh } from '@dcloudio/uni-app'
 import { bannerApi, type Banner } from '@/api/banner'
 import AsyncImage from '@/components/AsyncImage/index.vue'
 import Loading from '@/components/Loading/index.vue'
@@ -143,8 +143,13 @@ const loadBanners = async () => {
     uni.showToast({ title: '加载失败', icon: 'none' })
   } finally {
     loading.value = false
+    uni.stopPullDownRefresh()
   }
 }
+
+onPullDownRefresh(async () => {
+  await loadBanners()
+})
 
 const handleAdd = () => {
   uni.navigateTo({ url: '/pages/admin/banner-edit/index' })

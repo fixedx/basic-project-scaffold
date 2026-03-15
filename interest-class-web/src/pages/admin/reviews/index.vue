@@ -67,7 +67,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { onLoad } from '@dcloudio/uni-app'
+import { onLoad, onPullDownRefresh } from '@dcloudio/uni-app'
 import { type InstitutionInfo } from '@/api/institution'
 import { adminApi } from '@/api/admin'
 import Loading from '@/components/Loading/index.vue'
@@ -114,8 +114,14 @@ const loadInstitutions = async (isLoadMore = false) => {
     uni.showToast({ title: '加载失败', icon: 'none' })
   } finally {
     loading.value = false
+    uni.stopPullDownRefresh()
   }
 }
+
+onPullDownRefresh(async () => {
+  page.value = 1
+  await loadInstitutions()
+})
 
 const handleTabChange = () => {
   page.value = 1

@@ -76,7 +76,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { onLoad } from '@dcloudio/uni-app'
+import { onLoad, onPullDownRefresh } from '@dcloudio/uni-app'
 import { type InstitutionInfo } from '@/api/institution'
 import { adminApi } from '@/api/admin'
 import Loading from '@/components/Loading/index.vue'
@@ -146,8 +146,14 @@ const loadInstitutions = async (isLoadMore = false) => {
     }
   } finally {
     loading.value = false
+    if (!isLoadMore) uni.stopPullDownRefresh()
   }
 }
+
+onPullDownRefresh(async () => {
+  page.value = 1
+  await loadInstitutions()
+})
 
 const handleSearch = () => {
   page.value = 1

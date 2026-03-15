@@ -235,60 +235,58 @@
     </wd-popup>
 
     <!-- ========== 佣金设置弹窗 ========== -->
-    <wd-popup v-model="showCommissionDialog" position="bottom" :close-on-click-modal="true">
-      <view class="commission-dialog">
-        <view class="dialog-header">
-          <text class="dialog-title">设置佣金</text>
-          <view class="dialog-close" @click="showCommissionDialog = false">
-            <text class="iconfont icon-close"></text>
+    <BottomSheet v-model="showCommissionDialog" title="设置佣金">
+      <!-- 佣金类型 -->
+      <view class="form-group">
+        <view class="form-label">佣金类型</view>
+        <view class="tag-group">
+          <view
+            class="tag-item"
+            :class="{ 'tag-active': commissionForm.type === 'percentage' }"
+            @click="commissionForm.type = 'percentage'"
+          >
+            按比例
+          </view>
+          <view
+            class="tag-item"
+            :class="{ 'tag-active': commissionForm.type === 'fixed_amount' }"
+            @click="commissionForm.type = 'fixed_amount'"
+          >
+            固定金额
           </view>
         </view>
+      </view>
 
-        <!-- 佣金类型 -->
-        <view class="dialog-section">
-          <text class="dialog-label">佣金类型</text>
-          <view class="type-tags">
-            <view
-              class="type-tag"
-              :class="{ active: commissionForm.type === 'percentage' }"
-              @click="commissionForm.type = 'percentage'"
-            >按比例</view>
-            <view
-              class="type-tag"
-              :class="{ active: commissionForm.type === 'fixed_amount' }"
-              @click="commissionForm.type = 'fixed_amount'"
-            >固定金额</view>
-          </view>
+      <!-- 佣金数值 -->
+      <view class="form-group">
+        <view class="form-label">
+          {{ commissionForm.type === 'percentage' ? '佣金比例' : '固定金额' }}
         </view>
-
-        <!-- 佣金数值 -->
-        <view class="dialog-section">
-          <text class="dialog-label">
-            {{ commissionForm.type === 'percentage' ? '佣金比例（0-100%）' : '固定金额（元）' }}
-          </text>
-          <view class="value-input-row">
-            <wd-input
-              v-model="commissionForm.valueStr"
-              type="number"
-              :placeholder="commissionForm.type === 'percentage' ? '如：10 表示10%' : '如：5 表示5元'"
-              no-border
-              class="value-input"
-            />
-            <text class="value-unit">{{ commissionForm.type === 'percentage' ? '%' : '元' }}</text>
-          </view>
-          <text v-if="commissionForm.type === 'percentage'" class="dialog-hint">
+        <wd-input
+          v-model="commissionForm.valueStr"
+          type="digit"
+          :placeholder="commissionForm.type === 'percentage' ? '请输入比例' : '请输入金额'"
+        >
+          <template #suffix>
+            <text class="unit-text">{{ commissionForm.type === 'percentage' ? '%' : '元' }}</text>
+          </template>
+        </wd-input>
+        <view class="form-hint">
+          <text class="iconfont icon-info"></text>
+          <text v-if="commissionForm.type === 'percentage'">
             每笔订单实际收取金额 = 订单金额 × {{ commissionForm.valueStr || '0' }}%
           </text>
-          <text v-else class="dialog-hint">
+          <text v-else>
             每笔订单固定收取 ¥{{ commissionForm.valueStr || '0' }}
           </text>
         </view>
-
-        <view class="dialog-actions">
-          <wd-button block type="primary" size="large" @click="saveCommission">确认保存</wd-button>
-        </view>
       </view>
-    </wd-popup>
+
+      <!-- 底部按钮 -->
+      <template #footer>
+        <wd-button block type="primary" size="large" @click="saveCommission">确认保存</wd-button>
+      </template>
+    </BottomSheet>
   </view>
 </template>
 
@@ -301,6 +299,7 @@ import { adminApi } from '@/api/admin'
 import { useEnums } from '@/composables/useEnums'
 import AsyncImage from '@/components/AsyncImage/index.vue'
 import PageFooter from '@/components/PageFooter/index.vue'
+import BottomSheet from '@/components/BottomSheet/index.vue'
 import InstitutionInfoCard from '@/components/InstitutionInfoCard/index.vue'
 import InstitutionCourses from '@/components/InstitutionCourses/index.vue'
 import InstitutionShowcase from '@/components/InstitutionShowcase/index.vue'
@@ -784,83 +783,60 @@ const saveCommission = async () => {
   }
 }
 
-/* ========== 佣金设置弹窗 ========== */
-.commission-dialog {
-  background-color: $uni-bg-color;
-  border-radius: 32rpx 32rpx 0 0;
-  padding: 32rpx;
-  padding-bottom: calc(32rpx + env(safe-area-inset-bottom));
-}
+/* ========== 佣金弹窗内：通用表单元素 ========== */
+.form-group {
+  margin-bottom: 40rpx;
 
-.dialog-close {
-  padding: 8rpx;
-  .iconfont {
-    font-size: 36rpx;
-    color: $uni-text-color-tertiary;
-  }
-}
-
-.dialog-section {
-  margin-bottom: 32rpx;
-
-  .dialog-label {
+  .form-label {
     font-size: 28rpx;
-    color: $uni-text-color-secondary;
+    color: $uni-text-color;
     margin-bottom: 16rpx;
-    display: block;
+    font-weight: 500;
   }
-}
 
-.type-tags {
-  display: flex;
-  gap: 16rpx;
+  .tag-group {
+    display: flex;
+    gap: 20rpx;
 
-  .type-tag {
-    flex: 1;
-    padding: 20rpx;
-    text-align: center;
-    border-radius: 12rpx;
-    font-size: 28rpx;
-    background-color: $uni-bg-color-grey;
-    color: $uni-text-color-secondary;
-    border: 2rpx solid transparent;
+    .tag-item {
+      flex: 1;
+      height: 80rpx;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: #f7f8fa;
+      color: #646566;
+      border-radius: 12rpx;
+      font-size: 28rpx;
+      border: 2rpx solid transparent;
 
-    &.active {
-      background-color: $uni-color-primary-lighter;
-      color: $uni-color-primary;
-      border-color: $uni-color-primary;
-      font-weight: 600;
+      &.tag-active {
+        background-color: $uni-color-primary-lighter;
+        color: $uni-color-primary;
+        border-color: $uni-color-primary;
+        font-weight: bold;
+      }
     }
   }
-}
 
-.value-input-row {
-  display: flex;
-  align-items: center;
-  border: 2rpx solid $uni-border-color;
-  border-radius: 12rpx;
-  overflow: hidden;
-  padding: 0 20rpx;
-
-  .value-input {
-    flex: 1;
-  }
-
-  .value-unit {
-    font-size: 30rpx;
+  .unit-text {
+    font-size: 28rpx;
     color: $uni-text-color-secondary;
-    padding-left: 12rpx;
+    margin-left: 8rpx;
   }
-}
 
-.dialog-hint {
-  display: block;
-  font-size: 22rpx;
-  color: $uni-text-color-tertiary;
-  margin-top: 12rpx;
-}
+  .form-hint {
+    margin-top: 16rpx;
+    font-size: 24rpx;
+    color: #969799;
+    display: flex;
+    align-items: center;
 
-.dialog-actions {
-  margin-top: 16rpx;
+    .iconfont {
+      font-size: 24rpx;
+      margin-right: 8rpx;
+      color: $uni-color-primary;
+    }
+  }
 }
 </style>

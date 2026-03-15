@@ -43,7 +43,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { onShow, onLoad } from '@dcloudio/uni-app'
+import { onShow, onLoad, onPullDownRefresh } from '@dcloudio/uni-app'
 import { adminApi } from '@/api/admin'
 import type { Order } from '@/api/order'
 import StatusTabs from '@/components/StatusTabs/index.vue'
@@ -122,8 +122,13 @@ const loadOrders = async (append = false) => {
     loadMoreState.value = 'error'
   } finally {
     loading.value = false
+    if (!append) uni.stopPullDownRefresh()
   }
 }
+
+onPullDownRefresh(async () => {
+  await loadOrders()
+})
 
 // 加载更多
 const loadMore = () => {
