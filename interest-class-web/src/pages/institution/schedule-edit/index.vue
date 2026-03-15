@@ -68,7 +68,6 @@
           <view class="time-row">
             <view class="time-picker-wrapper">
               <wd-picker
-                :z-index="1000"
                 v-model="form.start_time"
                 :columns="timeColumns"
                 label="开始" label-width="80rpx" align-right
@@ -79,7 +78,6 @@
             <text class="time-separator">至</text>
             <view class="time-picker-wrapper">
               <wd-picker
-                :z-index="1000"
                 v-model="form.end_time"
                 :columns="timeColumns"
                 label="结束" label-width="80rpx" align-right
@@ -131,7 +129,7 @@
     </PageFooter>
 
     <!-- 课程选择弹窗 -->
-    <wd-popup v-model="showCoursePicker" position="bottom" :closable="true" :z-index="2000">
+    <wd-popup v-model="showCoursePicker" position="bottom" :closable="true">
       <view class="picker-popup">
         <view class="popup-title">选择课程</view>
         <view v-if="courseList.length > 0" class="picker-list">
@@ -153,7 +151,7 @@
     </wd-popup>
 
     <!-- 教师选择弹窗 -->
-    <wd-popup v-model="showTeacherPicker" position="bottom" :closable="true" :z-index="2000">
+    <wd-popup v-model="showTeacherPicker" position="bottom" :closable="true">
       <view class="picker-popup">
         <view class="popup-title">选择教师</view>
         <view v-if="teacherList.length > 0" class="picker-list">
@@ -176,7 +174,7 @@
     </wd-popup>
 
     <!-- 教室选择弹窗 -->
-    <wd-popup v-model="showClassroomPicker" position="bottom" :closable="true" :z-index="2000">
+    <wd-popup v-model="showClassroomPicker" position="bottom" :closable="true">
       <view class="picker-popup">
         <view class="popup-title">选择教室</view>
         <view v-if="classroomList.length > 0" class="picker-list">

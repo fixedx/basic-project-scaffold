@@ -128,7 +128,7 @@
     </PageFooter>
 
     <!-- 添加科目弹窗 -->
-    <wd-popup v-model="showAddSubject" position="bottom" :closable="true" :z-index="2000">
+    <wd-popup v-model="showAddSubject" position="bottom" :closable="true">
       <view class="popup-content">
         <view class="popup-title">添加科目</view>
         <view class="preset-items">
@@ -153,7 +153,7 @@
     </wd-popup>
 
     <!-- 添加证书弹窗 -->
-    <wd-popup v-model="showAddCertificate" position="bottom" :closable="true" :z-index="2000">
+    <wd-popup v-model="showAddCertificate" position="bottom" :closable="true">
       <view class="popup-content">
         <view class="popup-title">添加资格证书</view>
         <view class="custom-input">

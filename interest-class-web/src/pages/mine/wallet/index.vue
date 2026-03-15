@@ -125,7 +125,6 @@
       v-model="showWithdrawPopup" 
       position="bottom" 
       custom-style="border-radius: 24rpx 24rpx 0 0"
-      :z-index="2000"
     >
       <view class="withdraw-popup">
         <view class="popup-header">

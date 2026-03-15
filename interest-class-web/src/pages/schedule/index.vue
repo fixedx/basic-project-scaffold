@@ -267,7 +267,6 @@
       v-model="showChildPicker"
       :actions="childActions"
       cancel-text="取消"
-      :z-index="2000"
       @select="handleChildSelect"
     />
 
@@ -276,7 +275,6 @@
       v-model="showMonthPicker" 
       position="bottom" 
       :safe-area-inset-bottom="true"
-      :z-index="2000"
     >
       <view class="month-picker-container">
         <view class="picker-header">

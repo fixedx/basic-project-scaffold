@@ -144,7 +144,6 @@
       v-model="showMakeupModal" 
       position="bottom" 
       custom-class="makeup-popup"
-      :z-index="2000"
     >
       <view class="makeup-modal">
         <view class="modal-header">
@@ -193,7 +192,6 @@
       v-model="showCourseSheet" 
       :actions="courseActions" 
       cancel-text="取消"
-      :z-index="2000"
       @select="handleCourseSelect"
     />
 

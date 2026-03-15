@@ -26,7 +26,7 @@ withDefaults(defineProps<Props>(), {
   background-color: $uni-bg-color;
   border-top: 1rpx solid $uni-border-color-light;
   box-shadow: 0 -4rpx 16rpx rgba(0, 0, 0, 0.05);
-  z-index: 9; /* wd-popup 默认 z-index=10，PageFooter 必须低于它 */
+  z-index: 100;
   
   padding-bottom: calc(16rpx + env(safe-area-inset-bottom));
 

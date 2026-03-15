@@ -168,7 +168,6 @@
     <wd-popup
       v-model="showRejectDialog"
       position="bottom"
-      :z-index="2000"
       :safe-area-inset-bottom="true"
       custom-class="reject-popup"
     >

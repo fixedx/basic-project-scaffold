@@ -334,7 +334,6 @@
       position="bottom"
       :closable="true"
       :safe-area-inset-bottom="true"
-      :z-index="1000"
       custom-style="padding-bottom: env(safe-area-inset-bottom); border-radius: 32rpx 32rpx 0 0;"
     >
       <view class="account-dialog">

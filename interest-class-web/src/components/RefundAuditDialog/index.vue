@@ -1,6 +1,6 @@
 <template>
   <!-- 退款审批弹窗（机构端） -->
-  <wd-popup v-model="visible" position="bottom" custom-style="border-radius: 24rpx 24rpx 0 0;" :z-index="1000">
+  <wd-popup v-model="visible" position="bottom" custom-style="border-radius: 24rpx 24rpx 0 0;">
     <view class="refund-dialog">
       <view class="refund-dialog__header">
         <text class="refund-dialog__title">退款审批</text>

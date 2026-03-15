@@ -155,7 +155,6 @@
       v-model="showInterestInput"
       position="bottom"
       :safe-area-inset-bottom="true"
-      :z-index="2000"
     >
       <view class="interest-popup">
         <view class="popup-header">

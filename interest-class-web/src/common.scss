@@ -184,3 +184,16 @@
   line-height: 1.6;
   text-align: justify;
 }
+
+/* ========== 全局层级修正 ========== */
+/*
+ * PageFooter 恢复较高层级后，默认 wd-popup / wd-overlay 需要统一高于它。
+ * 这里做全局兜底，避免各页面重复手写 z-index。
+ */
+.wd-overlay {
+  z-index: 101 !important;
+}
+
+.wd-popup {
+  z-index: 102 !important;
+}
