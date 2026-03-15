@@ -72,7 +72,7 @@ import { type InstitutionInfo } from '@/api/institution'
 import { adminApi } from '@/api/admin'
 import Loading from '@/components/Loading/index.vue'
 
-const activeTab = ref('pending')
+const activeTab = ref('all')
 const loading = ref(false)
 const institutions = ref<InstitutionInfo[]>([])
 const page = ref(1)
@@ -123,7 +123,11 @@ onPullDownRefresh(async () => {
   await loadInstitutions()
 })
 
-const handleTabChange = () => {
+const handleTabChange = (event: any) => {
+  // wd-tabs @change 事件携带新 tab 的 name，优先使用，避免 v-model 异步更新时读到旧值
+  if (event?.name !== undefined) {
+    activeTab.value = event.name
+  }
   page.value = 1
   loadInstitutions()
 }
