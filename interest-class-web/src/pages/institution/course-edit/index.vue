@@ -547,32 +547,113 @@ onLoad(async (options: any) => {
   padding-bottom: 200rpx;
 }
 
-// 移除已失效的 @extend，直接在模板中使用公共类名
-// 这里保留自定义样式的占位，如果需要额外扩展可以在此编写
+/* ========== 直接引入公共样式逻辑，避免 @extend 无法跨作用域的问题 ========== */
+
+/* 卡片容器 */
 .section {
+  margin-bottom: 24rpx;
+  padding: 32rpx;
+  background-color: #fff;
+  border-radius: 24rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.04);
+
+  .section-title {
+    font-size: 32rpx;
+    font-weight: 600;
+    color: #1d2129;
+    margin-bottom: 32rpx;
+    display: flex;
+    align-items: center;
+    line-height: 1.4;
+
+    &::before {
+      content: '';
+      width: 8rpx;
+      height: 32rpx;
+      background: #52c41a;
+      border-radius: 4rpx;
+      margin-right: 16rpx;
+    }
+  }
 }
 
+/* 表单组 */
 .form-group {
+  margin-bottom: 32rpx;
+  
+  &:last-child {
+    margin-bottom: 0;
+  }
 }
 
+/* 表单标签 */
 .form-label {
+  font-size: 28rpx;
+  font-weight: 500;
+  color: #4e5969;
+  margin-bottom: 16rpx;
+  display: flex;
+  align-items: center;
+
+  &.required::after {
+    content: '*';
+    color: #f53f3f;
+    margin-left: 8rpx;
+    font-size: 32rpx;
+    line-height: 1;
+    transform: translateY(4rpx);
+  }
 }
 
+/* 表单提示 */
 .form-tip {
+  font-size: 24rpx;
+  color: #86909c;
+  margin-top: 12rpx;
+  line-height: 1.5;
 }
 
-// 标签组优化：圆角胶囊风格
+/* 标签组样式 */
 .tag-group {
-  @extend .tag-group;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20rpx;
 }
 
 .tag-item {
-  @extend .tag-item;
+  padding: 12rpx 32rpx;
+  font-size: 26rpx;
+  border-radius: 100rpx;
+  background-color: #f2f3f5;
+  color: #4e5969;
+  border: 2rpx solid transparent;
+  transition: all 0.3s;
+
+  &.tag-active {
+    background-color: rgba(82, 196, 26, 0.1);
+    color: #52c41a;
+    border-color: #52c41a;
+    font-weight: 500;
+  }
 }
 
-// 提示框优化
+/* 提示框 */
 .tip-box {
-  @extend .tip-box;
+  display: flex;
+  align-items: flex-start;
+  padding: 24rpx;
+  border-radius: 12rpx;
+  margin-bottom: 32rpx;
+
+  &.tip-warning {
+    background-color: #fff7e6;
+    border: 1rpx solid #ffe8c9;
+  }
+
+  &.tip-info {
+    background-color: #e6f7ff;
+    border: 1rpx solid #bae7ff;
+  }
 }
 
 .tip-icon {
