@@ -357,7 +357,7 @@ export class OrderService {
       );
       
       // ⭐ 从下单日期开始计算，找到下单日之后最近的对应星期几
-      // day_of_week 可能是英文名("monday"-"sunday")或数字("1"-"7")
+      // day_of_week 规范格式为数字字符串（"1"-"7"，1=周一，7=周日）；这里保留英文兼容仅用于历史数据
       const now = new Date();
       const dayNameToJsDay: Record<string, number> = {
         monday: 1, tuesday: 2, wednesday: 3, thursday: 4,

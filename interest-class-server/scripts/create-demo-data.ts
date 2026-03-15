@@ -767,15 +767,9 @@ async function createDemoData() {
           startTime.getTime() + course.lesson_duration * 60000,
         );
 
-        const dayOfWeek = [
-          'sunday',
-          'monday',
-          'tuesday',
-          'wednesday',
-          'thursday',
-          'friday',
-          'saturday',
-        ][startTime.getDay()];
+        // day_of_week 规范使用数字字符串（1=周一 ... 7=周日），与排课 UI 保持一致
+        const jsDay = startTime.getDay();
+        const dayOfWeek = jsDay === 0 ? '7' : String(jsDay);
 
         const scheduleData = {
           course_id: courseId,

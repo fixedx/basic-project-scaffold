@@ -238,15 +238,22 @@ async function handleSubmit() {
 function getDayLabel(day: string | number | undefined): string {
   if (day === undefined || day === null) return ''
   const dayLabels: Record<string, string> = {
-    '0': '周日',
     '1': '周一',
     '2': '周二',
     '3': '周三',
     '4': '周四',
     '5': '周五',
     '6': '周六',
+    '7': '周日',
+    monday: '周一',
+    tuesday: '周二',
+    wednesday: '周三',
+    thursday: '周四',
+    friday: '周五',
+    saturday: '周六',
+    sunday: '周日',
   }
-  return dayLabels[String(day)] || `周${day}`
+  return dayLabels[String(day).toLowerCase()] || `周${day}`
 }
 
 // 格式化时间

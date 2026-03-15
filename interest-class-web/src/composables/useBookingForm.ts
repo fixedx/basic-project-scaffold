@@ -35,12 +35,25 @@ export function useBookingForm() {
   const loadingSchedules = ref(false)
 
   const dayOfWeekOrder: Record<string, number> = {
-    monday: 1, tuesday: 2, wednesday: 3, thursday: 4, friday: 5, saturday: 6, sunday: 7,
+    '1': 1,
+    '2': 2,
+    '3': 3,
+    '4': 4,
+    '5': 5,
+    '6': 6,
+    '7': 7,
+    monday: 1,
+    tuesday: 2,
+    wednesday: 3,
+    thursday: 4,
+    friday: 5,
+    saturday: 6,
+    sunday: 7,
   }
   const sortedSchedules = computed(() =>
     [...schedules.value].sort((a, b) => {
-      const dA = dayOfWeekOrder[a.day_of_week?.toLowerCase()] || 0
-      const dB = dayOfWeekOrder[b.day_of_week?.toLowerCase()] || 0
+      const dA = dayOfWeekOrder[String(a.day_of_week || '').toLowerCase()] || 0
+      const dB = dayOfWeekOrder[String(b.day_of_week || '').toLowerCase()] || 0
       if (dA !== dB) return dA - dB
       return new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
     })
@@ -101,10 +114,17 @@ export function useBookingForm() {
 
   const getDayOfWeekLabel = (day: string) => {
     const m: Record<string, string> = {
+      '1': '周一',
+      '2': '周二',
+      '3': '周三',
+      '4': '周四',
+      '5': '周五',
+      '6': '周六',
+      '7': '周日',
       monday: '周一', tuesday: '周二', wednesday: '周三', thursday: '周四',
       friday: '周五', saturday: '周六', sunday: '周日',
     }
-    return m[day?.toLowerCase()] || day
+    return m[String(day || '').toLowerCase()] || day
   }
 
   const formatTimeRange = (start: string, end: string) =>

@@ -36,10 +36,9 @@ export async function createSchedule(
   const duration = options.duration || 60;
   const endTime = new Date(startTime.getTime() + duration * 60000);
 
-  // 计算星期几（0-6，0是周日）
-  const dayOfWeek = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'][
-    startTime.getDay()
-  ];
+  // 计算星期几（规范格式：1=周一 ... 7=周日）
+  const jsDay = startTime.getDay();
+  const dayOfWeek = jsDay === 0 ? '7' : String(jsDay);
 
   const scheduleData = {
     course_id: options.courseId,
