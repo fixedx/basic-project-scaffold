@@ -48,32 +48,51 @@
         >
           <template #actions="{ course: c }">
             <view class="action-buttons">
-              <wd-button
-                size="small"
-                plain
-                custom-class="btn-action btn-info"
-                @click="goToSchedule(c.id)"
-              >
-                排课管理
-              </wd-button>
-              <wd-button
-                size="small"
-                :type="c.is_online ? 'warning' : 'success'"
-                plain
-                custom-class="btn-action"
-                @click="handleToggleOnline(c)"
-              >
-                {{ c.is_online ? '下架' : '上架' }}
-              </wd-button>
-              <wd-button
-                size="small"
-                type="primary"
-                plain
-                custom-class="btn-action"
-                @click="goToEdit(c.id)"
-              >
-                编辑
-              </wd-button>
+              <!-- 上架中：只允许下架，禁止排课和编辑 -->
+              <template v-if="c.is_online">
+                <view class="online-hint">
+                  <text class="iconfont icon-info"></text>
+                  <text class="online-hint__text">先下架才可编辑和排课</text>
+                </view>
+                <wd-button
+                  size="small"
+                  type="warning"
+                  plain
+                  custom-class="btn-action"
+                  @click="handleToggleOnline(c)"
+                >
+                  下架
+                </wd-button>
+              </template>
+              <!-- 下架中：显示排课、上架、编辑 -->
+              <template v-else>
+                <wd-button
+                  size="small"
+                  plain
+                  custom-class="btn-action btn-info"
+                  @click="goToSchedule(c.id)"
+                >
+                  排课管理
+                </wd-button>
+                <wd-button
+                  size="small"
+                  type="success"
+                  plain
+                  custom-class="btn-action"
+                  @click="handleToggleOnline(c)"
+                >
+                  上架
+                </wd-button>
+                <wd-button
+                  size="small"
+                  type="primary"
+                  plain
+                  custom-class="btn-action"
+                  @click="goToEdit(c.id)"
+                >
+                  编辑
+                </wd-button>
+              </template>
             </view>
           </template>
         </CourseCard>
@@ -347,6 +366,23 @@ onMounted(async () => {
   justify-content: flex-end;
   gap: 16rpx;
   width: 100%;
+}
+
+.online-hint {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  flex: 1;
+
+  .iconfont {
+    font-size: 24rpx;
+    color: $uni-text-color-tertiary;
+  }
+
+  &__text {
+    font-size: 22rpx;
+    color: $uni-text-color-tertiary;
+  }
 }
 
 /* 按钮样式优化 */

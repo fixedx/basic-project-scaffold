@@ -45,6 +45,15 @@ export class ScheduleService {
     // 获取第一个机构（用户可能关联多个机构，这里简化处理）
     const institutionId = userInstitutions[0].institution_id;
 
+    // 验证课程是否存在且未上架（上架课程不允许新增排课）
+    const course = await this.courseRepository.findOneById(dto.course_id);
+    if (!course) {
+      throw new BadRequestException('课程不存在');
+    }
+    if (course.is_online) {
+      throw new BadRequestException('课程已上架，请先下架后再添加排课');
+    }
+
     // 验证时间
     const startTime = new Date(dto.start_time);
     const endTime = new Date(dto.end_time);
@@ -132,6 +141,15 @@ export class ScheduleService {
     }
 
     const institutionId = userInstitutions[0].institution_id;
+
+    // 验证课程是否存在且未上架（上架课程不允许新增排课）
+    const course = await this.courseRepository.findOneById(dto.course_id);
+    if (!course) {
+      throw new BadRequestException('课程不存在');
+    }
+    if (course.is_online) {
+      throw new BadRequestException('课程已上架，请先下架后再添加排课');
+    }
 
     // 验证时间格式
     if (dto.start_time >= dto.end_time) {

@@ -61,9 +61,14 @@
         >
           <view class="schedule-time">
             <text class="schedule-time__week">{{ getWeekLabel(schedule.day_of_week) }}</text>
-            <text class="schedule-time__start">{{ formatTime(schedule.start_time) }}</text>
-            <text class="schedule-time__end">{{ formatTime(schedule.end_time) }}</text>
-            <view class="schedule-time__line" :class="`status-${schedule.status}`"></view>
+            <view class="schedule-time__timeline">
+              <text class="schedule-time__start">{{ formatTime(schedule.start_time) }}</text>
+              <view class="schedule-time__line-wrap">
+                <view class="schedule-time__dot" :class="`status-${schedule.status}`"></view>
+                <view class="schedule-time__line" :class="`status-${schedule.status}`"></view>
+              </view>
+              <text class="schedule-time__end">{{ formatTime(schedule.end_time) }}</text>
+            </view>
           </view>
 
           <view class="schedule-main">
@@ -139,7 +144,7 @@ import Loading from '@/components/Loading/index.vue'
 import PageFooter from '@/components/PageFooter/index.vue'
 
 const courseId = ref('')
-const scheduleList = ref<Schedule[]>([])
+const allScheduleList = ref<Schedule[]>([])
 const loading = ref(false)
 const filterDay = ref('')
 
@@ -168,10 +173,17 @@ const selectedDayLabel = computed(() => {
   return dayFilterOptions.find((item) => item.value === filterDay.value)?.label || '全部'
 })
 
+const scheduleList = computed(() => {
+  if (!filterDay.value) {
+    return allScheduleList.value
+  }
+  return allScheduleList.value.filter((item) => item.day_of_week === filterDay.value)
+})
+
 const summary = computed(() => {
-  const total = scheduleList.value.length
-  const active = scheduleList.value.filter((item) => ['scheduled', 'in_progress'].includes(item.status)).length
-  const full = scheduleList.value.filter((item) => isNearlyFull(item)).length
+  const total = allScheduleList.value.length
+  const active = allScheduleList.value.filter((item) => ['scheduled', 'in_progress'].includes(item.status)).length
+  const full = allScheduleList.value.filter((item) => isNearlyFull(item)).length
 
   return {
     total,
@@ -239,12 +251,8 @@ const loadScheduleList = async () => {
       params.course_id = courseId.value
     }
 
-    if (filterDay.value) {
-      params.day_of_week = filterDay.value
-    }
-
     const res = await scheduleApi.getList(params)
-    scheduleList.value = Array.isArray(res) ? res : (res as any)?.data || []
+    allScheduleList.value = Array.isArray(res) ? res : (res as any)?.data || []
   } catch (error) {
     console.error('加载排课列表失败:', error)
     uni.showToast({ title: '加载失败', icon: 'none' })
@@ -254,8 +262,8 @@ const loadScheduleList = async () => {
 }
 
 const handleDayFilter = (value: string) => {
+  if (filterDay.value === value) return
   filterDay.value = value
-  loadScheduleList()
 }
 
 const handleAdd = () => {
@@ -471,6 +479,7 @@ onShow(() => {
 
 .schedule-card {
   display: flex;
+  align-items: flex-start;
   gap: 20rpx;
   padding: 24rpx;
   background-color: $uni-bg-color;
@@ -480,10 +489,11 @@ onShow(() => {
 
 .schedule-time {
   width: 132rpx;
-  padding-right: 8rpx;
+  padding: 4rpx 8rpx 0 0;
   display: flex;
   flex-direction: column;
   align-items: center;
+  gap: 16rpx;
   flex-shrink: 0;
 }
 
@@ -495,24 +505,60 @@ onShow(() => {
   padding: 6rpx 16rpx;
 }
 
+.schedule-time__timeline {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
 .schedule-time__start {
-  margin-top: 18rpx;
   font-size: 34rpx;
   font-weight: 700;
+  line-height: 1.2;
   color: $uni-text-color;
 }
 
+.schedule-time__line-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8rpx;
+  margin: 8rpx 0;
+}
+
+.schedule-time__dot {
+  width: 18rpx;
+  height: 18rpx;
+  border-radius: 50%;
+  background-color: $uni-border-color-light;
+
+  &.status-scheduled {
+    background-color: $uni-color-primary;
+  }
+
+  &.status-in_progress {
+    background-color: $uni-color-info;
+  }
+
+  &.status-completed {
+    background-color: $uni-color-success;
+  }
+
+  &.status-cancelled {
+    background-color: $uni-text-color-disable;
+  }
+}
+
 .schedule-time__end {
-  margin-top: 8rpx;
   font-size: 24rpx;
+  line-height: 1.2;
   color: $uni-text-color-secondary;
 }
 
 .schedule-time__line {
   width: 8rpx;
-  flex: 1;
-  min-height: 120rpx;
-  margin-top: 18rpx;
+  height: 72rpx;
   border-radius: 999rpx;
   background-color: $uni-border-color-light;
 
@@ -679,5 +725,41 @@ onShow(() => {
   padding: 80rpx 0 40rpx;
   background-color: $uni-bg-color;
   border-radius: 24rpx;
+}
+
+@media (max-width: 375px) {
+  .schedule-card {
+    gap: 16rpx;
+    padding: 20rpx;
+  }
+
+  .schedule-time {
+    width: 112rpx;
+  }
+
+  .schedule-time__line {
+    height: 60rpx;
+  }
+
+  .schedule-time__start {
+    font-size: 30rpx;
+  }
+
+  .meta-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .schedule-footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .action-btns {
+    width: 100%;
+  }
+
+  .mini-action {
+    flex: 1;
+  }
 }
 </style>

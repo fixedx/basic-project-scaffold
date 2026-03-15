@@ -4411,6 +4411,45 @@ paid_amount ¥1040 = (¥100推广费 - ¥60立减 + ¥100佣金) + ¥900线下
 
 ---
 
+### 错误 54: 纯前端筛选误走远程重载，造成整页闪动/“像刷新一样” ⚠️⚠️
+
+**错误现象**：
+```typescript
+// ❌ 错误：切换本地星期筛选时再次请求接口
+const handleDayFilter = (value: string) => {
+  filterDay.value = value;
+  loadScheduleList();
+};
+```
+
+**问题后果**：
+- 切换筛选标签时出现整页闪动，用户感知像“页面刷新”
+- 统计卡片、列表、空状态一起重算/重绘，体验生硬
+- 对于已在前端持有的数据，产生不必要的网络请求
+
+**正确写法**：
+```typescript
+// ✅ 先一次性加载源数据，再用 computed 做本地筛选
+const allScheduleList = ref<Schedule[]>([]);
+
+const scheduleList = computed(() => {
+  if (!filterDay.value) return allScheduleList.value;
+  return allScheduleList.value.filter(item => item.day_of_week === filterDay.value);
+});
+
+const handleDayFilter = (value: string) => {
+  if (filterDay.value === value) return;
+  filterDay.value = value;
+};
+```
+
+**规范**：
+- 对于**已完整加载到前端**的枚举/标签/星期/状态等轻量筛选，优先使用前端 `computed` 本地过滤
+- 只有当筛选条件会显著影响数据量、需要服务端分页/排序/权限裁剪时，才重新请求接口
+- 筛选切换应尽量只让**列表数据区域**变化，避免整页 loading/闪动
+
+---
+
 
 
 在生成新模块时，请检查以下内容：

@@ -263,6 +263,11 @@ export class CourseService {
       throw new ForbiddenException('您没有权限修改该课程');
     }
 
+    // 上架中的课程不允许编辑，必须先下架
+    if (course.is_online) {
+      throw new BadRequestException('课程已上架，请先下架后再进行编辑');
+    }
+
     // 业务校验
     if (dto.skus) {
       this.validateCourseDto({ ...dto, type: course.type } as CreateCourseDto);
