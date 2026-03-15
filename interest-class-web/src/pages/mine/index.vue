@@ -105,10 +105,6 @@
               block-color="#52c41a"
               :step="1"
             />
-            <view class="slider-marks">
-              <text>好友优惠↑</text>
-              <text>↑我赚更多</text>
-            </view>
           </view>
         </view>
         
@@ -214,6 +210,7 @@ const { isReady } = useAuthGuard()
 const userStore = useUserStore()
 const userInfo = ref<any>({})
 const inviteCodeInfo = ref<any>(null)
+const savedShareRatio = ref<number | null>(null) // 记录服务器端已保存的让利比例，用于正确触发保存
 
 // ⚠️ 必须在页面 <script setup> 中直接调用，不能放在 composable 里
 // uni-app 编译器扫描本文件来决定是否把 onShareAppMessage 写进 Page({})，
@@ -276,6 +273,7 @@ const loadInviteCode = async () => {
   if (!getToken()) return
   try {
     inviteCodeInfo.value = await inviteApi.getMyInviteCode()
+    savedShareRatio.value = inviteCodeInfo.value?.share_ratio ?? null
   } catch (error) {
     console.error('获取邀请码失败:', error)
   }
@@ -386,15 +384,21 @@ const onRatioChanging = (e: any) => {
  */
 const onShareRatioChange = async (e: any) => {
   const value = e.detail.value
-  if (value === inviteCodeInfo.value?.share_ratio) return
+  // 与服务器已保存的值对比，而非实时展示值（实时展示值已被 onRatioChanging 修改过）
+  if (savedShareRatio.value !== null && value === savedShareRatio.value) return
   
   uni.showLoading({ title: '更新中...' })
   try {
     await inviteApi.setShareRatio(value)
+    savedShareRatio.value = value // 更新已保存值
     inviteCodeInfo.value.share_ratio = value
     uni.showToast({ title: '设置已生效', icon: 'success' })
   } catch (error) {
     console.error('更新让利比例失败:', error)
+    // 保存失败时回滚展示值
+    if (savedShareRatio.value !== null) {
+      inviteCodeInfo.value.share_ratio = savedShareRatio.value
+    }
     uni.showToast({ title: '更新失败', icon: 'none' })
   } finally {
     uni.hideLoading()
