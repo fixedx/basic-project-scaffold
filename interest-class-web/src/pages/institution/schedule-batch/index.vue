@@ -61,26 +61,30 @@
         </view>
 
         <view class="form-group">
-          <view class="form-label required">上课时间</view>
-          <view class="time-row">
-            <view class="time-picker-wrapper">
-              <wd-picker
-                v-model="form.start_time"
-                :columns="timeColumns"
-                label="开始" label-width="80rpx" align-right
-                placeholder="开始时间"
-                @confirm="onStartTimeConfirm"
-              />
-            </view>
-            <text class="time-separator">至</text>
-            <view class="time-picker-wrapper">
-              <wd-picker
-                v-model="form.end_time"
-                :columns="timeColumns"
-                label="结束" label-width="80rpx" align-right
-                placeholder="结束时间"
-                @confirm="onEndTimeConfirm"
-              />
+          <view class="form-label required">上课时间（每天独立配置）</view>
+          <view v-if="selectedDays.length === 0" class="day-time-empty">请先选择上课日期</view>
+          <view v-else class="day-time-list">
+            <view
+              v-for="day in sortedSelectedDays"
+              :key="day"
+              class="day-time-row"
+            >
+              <view class="day-time-label">{{ weekLabels[day] }}</view>
+              <view class="day-time-pickers">
+                <wd-picker
+                  :model-value="dayTimeMap[day]?.start_time || ''"
+                  :columns="timeColumns"
+                  placeholder="开始"
+                  @confirm="({ value }) => setDayTime(day, 'start_time', value)"
+                />
+                <text class="day-time-sep">—</text>
+                <wd-picker
+                  :model-value="dayTimeMap[day]?.end_time || ''"
+                  :columns="timeColumns"
+                  placeholder="结束"
+                  @confirm="({ value }) => setDayTime(day, 'end_time', value)"
+                />
+              </view>
             </view>
           </view>
         </view>
@@ -99,11 +103,22 @@
 
         <view class="form-group">
           <view class="form-label required">结束日期</view>
-          <picker mode="date" :value="form.end_date" :start="form.start_date || ''" @change="onEndDateChange">
+          <view v-if="form.end_date" class="end-date-display">
+            <view class="end-date-value">
+              <text class="iconfont icon-calendar end-date-icon"></text>
+              <text class="end-date-text">{{ form.end_date }}</text>
+              <view v-if="totalLessonsLabel" class="end-date-badge">{{ totalLessonsLabel }}</view>
+            </view>
+            <view class="end-date-actions">
+              <text class="end-date-hint">自动计算</text>
+              <picker mode="date" :value="form.end_date" :start="form.start_date || ''" @change="onEndDateChange">
+                <text class="end-date-edit">修改</text>
+              </picker>
+            </view>
+          </view>
+          <picker v-else mode="date" :value="form.end_date" :start="form.start_date || ''" @change="onEndDateChange">
             <view class="date-selector">
-              <text :class="form.end_date ? 'date-text' : 'date-placeholder'">
-                {{ form.end_date || '请选择结束日期' }}
-              </text>
+              <text class="date-placeholder">请选择结束日期</text>
               <text class="iconfont icon-right-arrow selector-arrow"></text>
             </view>
           </picker>
@@ -114,13 +129,11 @@
       <view v-if="previewCount > 0" class="section preview-section">
         <view class="section-title">排课预览</view>
         <view class="preview-card">
-          <view class="preview-row">
-            <text class="preview-label">上课日</text>
-            <text class="preview-value">每{{ selectedDayLabels }}</text>
-          </view>
-          <view class="preview-row">
-            <text class="preview-label">时间段</text>
-            <text class="preview-value">{{ form.start_time }} - {{ form.end_time }}</text>
+          <view v-for="day in sortedSelectedDays" :key="day" class="preview-row">
+            <text class="preview-label">{{ weekLabels[day] }}</text>
+            <text class="preview-value">
+              {{ dayTimeMap[day]?.start_time || '--' }} — {{ dayTimeMap[day]?.end_time || '--' }}
+            </text>
           </view>
           <view class="preview-row">
             <text class="preview-label">日期范围</text>
@@ -235,7 +248,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, computed, watch } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { scheduleApi } from '@/api'
 import { courseApi, type Course } from '@/api/course'
@@ -244,6 +257,7 @@ import { classroomApi, type ClassroomInfo } from '@/api/classroom'
 import { getMyInstitutions } from '@/api/category'
 import PageFooter from '@/components/PageFooter/index.vue'
 import Loading from '@/components/Loading/index.vue'
+import { useScheduleEndDate } from '@/composables/useScheduleEndDate'
 
 const pageLoading = ref(false)
 const institutionId = ref('')
@@ -253,16 +267,17 @@ const form = reactive({
   course_id: '',
   teacher_id: '',
   classroom_id: '',
-  start_time: '',
-  end_time: '',
   start_date: '',
   end_date: '',
   max_students: '',
   notes: '',
 })
 
-// 多选星期
+// 多选星期（含各天独立时间配置）
 const selectedDays = ref<string[]>([])
+
+interface DayTimeConfig { start_time: string; end_time: string }
+const dayTimeMap = ref<Record<string, DayTimeConfig>>({})
 
 // 选中项
 const selectedCourse = ref<Course | null>(null)
@@ -302,16 +317,6 @@ const selectedDayLabels = computed(() =>
     .map(d => weekLabels[d])
     .join('、')
 )
-
-// 切换星期选中
-const toggleDay = (value: string) => {
-  const idx = selectedDays.value.indexOf(value)
-  if (idx >= 0) {
-    selectedDays.value.splice(idx, 1)
-  } else {
-    selectedDays.value.push(value)
-  }
-}
 
 // 生成时间列
 const generateTimeColumns = () => {
@@ -356,6 +361,8 @@ const selectCourse = (course: Course) => {
   form.course_id = course.id
   selectedCourse.value = course
   showCoursePicker.value = false
+  const end = computeEndDate(form.start_date)
+  if (end) form.end_date = end
 }
 const selectTeacher = (teacher: TeacherInfo) => {
   form.teacher_id = teacher.id
@@ -369,9 +376,52 @@ const selectClassroom = (classroom: ClassroomInfo) => {
   showClassroomPicker.value = false
 }
 
-const onStartTimeConfirm = ({ value }: any) => { form.start_time = value }
-const onEndTimeConfirm = ({ value }: any) => { form.end_time = value }
-const onStartDateChange = (e: any) => { form.start_date = e.detail.value }
+// 按天独立配置时间
+const sortedSelectedDays = computed(() =>
+  [...selectedDays.value].sort((a, b) => Number(a) - Number(b))
+)
+
+// 切换星期选中
+const toggleDay = (value: string) => {
+  const idx = selectedDays.value.indexOf(value)
+  if (idx >= 0) {
+    selectedDays.value.splice(idx, 1)
+    const updated = { ...dayTimeMap.value }
+    delete updated[value]
+    dayTimeMap.value = updated
+  } else {
+    selectedDays.value.push(value)
+    if (!dayTimeMap.value[value]) {
+      dayTimeMap.value = { ...dayTimeMap.value, [value]: { start_time: '', end_time: '' } }
+    }
+  }
+}
+
+// 设置某天的时间
+const setDayTime = (day: string, field: 'start_time' | 'end_time', value: string) => {
+  if (dayTimeMap.value[day]) {
+    dayTimeMap.value[day][field] = value
+  }
+}
+
+// 结束日期自动计算 Hook
+const { computeEndDate, totalLessonsLabel } = useScheduleEndDate(selectedCourse, selectedDays)
+
+// 课程 / 天数 / 开始日期任意变化时，自动计算结束日期
+watch(
+  [selectedCourse, selectedDays, () => form.start_date],
+  () => {
+    const computed = computeEndDate(form.start_date)
+    if (computed) form.end_date = computed
+  },
+  { deep: true },
+)
+
+const onStartDateChange = (e: any) => {
+  form.start_date = e.detail.value
+  const end = computeEndDate(form.start_date)
+  if (end) form.end_date = end
+}
 const onEndDateChange = (e: any) => { form.end_date = e.detail.value }
 
 // 加载机构ID
@@ -410,9 +460,12 @@ const validateForm = (): boolean => {
   if (!form.teacher_id) { uni.showToast({ title: '请选择教师', icon: 'none' }); return false }
   if (!form.classroom_id) { uni.showToast({ title: '请选择教室', icon: 'none' }); return false }
   if (selectedDays.value.length === 0) { uni.showToast({ title: '请选择上课日期', icon: 'none' }); return false }
-  if (!form.start_time) { uni.showToast({ title: '请选择开始时间', icon: 'none' }); return false }
-  if (!form.end_time) { uni.showToast({ title: '请选择结束时间', icon: 'none' }); return false }
-  if (form.start_time >= form.end_time) { uni.showToast({ title: '开始时间必须早于结束时间', icon: 'none' }); return false }
+  for (const day of selectedDays.value) {
+    const cfg = dayTimeMap.value[day]
+    if (!cfg?.start_time) { uni.showToast({ title: `请设置${weekLabels[day]}的开始时间`, icon: 'none' }); return false }
+    if (!cfg?.end_time) { uni.showToast({ title: `请设置${weekLabels[day]}的结束时间`, icon: 'none' }); return false }
+    if (cfg.start_time >= cfg.end_time) { uni.showToast({ title: `${weekLabels[day]}开始时间必须早于结束时间`, icon: 'none' }); return false }
+  }
   if (!form.start_date) { uni.showToast({ title: '请选择开始日期', icon: 'none' }); return false }
   if (!form.end_date) { uni.showToast({ title: '请选择结束日期', icon: 'none' }); return false }
   if (form.start_date > form.end_date) { uni.showToast({ title: '开始日期不能晚于结束日期', icon: 'none' }); return false }
@@ -429,26 +482,33 @@ const handleSubmit = async () => {
   try {
     uni.showLoading({ title: `正在创建${previewCount.value}节课...`, mask: true })
 
-    const submitData = {
-      course_id: form.course_id,
-      teacher_id: form.teacher_id,
-      classroom_id: form.classroom_id,
-      start_time: form.start_time,
-      end_time: form.end_time,
-      days_of_week: [...selectedDays.value],
-      start_date: form.start_date,
-      end_date: form.end_date,
-      max_students: Number(form.max_students),
-      notes: form.notes || undefined,
+    // 每个选中的星期独立发一次 batch 请求（各有自己的 start_time/end_time）
+    let totalCreated = 0
+    let totalSkipped = 0
+    const sortedDays = [...selectedDays.value].sort((a, b) => Number(a) - Number(b))
+    for (const day of sortedDays) {
+      const cfg = dayTimeMap.value[day]
+      const submitData = {
+        course_id: form.course_id,
+        teacher_id: form.teacher_id,
+        classroom_id: form.classroom_id,
+        start_time: cfg.start_time,
+        end_time: cfg.end_time,
+        days_of_week: [day],
+        start_date: form.start_date,
+        end_date: form.end_date,
+        max_students: Number(form.max_students),
+        notes: form.notes || undefined,
+      }
+      const res = await scheduleApi.batchCreate(submitData) as any
+      totalCreated += res.created || 0
+      totalSkipped += res.skipped || 0
     }
-
-    const res = await scheduleApi.batchCreate(submitData) as any
     uni.hideLoading()
 
-    // 展示结果
-    let message = `成功创建 ${res.created} 节课`
-    if (res.skipped > 0) {
-      message += `\n跳过 ${res.skipped} 节（时间冲突）`
+    let message = `成功创建 ${totalCreated} 节课`
+    if (totalSkipped > 0) {
+      message += `\n跳过 ${totalSkipped} 节（时间冲突）`
     }
 
     uni.showModal({
@@ -687,20 +747,109 @@ onLoad(async (options) => {
   }
 }
 
-.time-row {
+// 每天独立时间配置样式
+.day-time-empty {
+  padding: 20rpx 0;
+  font-size: 26rpx;
+  color: #c9cdd4;
+}
+
+.day-time-list {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 24rpx;
 }
 
-.time-picker-wrapper {
+.day-time-row {
+  display: flex;
+  align-items: center;
+  padding: 16rpx 0;
+  border-bottom: 1rpx solid #f2f3f5;
+
+  &:last-child { border-bottom: none; }
+}
+
+.day-time-label {
+  font-size: 28rpx;
+  font-weight: 500;
+  color: #1d2129;
+  width: 80rpx;
+  flex-shrink: 0;
+}
+
+.day-time-pickers {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+
+  :deep(.wd-picker) {
+    flex: 1;
+    .wd-cell { padding: 0 !important; }
+  }
+}
+
+.day-time-sep {
+  font-size: 24rpx;
+  color: #c9cdd4;
+  flex-shrink: 0;
+}
+
+// 结束日期自动计算展示
+.end-date-display {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16rpx 0;
+  border-bottom: 1rpx solid #e5e6eb;
+  min-height: 72rpx;
+}
+
+.end-date-value {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
   flex: 1;
 }
 
-.time-separator {
+.end-date-icon {
   font-size: 28rpx;
-  color: #4e5969;
+  color: $uni-color-primary;
+}
+
+.end-date-text {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #1d2129;
+}
+
+.end-date-badge {
+  background: rgba($uni-color-primary, 0.1);
+  color: $uni-color-primary;
+  font-size: 22rpx;
+  padding: 4rpx 14rpx;
+  border-radius: 20rpx;
+  border: 1rpx solid rgba($uni-color-primary, 0.2);
+}
+
+.end-date-actions {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
   flex-shrink: 0;
+}
+
+.end-date-hint {
+  font-size: 22rpx;
+  color: #c9cdd4;
+}
+
+.end-date-edit {
+  font-size: 24rpx;
+  color: $uni-color-primary;
+  padding: 4rpx 12rpx;
+  border: 1rpx solid rgba($uni-color-primary, 0.4);
+  border-radius: 8rpx;
 }
 
 :deep(.wd-picker) {

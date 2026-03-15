@@ -271,6 +271,15 @@ const generateTimeColumns = () => {
 
 const timeColumns = computed(() => generateTimeColumns())
 
+// 时间选择回调
+const onStartTimeConfirm = ({ value }: any) => {
+  form.start_time = value
+}
+
+const onEndTimeConfirm = ({ value }: any) => {
+  form.end_time = value
+}
+
 // 选择课程
 const selectCourse = (course: Course) => {
   form.course_id = course.id
@@ -294,15 +303,6 @@ const selectClassroom = (classroom: ClassroomInfo) => {
     form.max_students = String(classroom.capacity)
   }
   showClassroomPicker.value = false
-}
-
-// 时间选择回调
-const onStartTimeConfirm = ({ value }: any) => {
-  form.start_time = value
-}
-
-const onEndTimeConfirm = ({ value }: any) => {
-  form.end_time = value
 }
 
 // 加载机构ID

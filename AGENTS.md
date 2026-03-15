@@ -1899,7 +1899,7 @@ form.avatar = urlRes.url
 **PageFooter 组件特点**：
 - ✅ 统一的固定定位和布局
 - ✅ 统一的内边距和阴影
-- ✅ 合理的 z-index（100）- 既能覆盖页面内容，又不会遮挡 picker 等弹出层
+- ✅ 合理的 z-index（**9**）- 低于 `wd-popup` 默认 z-index（10），保证弹层永远在 PageFooter 上方；同时高于普通页面内容（z-index: auto = 0）
 - ✅ 自动处理安全区域（safe-area-inset-bottom）
 - ✅ 支持通过 slot 自定义内容
 - ✅ 支持通过 :deep() 自定义内部布局
