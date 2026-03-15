@@ -26,12 +26,12 @@
               <view class="tag-item mode-tag">
                 {{ course.is_online ? '在线授课' : '线下授课' }}
               </view>
-              <view 
-                v-for="tag in course.tags?.slice(0, 3)" 
-                :key="tag" 
+              <view
+                v-for="tag in course.tags?.slice(0, 3)"
+                :key="tag"
                 class="tag-item"
               >
-                {{ tag }}
+                {{ getTagLabel(tag) }}
               </view>
             </view>
 
@@ -291,6 +291,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { onLoad, onShareAppMessage } from '@dcloudio/uni-app'
 import { courseApi, reviewApi, type Course, type CourseSku, type Review } from '@/api'
+import { useEnums } from '@/composables/useEnums'
 import { favoriteApi } from '@/api/favorite'
 import { showErrorToast, showSuccessToast } from '@/utils/toast'
 import { getToken } from '@/utils/request'
@@ -335,6 +336,16 @@ const skuDiscountAmount = computed(() => {
   if (!course.value || !selectedSku.value) return 0
   return Number((course.value as any).max_discount_amount) || 0
 })
+
+// 课程标签枚举映射
+const { loadEnumsByTypes, getEnumLabel, ENUM_TYPES } = useEnums()
+
+/**
+ * 将标签 code 转换为中文标签，找不到则展示原始小写 code
+ */
+const getTagLabel = (code: string): string => {
+  return getEnumLabel(ENUM_TYPES.COURSE_TAG, code) || code
+}
 
 // 加载课程详情
 const loadCourseDetail = async () => {
@@ -491,6 +502,7 @@ onShareAppMessage(() => {
 })
 
 onMounted(() => {
+  loadEnumsByTypes([ENUM_TYPES.COURSE_TAG]).catch(() => {})
   loadCourseDetail()
   checkFavoriteStatus()
 })
