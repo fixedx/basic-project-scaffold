@@ -66,9 +66,8 @@ const AUTH_WHITELIST_RULES: Array<{ pattern: RegExp; methods?: string[] }> = [
   { pattern: /^\/api\/payment\/transfer-notify\/?$/ }, // 微信转账回调（必须公开）
   { pattern: /^\/api\/payment\/status\/\d+\/?$/, methods: ['GET'] }, // 查询支付状态（公开接口）
   
-  // ==================== 邀友让利相关（公开接口） ====================
-  { pattern: /^\/api\/invite\/validate\/?$/ },        // 验证邀请码有效性（下单时调用）
-  { pattern: /^\/api\/invite\/calculate-discount\/?$/ }, // 计算立减金额（下单时调用）
+  // ==================== 邀友让利相关 ====================
+  // ⚠️ validate 和 calculate-discount 需要登录（下单时用户已登录），以便检查不能使用自己的邀请码
   { pattern: /^\/api\/invite\/available\/?$/, methods: ['GET'] }, // 获取可用邀请码列表（选择邀请码时调用）
   
   // ==================== 公告相关（公开接口） ====================

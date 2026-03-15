@@ -131,6 +131,82 @@ await this.inviteService.createInviteOrder({
 
 ---
 
+### 错误 53: 邀请码 validate / calculate-discount 接口在白名单，自我邀请检查被绕过 ⚠️⚠️⚠️
+
+**错误现象**：
+```typescript
+// auth.middleware.ts 白名单
+{ pattern: /^\/api\/invite\/validate\/?$/ },           // ← 跳过 JWT 解析
+{ pattern: /^\/api\/invite\/calculate-discount\/?$/ }, // ← 跳过 JWT 解析
+
+// invite.service.ts validateInviteCode()
+const currentUserId = this.userContextService.getCurrentUserIdOrNull();
+if (currentUserId && inviteCodeEntity.user_id === currentUserId) {
+  return { valid: false, message: '不能使用自己的邀请码' };
+}
+// 因白名单跳过 JWT 解析，currentUserId 始终为 null，
+// 自我邀请检查永远不触发，用户可以使用自己的邀请码下单
+```
+
+**根本原因**：
+- `validate` 和 `calculate-discount` 被放在 Auth 白名单，中间件 `return next()` 不解析 JWT
+- CLS 上下文（userId）从未设置，`getCurrentUserIdOrNull()` 始终返回 `null`
+- 同时 `calculateDiscount()` 方法完全没有自我邀请检查
+
+**正确写法**：
+```typescript
+// ❌ 从白名单移除（下单时用户已登录，必须有 JWT）
+// { pattern: /^\/api\/invite\/validate\/?$/ },
+// { pattern: /^\/api\/invite\/calculate-discount\/?$/ },
+
+// ✅ validateInviteCode()：自我检查提前到第 2 步（优先于课程检查，防止信息泄漏）
+// 2. 检查不能使用自己的邀请码（优先检查）
+const currentUserId = this.userContextService.getCurrentUserIdOrNull();
+if (currentUserId && inviteCodeEntity.user_id === currentUserId) {
+  return { valid: false, message: '不能使用自己的邀请码' };
+}
+// 3. 检查当日使用次数...
+// 4. 检查课程是否开启返现...
+
+// ✅ calculateDiscount()：同样补充自我邀请检查
+const currentUserId = this.userContextService.getCurrentUserIdOrNull();
+if (currentUserId && inviteCodeEntity.user_id === currentUserId) {
+  throw new BadRequestException('不能使用自己的邀请码');
+}
+```
+
+**测试修复**：
+```typescript
+// ❌ 旧测试：靠 course_id='test_course_id' 触发"课程不存在"错误来伪通过
+// 且 try-catch 捕获到自己 throw 的 Error('预期应该报错：不能使用自己的邀请码')，
+// 因错误消息包含'自己'而被当作成功——假通过！
+try {
+  await helper.post('/invite/validate', { invite_code: myCode, course_id: 'test_course_id' });
+  throw new Error('预期应该报错：不能使用自己的邀请码');  // ← 被 catch 到，包含'自己'而通过
+} catch (error: any) {
+  if (error.message.includes('自己')) { success() }  // ← 假通过
+}
+
+// ✅ 正确测试：直接检查响应内容
+const result = await helper.post('/invite/validate', {
+  invite_code: myCode.invite_code,
+  course_id: 'any_course_id',  // 自我检查在课程检查之前，course_id 不影响结果
+});
+if (result.valid === false && result.message?.includes('自己')) {
+  logger.success('使用自己的邀请码正确拒绝（validate 接口）');
+} else {
+  throw new Error(`预期 {valid: false}，实际：${JSON.stringify(result)}`);
+}
+```
+
+**规范**：
+- **`validate` 和 `calculate-discount` 必须从 Auth 白名单移除**：只有已登录用户才能使用邀请码，无需公开
+- **自我邀请检查在 `validateInviteCode()` 中必须排在第 2 步**（邀请码存在性检查之后、课程/频次检查之前），防止因后续检查失败而绕过
+- **`calculateDiscount()` 也必须加自我邀请检查**，不能遗漏
+- **白名单上的接口 JWT 不被解析**：`getCurrentUserIdOrNull()` 在白名单路径上始终返回 null，依赖它做权限检查必须确保接口不在白名单
+
+---
+
 ### 错误 52: 下单后修改邀请码让利比例，支付确认/回调仍回退到当前 share_ratio ⚠️⚠️⚠️
 
 **错误现象**：

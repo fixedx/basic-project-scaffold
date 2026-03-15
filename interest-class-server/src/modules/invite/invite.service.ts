@@ -240,7 +240,13 @@ export class InviteService implements OnModuleInit {
       return { valid: false, message: '邀请码无效' };
     }
 
-    // 2. 检查当日使用次数是否超限
+    // 2. 检查不能使用自己的邀请码（优先检查，避免泄漏其他信息）
+    const currentUserId = this.userContextService.getCurrentUserIdOrNull();
+    if (currentUserId && inviteCodeEntity.user_id === currentUserId) {
+      return { valid: false, message: '不能使用自己的邀请码' };
+    }
+
+    // 3. 检查当日使用次数是否超限
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     let dailyCount = inviteCodeEntity.daily_use_count;
@@ -270,12 +276,6 @@ export class InviteService implements OnModuleInit {
       }
     }
 
-    // 5. 检查不能使用自己的邀请码
-    const currentUserId = this.userContextService.getCurrentUserIdOrNull();
-    if (currentUserId && inviteCodeEntity.user_id === currentUserId) {
-      return { valid: false, message: '不能使用自己的邀请码' };
-    }
-
     return { valid: true, inviteCode: inviteCodeEntity };
   }
 
@@ -296,6 +296,12 @@ export class InviteService implements OnModuleInit {
       await this.userInviteCodeRepository.findActiveByInviteCode(invite_code);
     if (!inviteCodeEntity) {
       throw new BadRequestException('邀请码无效');
+    }
+
+    // 检查不能使用自己的邀请码
+    const currentUserId = this.userContextService.getCurrentUserIdOrNull();
+    if (currentUserId && inviteCodeEntity.user_id === currentUserId) {
+      throw new BadRequestException('不能使用自己的邀请码');
     }
 
     // 从课程表查询实际返现比例（同时校验课程是否开启了返现）

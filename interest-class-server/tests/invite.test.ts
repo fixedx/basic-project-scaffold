@@ -219,23 +219,18 @@ async function testApplyWithdrawInsufficientBalance() {
 async function testValidateOwnInviteCode() {
   const myCode = await helper.get('/invite/code');
 
-  try {
-    await helper.post('/invite/validate', { 
-      invite_code: myCode.invite_code,
-      course_id: 'test_course_id'
-    });
-    throw new Error('预期应该报错：不能使用自己的邀请码');
-  } catch (error: any) {
-    if (
-      error.message.includes('自己') ||
-      error.message.includes('own') ||
-      error.message.includes('无效') ||
-      error.message.includes('invalid')
-    ) {
-      logger.success('使用自己的邀请码正确拒绝');
-    } else {
-      throw error;
-    }
+  // validate 接口需要登录（已从白名单移除），自我检查优先于课程检查
+  const result = await helper.post('/invite/validate', {
+    invite_code: myCode.invite_code,
+    course_id: 'any_course_id',  // 课程检查在自我检查之后，不影响结果
+  });
+
+  if (result.valid === false && result.message?.includes('自己')) {
+    logger.success('使用自己的邀请码正确拒绝（validate 接口）');
+  } else {
+    throw new Error(
+      `预期 validate 返回 {valid: false, message: '不能使用自己的邀请码'}，实际：${JSON.stringify(result)}`,
+    );
   }
 }
 
