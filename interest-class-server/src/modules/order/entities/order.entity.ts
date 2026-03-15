@@ -259,6 +259,8 @@ export class OrderEntity extends BaseEntity {
   sku_snapshot?: {
     id: string;
     name: string;
+    /** 下单时 SKU 类型快照（trial/standard），用于判断是否体验课 */
+    type?: string;
     original_price: number;
     class_count: number;
     class_duration: number;

@@ -113,8 +113,8 @@
             <text class="label">线下支付</text>
             <text class="value">¥{{ formatPrice(order.offline_pay_amount) }}</text>
           </view>
-          <!-- 管理员可见：平台佣金 -->
-          <view v-if="role === 'admin' && (order.commission_amount ?? 0) > 0" class="info-item">
+          <!-- 管理员/机构可见：平台佣金 -->
+          <view v-if="(role === 'admin' || role === 'institution') && (order.commission_amount ?? 0) > 0" class="info-item">
             <text class="label">平台佣金</text>
             <text class="value commission">¥{{ formatPrice(order.commission_amount) }}</text>
           </view>

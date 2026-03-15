@@ -632,7 +632,7 @@ export class InstitutionService {
     // 5. 时段营收
     const periodRevenueQb = this.orderRepository
       .createQueryBuilder('order')
-      .select('SUM(order.paid_amount)', 'total')
+      .select('SUM(order.original_price - COALESCE(order.cashback_amount, 0))', 'total')
       .where('order.institution_id = :institutionId', { institutionId })
       .andWhere('order.status IN (:...statuses)', {
         statuses: ['confirmed', 'completed'],
@@ -707,7 +707,7 @@ export class InstitutionService {
       // 4. 总营收（不受时间筛选，始终为全部）
       this.orderRepository
         .createQueryBuilder('order')
-        .select('SUM(order.paid_amount)', 'total')
+        .select('SUM(order.original_price - COALESCE(order.cashback_amount, 0))', 'total')
         .where('order.institution_id = :institutionId', { institutionId })
         .andWhere('order.status IN (:...statuses)', {
           statuses: ['confirmed', 'completed'],
@@ -721,7 +721,7 @@ export class InstitutionService {
       // 6. 今日收入（始终为今日）
       this.orderRepository
         .createQueryBuilder('order')
-        .select('SUM(order.paid_amount)', 'total')
+        .select('SUM(order.original_price - COALESCE(order.cashback_amount, 0))', 'total')
         .where('order.institution_id = :institutionId', { institutionId })
         .andWhere('order.status IN (:...statuses)', {
           statuses: ['confirmed', 'completed'],

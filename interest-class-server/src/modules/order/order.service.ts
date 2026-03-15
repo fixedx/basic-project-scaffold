@@ -504,6 +504,7 @@ export class OrderService {
       sku_snapshot: {
         id: sku.id,
         name: sku.name,
+        type: sku.type || 'standard',  // ⭐ 锁定下单时的 SKU 类型（trial/standard）
         original_price: sku.total_price,
         class_count: sku.total_lessons || 0,
         // ⭐ 修复：原来硬编码 undefined，应取课程的单节课时长
