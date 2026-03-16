@@ -326,6 +326,21 @@ async function testRefundNotify_successFromRefunding() {
     throw new Error(`退款成功回调后状态应为 refunded，实际: ${currentOrder.status}`);
   }
 
+  const bookingIds = String(currentOrder.booking_id || '')
+    .split(',')
+    .map((id: string) => id.trim())
+    .filter(Boolean);
+  if (bookingIds.length === 0) {
+    throw new Error('退款订单缺少 booking_id，无法验证预约取消副作用');
+  }
+
+  for (const bookingId of bookingIds) {
+    const booking = await userHelper.get(`/booking/${bookingId}`);
+    if (booking.status !== 'cancelled') {
+      throw new Error(`退款成功后预约应为 cancelled，booking=${bookingId}, 实际=${booking.status}`);
+    }
+  }
+
   logger.info(`✓ 退款成功回调处理完毕，订单状态已变为 refunded`);
 }
 

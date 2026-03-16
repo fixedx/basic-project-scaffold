@@ -922,9 +922,25 @@ export class OrderService {
       }
 
       wechatRefundId = refundResult.refund_id || '';
+      await this.dataSource.query(
+        `UPDATE orders
+         SET wechat_refund_id = $1,
+             refund_status = $2,
+             updated_at = NOW()
+         WHERE id = $3 AND is_delete = false`,
+        [wechatRefundId, refundResult.finalized ? 'success' : 'processing', id],
+      );
+
       this.logger.log(
         `订单退款已受理: ${order.order_no}, 微信状态=${refundResult.status}`,
       );
+
+      if (!refundResult.finalized) {
+        this.logger.log(
+          `订单退款等待微信回调确认后再置为 refunded: ${order.order_no}`,
+        );
+        return;
+      }
     } else {
       this.logger.log(`订单退款成功（纯线下）: ${order.order_no}`);
     }

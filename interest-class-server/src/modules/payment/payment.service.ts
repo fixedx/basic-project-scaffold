@@ -52,6 +52,7 @@ export interface WechatRefundResult {
   success: boolean;
   refund_id?: string; // 微信退款单号
   status?: string; // 退款状态: SUCCESS, PROCESSING, ABNORMAL, CLOSED
+  finalized?: boolean; // 是否可直接视为最终成功（仅 mock/test/纯线下兼容场景）
   message?: string; // 错误信息
 }
 
@@ -149,6 +150,8 @@ export class PaymentService {
       this.logger.log(`私钥长度: ${this.config.privateKey.length}`);
       this.logger.log(`API密钥长度: ${this.config.apiKey.length}`);
       this.logger.log(`测试模式: ${this.config.testMode}`);
+      this.logger.log(`支付回调地址: ${this.config.notifyUrl}`);
+      this.logger.log(`退款回调地址: ${this.config.refundNotifyUrl}`);
       if (!this.config.apiKey) {
         this.logger.warn('WECHAT_API_KEY_PATH 未配置或文件读取失败');
       }
@@ -625,16 +628,7 @@ export class PaymentService {
         success: true,
         refund_id: 'mock_refund_' + Date.now(),
         status: 'SUCCESS',
-      };
-    }
-
-    // 测试模式下模拟退款成功（避免用测试数据调用真实微信API）
-    if (this.config.testMode) {
-      this.logger.log(`[测试模式] 模拟退款成功: 订单=${order.order_no}, 金额=${onlineRefundAmount}`);
-      return {
-        success: true,
-        refund_id: 'test_refund_' + Date.now(),
-        status: 'SUCCESS',
+        finalized: true,
       };
     }
 
@@ -645,6 +639,7 @@ export class PaymentService {
         success: true,
         refund_id: '',
         status: 'SUCCESS',
+        finalized: true,
       };
     }
 
@@ -727,6 +722,7 @@ export class PaymentService {
         success: true,
         refund_id: result.refund_id,
         status: result.status, // SUCCESS, PROCESSING, ABNORMAL, CLOSED
+        finalized: false,
       };
     } catch (error) {
       this.logger.error(`调用微信退款接口异常: ${order.order_no}`, error);
@@ -745,22 +741,36 @@ export class PaymentService {
     headers: Record<string, string>,
   ): Promise<{ success: boolean; message: string }> {
     try {
+      this.logger.log(
+        `开始处理微信退款回调: testMode=${this.config.testMode}, ` +
+          `wechatpay-serial=${headers['wechatpay-serial'] || '-'}, ` +
+          `wechatpay-signature=${headers['wechatpay-signature'] ? 'present' : 'missing'}, ` +
+          `has-resource=${body?.resource ? 'true' : 'false'}, has-test-data=${body?.test_data ? 'true' : 'false'}`,
+      );
+
       // 测试模式：允许直接传递明文数据，跳过解密
       let decryptedData: any;
       if (this.config.testMode && body.test_data) {
+        this.logger.log('退款回调使用 test_data 明文模式处理');
         decryptedData = body.test_data;
       } else {
         // ⚠️ 验证微信平台签名（防止伪造退款回调）
         const isValid = this.verifyNotifySignature(body, headers);
         if (!isValid) {
+          this.logger.error(
+            `退款回调签名验证失败: wechatpay-serial=${headers['wechatpay-serial'] || '-'}, ` +
+              `wechatpay-timestamp=${headers['wechatpay-timestamp'] || '-'}, has-resource=${body?.resource ? 'true' : 'false'}`,
+          );
           throw new BadRequestException('退款回调签名验证失败');
         }
         // 解密回调数据
         const resource = body.resource;
         if (!resource) {
+          this.logger.error('退款回调缺少 resource 字段');
           throw new BadRequestException('回调数据格式错误');
         }
         decryptedData = this.decryptResource(resource);
+        this.logger.log('退款回调验签并解密成功');
       }
 
       const orderNo = decryptedData.out_trade_no;
@@ -817,7 +827,7 @@ export class PaymentService {
               if (bookingIds.length > 0) {
                 await this.dataSource.query(
                   `UPDATE bookings
-                   SET status = 'cancelled', cancelled_at = NOW(), cancel_reason = '退款成功'
+                   SET status = 'cancelled', cancelled_at = NOW(), reason = '退款成功'
                    WHERE id = ANY($1::text[]) AND status IN ('pending','confirmed','pending_change') AND is_delete = false`,
                   [bookingIds],
                 );

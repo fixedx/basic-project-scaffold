@@ -8,6 +8,7 @@ import {
   Req,
   Res,
   HttpCode,
+  Logger,
 } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { PaymentService } from './payment.service';
@@ -15,6 +16,8 @@ import { PrepayDto } from './dto/payment.dto';
 
 @Controller('payment')
 export class PaymentController {
+  private readonly logger = new Logger(PaymentController.name);
+
   constructor(private readonly paymentService: PaymentService) {}
 
   /**
@@ -68,6 +71,12 @@ export class PaymentController {
     @Body() body: any,
     @Headers() headers: Record<string, string>,
   ) {
+    this.logger.log(
+      `收到微信退款回调HTTP请求: method=${req.method}, path=${req.originalUrl}, ip=${req.ip || req.socket?.remoteAddress || '-'}, ` +
+        `wechatpay-serial=${headers['wechatpay-serial'] || '-'}, wechatpay-timestamp=${headers['wechatpay-timestamp'] || '-'}, ` +
+        `has-resource=${body?.resource ? 'true' : 'false'}, has-test-data=${body?.test_data ? 'true' : 'false'}`,
+    );
+
     const result = await this.paymentService.handleRefundNotify(body, headers);
 
     if (result.success) {

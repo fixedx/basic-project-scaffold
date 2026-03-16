@@ -367,6 +367,94 @@ const validStatus = ['confirmed', 'refund_rejected', 'completed']
 
 ---
 
+### 错误 60: 机构审批退款后立即置 `refunded`，把“微信已受理”误当成“用户已到账” ⚠️⚠️⚠️
+
+**错误现象**：
+```typescript
+// ❌ 错误：只要微信退款接口返回 success，就立即执行 DB 收尾
+const refundResult = await this.paymentService.createRefund(order, amount, refundNo);
+if (!refundResult.success) {
+  rollback();
+}
+
+// 这里直接把订单改成 refunded
+await this._finalizeApprovedRefund(id, order, refundResult.refund_id);
+
+// 结果：前端显示“退款成功”，但微信侧可能只是 accepted/processing，用户实际尚未收到退款
+```
+
+**根本原因**：
+- 微信退款接口同步返回的成功，表示“退款请求已被受理”，不等于最终到账完成
+- 真正可靠的成功信号应该以微信退款异步回调 `handleRefundNotify()` 的 `SUCCESS` 为准
+- 若在审批通过时就把订单改成 `refunded`，前端会过早显示退款成功，造成“状态已成功但钱包未到账”的错觉
+
+**正确写法**：
+```typescript
+// ✅ 正确：真实微信退款先保持 refunding，等待回调 SUCCESS 再收尾
+const refundResult = await this.paymentService.createRefund(order, amount, refundNo);
+if (!refundResult.success) {
+  rollback();
+}
+
+await this.dataSource.query(
+  `UPDATE orders
+   SET wechat_refund_id = $1, refund_status = 'processing', updated_at = NOW()
+   WHERE id = $2`,
+  [refundResult.refund_id || '', id],
+);
+
+if (!refundResult.finalized) {
+  return; // 等待微信退款回调 SUCCESS
+}
+
+// 只有 mock/test/纯线下场景才允许立即收尾
+await this._finalizeApprovedRefund(id, order, refundResult.refund_id || '');
+```
+
+**规范**：
+- **真实微信退款链路中，`processRefund()` 审批通过后只能进入 `refunding`，不能立即进入 `refunded`**
+- **只有 `handleRefundNotify()` 收到微信回调 `SUCCESS` 后，才能执行 `_finalizeApprovedRefund()` 并把订单状态改为 `refunded`**
+- mock/test/纯线下退款可保留立即成功逻辑，但必须与真实微信链路显式区分
+- 前端“退款成功”文案必须以订单状态 `refunded` 为准，不能以“审批通过”或“微信已受理”替代
+
+---
+
+### 错误 61: 退款回调取消预约时误写 `cancel_reason`，导致副作用被吞掉 ⚠️⚠️
+
+**错误现象**：
+```typescript
+// ❌ 错误：退款回调里直接更新 bookings，但写了不存在的字段 cancel_reason
+await this.dataSource.query(
+  `UPDATE bookings
+   SET status = 'cancelled', cancelled_at = NOW(), cancel_reason = '退款成功'
+   WHERE id = ANY($1::text[]) ...`,
+  [bookingIds],
+);
+
+// 日志：退款回调取消预约失败: column "cancel_reason" of relation "bookings" does not exist
+```
+
+**根本原因**：
+- `bookings` 实体中的字段名是 `reason`，不是 `cancel_reason`
+- 退款回调里这段 SQL 失败后被 catch 吃掉，主流程仍继续，所以订单虽然退款成功，但预约取消副作用静默失败
+
+**正确写法**：
+```typescript
+await this.dataSource.query(
+  `UPDATE bookings
+   SET status = 'cancelled', cancelled_at = NOW(), reason = '退款成功'
+   WHERE id = ANY($1::text[]) AND status IN ('pending','confirmed','pending_change') AND is_delete = false`,
+  [bookingIds],
+);
+```
+
+**规范**：
+- 对 `bookings` 表写取消/拒绝原因时，统一使用字段 `reason`
+- 不要臆造 `cancel_reason` 这类数据库中不存在的列名
+- 退款回调测试必须校验关联预约确实已变为 `cancelled`，避免副作用异常被日志吞掉却长期无人发现
+
+---
+
 ### 错误 52: 下单后修改邀请码让利比例，支付确认/回调仍回退到当前 share_ratio ⚠️⚠️⚠️
 
 **错误现象**：
