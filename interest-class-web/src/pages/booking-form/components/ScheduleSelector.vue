@@ -2,8 +2,8 @@
   <view class="schedule-selector card-section">
     <view class="section-header">
       <view class="section-title">选择上课时间</view>
-      <text v-if="selectedScheduleIds.length > 0" class="selected-tip">
-        已选 {{ selectedScheduleIds.length }} 个时段
+      <text v-if="selectedScheduleIds.length > 0" class="selected-tip selected-tip--active">
+        已选
       </text>
     </view>
 

@@ -18,32 +18,9 @@
         </view>
       </view>
 
-      <!-- 教师和教室 -->
+      <!-- 上课安排：星期 + 每天时间/教师/教室 -->
       <view class="section">
-        <view class="section-title">教师与教室</view>
-        <view class="form-group">
-          <view class="form-label required">选择教师</view>
-          <view class="selector" @click="showTeacherPicker = true">
-            <text v-if="selectedTeacher" class="selector-text">{{ selectedTeacher.name }}</text>
-            <text v-else class="selector-placeholder">请选择教师</text>
-            <text class="iconfont icon-right-arrow selector-arrow"></text>
-          </view>
-        </view>
-        <view class="form-group">
-          <view class="form-label required">选择教室</view>
-          <view class="selector" @click="showClassroomPicker = true">
-            <text v-if="selectedClassroom" class="selector-text">
-              {{ selectedClassroom.name }}（容纳{{ selectedClassroom.capacity }}人）
-            </text>
-            <text v-else class="selector-placeholder">请选择教室</text>
-            <text class="iconfont icon-right-arrow selector-arrow"></text>
-          </view>
-        </view>
-      </view>
-
-      <!-- 重复设置 -->
-      <view class="section">
-        <view class="section-title">重复设置</view>
+        <view class="section-title">上课安排</view>
 
         <view class="form-group">
           <view class="form-label required">上课日期（可多选）</view>
@@ -60,34 +37,64 @@
           </view>
         </view>
 
-        <view class="form-group">
-          <view class="form-label required">上课时间（每天独立配置）</view>
-          <view v-if="selectedDays.length === 0" class="day-time-empty">请先选择上课日期</view>
-          <view v-else class="day-time-list">
-            <view
-              v-for="day in sortedSelectedDays"
-              :key="day"
-              class="day-time-row"
-            >
-              <view class="day-time-label">{{ weekLabels[day] }}</view>
+        <view v-if="selectedDays.length > 0" class="day-config-list">
+          <view
+            v-for="day in sortedSelectedDays"
+            :key="day"
+            class="day-config-card"
+          >
+            <view class="day-config-header">
+              <text class="day-config-day">{{ weekLabels[day] }}</text>
+            </view>
+            <!-- 时间 -->
+            <view class="day-config-row">
+              <text class="day-config-label">时间</text>
               <view class="day-time-pickers">
                 <wd-picker
-                  :model-value="dayTimeMap[day]?.start_time || ''"
+                  :model-value="dayConfigMap[day]?.start_time || ''"
                   :columns="timeColumns"
                   placeholder="开始"
-                  @confirm="({ value }) => setDayTime(day, 'start_time', value)"
+                  @confirm="(e: any) => setDayConfig(day, 'start_time', e.value)"
                 />
                 <text class="day-time-sep">—</text>
                 <wd-picker
-                  :model-value="dayTimeMap[day]?.end_time || ''"
+                  :model-value="dayConfigMap[day]?.end_time || ''"
                   :columns="timeColumns"
                   placeholder="结束"
-                  @confirm="({ value }) => setDayTime(day, 'end_time', value)"
+                  @confirm="(e: any) => setDayConfig(day, 'end_time', e.value)"
                 />
+              </view>
+            </view>
+            <!-- 教师 -->
+            <view class="day-config-row" @click="openTeacherPicker(day)">
+              <text class="day-config-label">教师</text>
+              <view class="day-config-selector">
+                <text v-if="dayConfigMap[day]?.teacherName" class="day-config-value-text">
+                  {{ dayConfigMap[day].teacherName }}
+                </text>
+                <text v-else class="day-config-placeholder">请选择教师</text>
+                <text class="iconfont icon-right-arrow day-config-arrow"></text>
+              </view>
+            </view>
+            <!-- 教室 -->
+            <view class="day-config-row" @click="openClassroomPicker(day)">
+              <text class="day-config-label">教室</text>
+              <view class="day-config-selector">
+                <text v-if="dayConfigMap[day]?.classroomName" class="day-config-value-text">
+                  {{ dayConfigMap[day].classroomName }}
+                  <text v-if="dayConfigMap[day]?.classroomCapacity" class="day-config-cap">（{{ dayConfigMap[day].classroomCapacity }}人）</text>
+                </text>
+                <text v-else class="day-config-placeholder">请选择教室</text>
+                <text class="iconfont icon-right-arrow day-config-arrow"></text>
               </view>
             </view>
           </view>
         </view>
+      </view>
+
+      <!-- 排课周期 -->
+      <view class="section">
+        <view class="section-title">排课周期</view>
 
         <view class="form-group">
           <view class="form-label required">开始日期</view>
@@ -131,13 +138,20 @@
         <view class="preview-card">
           <view v-for="day in sortedSelectedDays" :key="day" class="preview-row">
             <text class="preview-label">{{ weekLabels[day] }}</text>
-            <text class="preview-value">
-              {{ dayTimeMap[day]?.start_time || '--' }} — {{ dayTimeMap[day]?.end_time || '--' }}
-            </text>
+            <view class="preview-col">
+              <text class="preview-value">{{ dayConfigMap[day]?.start_time || '--' }} — {{ dayConfigMap[day]?.end_time || '--' }}</text>
+              <text class="preview-sub">{{ dayConfigMap[day]?.teacherName || '--' }} · {{ dayConfigMap[day]?.classroomName || '--' }}</text>
+            </view>
           </view>
           <view class="preview-row">
             <text class="preview-label">日期范围</text>
             <text class="preview-value">{{ form.start_date }} 至 {{ form.end_date }}</text>
+          </view>
+          <view v-if="selectedDays.length > 1 && selectedCourse?.skus?.[0]?.total_lessons" class="preview-row note-row">
+            <text class="preview-label">说明</text>
+            <text class="preview-value note">
+              每天各独立排满 {{ selectedCourse.skus[0].total_lessons }} 节，共 {{ selectedDays.length }} 天
+            </text>
           </view>
           <view class="preview-row highlight">
             <text class="preview-label">总计</text>
@@ -206,18 +220,18 @@
     <!-- 教师选择弹窗 -->
     <wd-popup v-model="showTeacherPicker" position="bottom" :closable="true">
       <view class="picker-popup">
-        <view class="popup-title">选择教师</view>
+        <view class="popup-title">选择教师（{{ weekLabels[activeDayForTeacher] || '' }}）</view>
         <view v-if="teacherList.length > 0" class="picker-list">
           <view
             v-for="teacher in teacherList"
             :key="teacher.id"
             class="picker-item"
-            :class="{ active: form.teacher_id === teacher.id }"
+            :class="{ active: dayConfigMap[activeDayForTeacher]?.teacher_id === teacher.id }"
             @click="selectTeacher(teacher)"
           >
             <text class="picker-item-text">{{ teacher.name }}</text>
             <text v-if="teacher.title" class="picker-item-desc">{{ teacher.title }}</text>
-            <text v-if="form.teacher_id === teacher.id" class="picker-item-check">✓</text>
+            <text v-if="dayConfigMap[activeDayForTeacher]?.teacher_id === teacher.id" class="picker-item-check">✓</text>
           </view>
         </view>
         <view v-else class="picker-empty"><text>暂无教师</text></view>
@@ -227,18 +241,18 @@
     <!-- 教室选择弹窗 -->
     <wd-popup v-model="showClassroomPicker" position="bottom" :closable="true">
       <view class="picker-popup">
-        <view class="popup-title">选择教室</view>
+        <view class="popup-title">选择教室（{{ weekLabels[activeDayForClassroom] || '' }}）</view>
         <view v-if="classroomList.length > 0" class="picker-list">
           <view
             v-for="classroom in classroomList"
             :key="classroom.id"
             class="picker-item"
-            :class="{ active: form.classroom_id === classroom.id }"
+            :class="{ active: dayConfigMap[activeDayForClassroom]?.classroom_id === classroom.id }"
             @click="selectClassroom(classroom)"
           >
             <text class="picker-item-text">{{ classroom.name }}</text>
             <text class="picker-item-desc">容纳{{ classroom.capacity }}人</text>
-            <text v-if="form.classroom_id === classroom.id" class="picker-item-check">✓</text>
+            <text v-if="dayConfigMap[activeDayForClassroom]?.classroom_id === classroom.id" class="picker-item-check">✓</text>
           </view>
         </view>
         <view v-else class="picker-empty"><text>暂无教室</text></view>
@@ -262,27 +276,31 @@ import { useScheduleEndDate } from '@/composables/useScheduleEndDate'
 const pageLoading = ref(false)
 const institutionId = ref('')
 
-// 表单数据
+// 表单数据（teacher_id / classroom_id 已移入 dayConfigMap，每天独立配置）
 const form = reactive({
   course_id: '',
-  teacher_id: '',
-  classroom_id: '',
   start_date: '',
   end_date: '',
   max_students: '',
   notes: '',
 })
 
-// 多选星期（含各天独立时间配置）
+// 多选星期 + 每天独立配置（时间、教师、教室）
 const selectedDays = ref<string[]>([])
 
-interface DayTimeConfig { start_time: string; end_time: string }
-const dayTimeMap = ref<Record<string, DayTimeConfig>>({})
+interface DayConfig {
+  start_time: string
+  end_time: string
+  teacher_id: string
+  classroom_id: string
+  teacherName: string
+  classroomName: string
+  classroomCapacity: number
+}
+const dayConfigMap = ref<Record<string, DayConfig>>({})
 
-// 选中项
+// 选中的课程
 const selectedCourse = ref<Course | null>(null)
-const selectedTeacher = ref<TeacherInfo | null>(null)
-const selectedClassroom = ref<ClassroomInfo | null>(null)
 
 // 数据列表
 const courseList = ref<Course[]>([])
@@ -293,6 +311,10 @@ const classroomList = ref<ClassroomInfo[]>([])
 const showCoursePicker = ref(false)
 const showTeacherPicker = ref(false)
 const showClassroomPicker = ref(false)
+
+// 当前正在配置哪天的教师 / 教室
+const activeDayForTeacher = ref('')
+const activeDayForClassroom = ref('')
 
 // 星期选项
 const dayOptions = [
@@ -310,14 +332,6 @@ const weekLabels: Record<string, string> = {
   '5': '周五', '6': '周六', '7': '周日',
 }
 
-// 选中的星期标签（如"周一、周三"）
-const selectedDayLabels = computed(() =>
-  selectedDays.value
-    .sort((a, b) => Number(a) - Number(b))
-    .map(d => weekLabels[d])
-    .join('、')
-)
-
 // 生成时间列
 const generateTimeColumns = () => {
   const times: string[] = []
@@ -330,7 +344,12 @@ const generateTimeColumns = () => {
 }
 const timeColumns = computed(() => generateTimeColumns())
 
-// 计算预览数量
+// 已排序的选中星期
+const sortedSelectedDays = computed(() =>
+  [...selectedDays.value].sort((a, b) => Number(a) - Number(b))
+)
+
+// 计算预览数量（所有天合计）
 const previewCount = computed(() => {
   if (!form.start_date || !form.end_date || selectedDays.value.length === 0) return 0
 
@@ -341,7 +360,6 @@ const previewCount = computed(() => {
 
   if (start > end) return 0
 
-  // 将项目 day_of_week（1=周一...7=周日）转为 JS getDay()（0=周日...6=周六）
   const targetJsDays = selectedDays.value.map(d => {
     const n = parseInt(d)
     return n === 7 ? 0 : n
@@ -356,7 +374,7 @@ const previewCount = computed(() => {
   return count
 })
 
-// 选择器回调
+// 课程选择
 const selectCourse = (course: Course) => {
   form.course_id = course.id
   selectedCourse.value = course
@@ -364,44 +382,69 @@ const selectCourse = (course: Course) => {
   const end = computeEndDate(form.start_date)
   if (end) form.end_date = end
 }
-const selectTeacher = (teacher: TeacherInfo) => {
-  form.teacher_id = teacher.id
-  selectedTeacher.value = teacher
-  showTeacherPicker.value = false
-}
-const selectClassroom = (classroom: ClassroomInfo) => {
-  form.classroom_id = classroom.id
-  selectedClassroom.value = classroom
-  if (!form.max_students) form.max_students = String(classroom.capacity)
-  showClassroomPicker.value = false
-}
 
-// 按天独立配置时间
-const sortedSelectedDays = computed(() =>
-  [...selectedDays.value].sort((a, b) => Number(a) - Number(b))
-)
-
-// 切换星期选中
+// 切换星期选中（新增时初始化完整 DayConfig）
 const toggleDay = (value: string) => {
   const idx = selectedDays.value.indexOf(value)
   if (idx >= 0) {
     selectedDays.value.splice(idx, 1)
-    const updated = { ...dayTimeMap.value }
+    const updated = { ...dayConfigMap.value }
     delete updated[value]
-    dayTimeMap.value = updated
+    dayConfigMap.value = updated
   } else {
     selectedDays.value.push(value)
-    if (!dayTimeMap.value[value]) {
-      dayTimeMap.value = { ...dayTimeMap.value, [value]: { start_time: '', end_time: '' } }
+    if (!dayConfigMap.value[value]) {
+      dayConfigMap.value = {
+        ...dayConfigMap.value,
+        [value]: {
+          start_time: '', end_time: '',
+          teacher_id: '', classroom_id: '',
+          teacherName: '', classroomName: '', classroomCapacity: 0,
+        },
+      }
     }
   }
 }
 
-// 设置某天的时间
-const setDayTime = (day: string, field: 'start_time' | 'end_time', value: string) => {
-  if (dayTimeMap.value[day]) {
-    dayTimeMap.value[day][field] = value
+// 设置某天的时间字段
+const setDayConfig = (day: string, field: 'start_time' | 'end_time', value: string) => {
+  if (dayConfigMap.value[day]) {
+    dayConfigMap.value[day][field] = value
   }
+}
+
+// 打开某天的教师 / 教室选择弹窗
+const openTeacherPicker = (day: string) => {
+  activeDayForTeacher.value = day
+  showTeacherPicker.value = true
+}
+const openClassroomPicker = (day: string) => {
+  activeDayForClassroom.value = day
+  showClassroomPicker.value = true
+}
+
+// 选择教师（写入对应天的配置）
+const selectTeacher = (teacher: TeacherInfo) => {
+  const day = activeDayForTeacher.value
+  if (day && dayConfigMap.value[day]) {
+    dayConfigMap.value[day].teacher_id = teacher.id
+    dayConfigMap.value[day].teacherName = teacher.name
+  }
+  showTeacherPicker.value = false
+  activeDayForTeacher.value = ''
+}
+
+// 选择教室（写入对应天的配置）
+const selectClassroom = (classroom: ClassroomInfo) => {
+  const day = activeDayForClassroom.value
+  if (day && dayConfigMap.value[day]) {
+    dayConfigMap.value[day].classroom_id = classroom.id
+    dayConfigMap.value[day].classroomName = classroom.name
+    dayConfigMap.value[day].classroomCapacity = classroom.capacity
+    if (!form.max_students) form.max_students = String(classroom.capacity)
+  }
+  showClassroomPicker.value = false
+  activeDayForClassroom.value = ''
 }
 
 // 结束日期自动计算 Hook
@@ -454,17 +497,18 @@ const loadOptions = async () => {
   }
 }
 
-// 表单校验
+// 表单校验（每天独立校验教师、教室、时间）
 const validateForm = (): boolean => {
   if (!form.course_id) { uni.showToast({ title: '请选择课程', icon: 'none' }); return false }
-  if (!form.teacher_id) { uni.showToast({ title: '请选择教师', icon: 'none' }); return false }
-  if (!form.classroom_id) { uni.showToast({ title: '请选择教室', icon: 'none' }); return false }
   if (selectedDays.value.length === 0) { uni.showToast({ title: '请选择上课日期', icon: 'none' }); return false }
   for (const day of selectedDays.value) {
-    const cfg = dayTimeMap.value[day]
-    if (!cfg?.start_time) { uni.showToast({ title: `请设置${weekLabels[day]}的开始时间`, icon: 'none' }); return false }
-    if (!cfg?.end_time) { uni.showToast({ title: `请设置${weekLabels[day]}的结束时间`, icon: 'none' }); return false }
-    if (cfg.start_time >= cfg.end_time) { uni.showToast({ title: `${weekLabels[day]}开始时间必须早于结束时间`, icon: 'none' }); return false }
+    const cfg = dayConfigMap.value[day]
+    const label = weekLabels[day]
+    if (!cfg?.start_time) { uni.showToast({ title: `请设置${label}的开始时间`, icon: 'none' }); return false }
+    if (!cfg?.end_time) { uni.showToast({ title: `请设置${label}的结束时间`, icon: 'none' }); return false }
+    if (cfg.start_time >= cfg.end_time) { uni.showToast({ title: `${label}开始时间必须早于结束时间`, icon: 'none' }); return false }
+    if (!cfg?.teacher_id) { uni.showToast({ title: `请选择${label}的教师`, icon: 'none' }); return false }
+    if (!cfg?.classroom_id) { uni.showToast({ title: `请选择${label}的教室`, icon: 'none' }); return false }
   }
   if (!form.start_date) { uni.showToast({ title: '请选择开始日期', icon: 'none' }); return false }
   if (!form.end_date) { uni.showToast({ title: '请选择结束日期', icon: 'none' }); return false }
@@ -475,23 +519,23 @@ const validateForm = (): boolean => {
   return true
 }
 
-// 提交（白名单方式构造字段，符合 AGENTS.md 规则 #26）
+// 提交（每天独立 teacher_id / classroom_id，白名单构造字段）
 const handleSubmit = async () => {
   if (!validateForm()) return
 
   try {
     uni.showLoading({ title: `正在创建${previewCount.value}节课...`, mask: true })
 
-    // 每个选中的星期独立发一次 batch 请求（各有自己的 start_time/end_time）
     let totalCreated = 0
     let totalSkipped = 0
     const sortedDays = [...selectedDays.value].sort((a, b) => Number(a) - Number(b))
+
     for (const day of sortedDays) {
-      const cfg = dayTimeMap.value[day]
+      const cfg = dayConfigMap.value[day]
       const submitData = {
         course_id: form.course_id,
-        teacher_id: form.teacher_id,
-        classroom_id: form.classroom_id,
+        teacher_id: cfg.teacher_id,
+        classroom_id: cfg.classroom_id,
         start_time: cfg.start_time,
         end_time: cfg.end_time,
         days_of_week: [day],
@@ -515,9 +559,7 @@ const handleSubmit = async () => {
       title: '批量排课完成',
       content: message,
       showCancel: false,
-      success: () => {
-        uni.navigateBack()
-      },
+      success: () => { uni.navigateBack() },
     })
   } catch (error: any) {
     uni.hideLoading()
@@ -533,7 +575,6 @@ onLoad(async (options) => {
   await loadInstitutionId()
   await loadOptions()
 
-  // 如果携带了 courseId 参数，自动选中
   if (options?.courseId) {
     const course = courseList.value.find(c => c.id === options.courseId)
     if (course) selectCourse(course)
@@ -747,7 +788,101 @@ onLoad(async (options) => {
   }
 }
 
-// 每天独立时间配置样式
+// 每天独立配置卡片
+.day-config-list {
+  display: flex;
+  flex-direction: column;
+  gap: 24rpx;
+}
+
+.day-config-card {
+  border: 1rpx solid #e5e6eb;
+  border-radius: 16rpx;
+  overflow: hidden;
+}
+
+.day-config-header {
+  background-color: rgba($uni-color-primary, 0.06);
+  padding: 16rpx 24rpx;
+  border-bottom: 1rpx solid rgba($uni-color-primary, 0.12);
+}
+
+.day-config-day {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: $uni-color-primary;
+}
+
+.day-config-row {
+  display: flex;
+  align-items: center;
+  padding: 20rpx 24rpx;
+  border-bottom: 1rpx solid #f2f3f5;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  // 时间行：内部 day-time-pickers 接管布局
+  .day-time-pickers {
+    flex: 1;
+    margin-left: 16rpx;
+  }
+}
+
+.day-config-label {
+  font-size: 26rpx;
+  color: #4e5969;
+  width: 56rpx;
+  flex-shrink: 0;
+}
+
+.day-config-selector {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-left: 16rpx;
+}
+
+.day-config-value-text {
+  font-size: 28rpx;
+  color: #1d2129;
+  flex: 1;
+}
+
+.day-config-cap {
+  font-size: 24rpx;
+  color: #86909c;
+}
+
+.day-config-placeholder {
+  font-size: 28rpx;
+  color: #c9cdd4;
+  flex: 1;
+}
+
+.day-config-arrow {
+  font-size: 22rpx;
+  color: #c9cdd4;
+  flex-shrink: 0;
+}
+
+// 预览列（时间 + 教师·教室 副文字）
+.preview-col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6rpx;
+}
+
+.preview-sub {
+  font-size: 24rpx;
+  color: #86909c;
+  font-weight: 400;
+}
+
+// 每天独立时间配置样式（保留，day-time-pickers 仍在新卡片中复用）
 .day-time-empty {
   padding: 20rpx 0;
   font-size: 26rpx;
@@ -966,6 +1101,11 @@ onLoad(async (options) => {
     padding-top: 24rpx;
     border-top: 1rpx dashed #e5e6eb;
   }
+
+  &.note-row {
+    align-items: flex-start;
+    padding: 8rpx 0;
+  }
 }
 
 .preview-label {
@@ -982,6 +1122,13 @@ onLoad(async (options) => {
     font-size: 36rpx;
     font-weight: bold;
     color: $uni-color-primary;
+  }
+
+  &.note {
+    font-size: 26rpx;
+    font-weight: 400;
+    color: #86909c;
+    text-align: right;
   }
 }
 

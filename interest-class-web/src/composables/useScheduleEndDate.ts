@@ -18,17 +18,29 @@ export function useScheduleEndDate(
   selectedDays: Ref<string[]>,
 ) {
   /**
-   * 课程总课时标签，如 "共20节课"
+   * 课程总课时标签
+   * - 单天：如 "共12节课"
+   * - 多天：如 "共24节（每天12节）"
    */
   const totalLessonsLabel = computed(() => {
     const total = selectedCourse.value?.skus?.[0]?.total_lessons
-    return total ? `共${total}节课` : ''
+    if (!total) return ''
+    const daysCount = selectedDays.value.length
+    if (daysCount > 1) {
+      return `共${total * daysCount}节（每天${total}节）`
+    }
+    return `共${total}节课`
   })
 
   /**
    * 根据课程总课时 + 每周上课天数 + 开始日期，计算结束日期。
-   * 返回最后一节课所在日期的 YYYY-MM-DD 字符串；
-   * 若数据不足则返回 ""。
+   *
+   * 新逻辑：每个选中的星期**独立**排满 total_lessons 节，
+   * 结束日期 = 各星期第 total_lessons 次出现中最晚的那一天。
+   *
+   * 例：12 节课 + 选择周二和周四
+   *   → 周二独立排 12 节，周四独立排 12 节
+   *   → 结束日期取两者的第 12 次中较晚的日期
    *
    * @param startDate - "YYYY-MM-DD" 格式的开始日期
    */
@@ -39,30 +51,38 @@ export function useScheduleEndDate(
     if (!totalLessons || !daysCount || !startDate) return ''
 
     // 将 day_of_week（1=周一…7=周日）转为 JS getDay()（0=周日…6=周六）
-    const targetJsDays = selectedDays.value.map((d) => {
+    const toJsDay = (d: string): number => {
       const n = parseInt(d)
       return n === 7 ? 0 : n
-    })
+    }
 
     const [y, m, d] = startDate.split('-').map(Number)
-    const cursor = new Date(y, m - 1, d)
-    let count = 0
-    let lastDate = new Date(cursor)
+    const startDateObj = new Date(y, m - 1, d)
+    let latestDate = new Date(startDateObj)
 
-    // 从开始日期逐天迭代，直到凑满 total_lessons
-    while (count < totalLessons) {
-      if (targetJsDays.includes(cursor.getDay())) {
-        count++
-        lastDate = new Date(cursor)
-      }
-      if (count < totalLessons) {
+    // 每个选中的星期独立计算第 totalLessons 次出现的日期
+    for (const dayStr of selectedDays.value) {
+      const targetJsDay = toJsDay(dayStr)
+      const cursor = new Date(startDateObj)
+      let count = 0
+
+      while (count < totalLessons) {
+        if (cursor.getDay() === targetJsDay) {
+          count++
+          if (count === totalLessons) break
+        }
         cursor.setDate(cursor.getDate() + 1)
+      }
+
+      // cursor 此时停在该星期第 totalLessons 次出现的日期
+      if (cursor > latestDate) {
+        latestDate = new Date(cursor)
       }
     }
 
-    const yy = lastDate.getFullYear()
-    const mm = String(lastDate.getMonth() + 1).padStart(2, '0')
-    const dd = String(lastDate.getDate()).padStart(2, '0')
+    const yy = latestDate.getFullYear()
+    const mm = String(latestDate.getMonth() + 1).padStart(2, '0')
+    const dd = String(latestDate.getDate()).padStart(2, '0')
     return `${yy}-${mm}-${dd}`
   }
 

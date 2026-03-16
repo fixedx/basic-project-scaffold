@@ -244,8 +244,7 @@ export function useBookingForm() {
 
   // --- 交互 ---
   const selectSchedule = (id: string) => {
-    const idx = selectedScheduleIds.value.indexOf(id)
-    idx > -1 ? selectedScheduleIds.value.splice(idx, 1) : selectedScheduleIds.value.push(id)
+    selectedScheduleIds.value = selectedScheduleIds.value[0] === id ? [] : [id]
   }
 
   const showAgreement = () => {
@@ -267,7 +266,7 @@ export function useBookingForm() {
 
   const handleSubmit = async () => {
     if (!validateForm()) return
-    if (selectedScheduleIds.value.length === 0) { showErrorToast('请选择至少一个上课时段'); return }
+    if (selectedScheduleIds.value.length === 0) { showErrorToast('请选择上课时间'); return }
     submitting.value = true
     try {
       const orderId = await orderApi.create({
