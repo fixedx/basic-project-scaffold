@@ -207,6 +207,46 @@ if (result.valid === false && result.message?.includes('自己')) {
 
 ---
 
+### 错误 56: 邀请码 available 接口在白名单，邀请码选择页会出现自己的邀请码 ⚠️⚠️⚠️
+
+**错误现象**：
+```typescript
+// auth.middleware.ts 白名单
+{ pattern: /^\/api\/invite\/available\/?$/, methods: ['GET'] },
+
+// invite.service.ts getAvailableInviteCodes()
+const currentUserId = this.userContextService.getCurrentUserIdOrNull();
+const inviteCodes = await this.userInviteCodeRepository.findAllActiveInviteCodes(
+  currentUserId || undefined,
+);
+// 因白名单跳过 JWT 解析，currentUserId 始终为 null，
+// repository 无法排除当前用户的邀请码，家长在选择页仍能选到自己的邀请码
+```
+
+**根本原因**：
+- `GET /invite/available` 被放在 Auth 白名单，中间件直接 `next()`，不会解析 JWT
+- `getAvailableInviteCodes()` 虽然已经有 `excludeUserId` 过滤参数，但 `currentUserId` 取不到，过滤条件失效
+- 结果是邀请码选择页列表里仍会出现当前登录用户自己的邀请码
+
+**正确写法**：
+```typescript
+// ❌ 从白名单移除
+// { pattern: /^\/api\/invite\/available\/?$/, methods: ['GET'] },
+
+// ✅ 保持 service 里的排除逻辑生效
+const currentUserId = this.userContextService.getCurrentUserIdOrNull();
+const inviteCodes = await this.userInviteCodeRepository.findAllActiveInviteCodes(
+  currentUserId || undefined,
+);
+```
+
+**规范**：
+- **`available` 也必须从 Auth 白名单移除**：邀请码选择页发生在下单流程中，用户已登录，无需公开
+- **凡是依赖 `currentUserId` 做过滤的接口，都不能放进 Auth 白名单**
+- **邀请码选择页的数据源必须从后端源头排除自己的邀请码，不能只靠前端隐藏**
+
+---
+
 ### 错误 52: 下单后修改邀请码让利比例，支付确认/回调仍回退到当前 share_ratio ⚠️⚠️⚠️
 
 **错误现象**：

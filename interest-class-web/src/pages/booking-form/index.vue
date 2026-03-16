@@ -72,12 +72,12 @@
 
       <!-- 优惠与抵扣（体验课/试听类SKU不展示） -->
       <DiscountSection
-        v-if="course.type !== 'trial' && !isTrialSku"
+        v-if="canUseInviteCode"
         v-model:model-invite-code="inviteCode"
         v-model:model-use-balance="useBalance"
         :invite-validated="inviteValidated"
         :validating-invite="validatingInvite"
-        :invite-discount="inviteDiscount"
+        :invite-discount="displayedInviteDiscount"
         :user-balance="userBalance"
         :balance-deduct-amount="balanceDeductAmount"
         :format-price="formatPrice"
@@ -93,7 +93,7 @@
         :is-trial-sku="isTrialSku"
         :course="course"
         :display-price="displayPrice"
-        :invite-discount="inviteDiscount"
+        :invite-discount="displayedInviteDiscount"
         :model-use-balance="useBalance"
         :balance-deduct-amount="balanceDeductAmount"
         :online-pay-base="onlinePayBase"
@@ -187,7 +187,7 @@ const {
   form,
   isTrialSku, onlinePayBase, balanceDeductAmount, totalDiscount,
   onlinePayAmount, offlinePayAmount, commissionAmount, finalPrice,
-  inviteDiscount, userBalance, skuCashbackAmount, skuDiscountAmount, displayPrice,
+  inviteDiscount, displayedInviteDiscount, canUseInviteCode, userBalance, skuCashbackAmount, skuDiscountAmount, displayPrice,
   formatPrice, getDayOfWeekLabel, formatTimeRange,
   handleValidateInvite, goSelectInviteCode, clearInviteCode,
   selectSchedule, handleSubmit, handleBack, showAgreement, goToAddChild,

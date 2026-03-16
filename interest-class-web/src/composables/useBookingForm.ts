@@ -64,6 +64,7 @@ export function useBookingForm() {
   const inviteValidated = ref(false)
   const validatingInvite = ref(false)
   const useBalance = ref(false)
+  const selectedInviteDiscount = ref(0)
 
   // --- 金额（由后端统一计算） ---
   const amountResult = ref<OrderAmountResult>({
@@ -103,6 +104,12 @@ export function useBookingForm() {
   const commissionAmount = computed(() => amountResult.value.commission_amount)
   const finalPrice = computed(() => amountResult.value.paid_amount)
   const inviteDiscount = computed(() => amountResult.value.invite_discount)
+  const displayedInviteDiscount = computed(
+    () => Number(amountResult.value.invite_discount) || Number(selectedInviteDiscount.value) || 0,
+  )
+  const canUseInviteCode = computed(
+    () => !isTrialSku.value && !!course.value?.cashback_enabled,
+  )
   const userBalance = computed(() => amountResult.value.user_balance)
   const skuCashbackAmount = computed(() => amountResult.value.max_cashback_amount)
   const skuDiscountAmount = computed(() => amountResult.value.max_discount_amount)
@@ -139,7 +146,7 @@ export function useBookingForm() {
         course_id: courseId.value,
         sku_id: skuId.value,
         quantity: 1,
-        invite_code: (!isTrialSku.value && inviteValidated.value) ? inviteCode.value.trim() : undefined,
+        invite_code: (canUseInviteCode.value && inviteValidated.value) ? inviteCode.value.trim() : undefined,
         use_balance: useBalance.value,
       })
     } catch (e) {
@@ -156,6 +163,7 @@ export function useBookingForm() {
 
   // --- 邀请码 ---
   const handleValidateInvite = async () => {
+    if (!canUseInviteCode.value) { showErrorToast('该课程未开启返现，暂不可使用邀请码'); return }
     if (!inviteCode.value.trim()) { showErrorToast('请输入邀请码'); return }
     if (!courseId.value) { showErrorToast('缺少课程信息'); return }
     validatingInvite.value = true
@@ -164,10 +172,12 @@ export function useBookingForm() {
       inviteValidated.value = true
       showSuccessToast('邀请码验证成功')
       await recalculateAmount()
+      selectedInviteDiscount.value = Number(amountResult.value.invite_discount) || 0
     } catch (e: any) {
       showErrorToast(e.message || '邀请码无效')
       inviteCode.value = ''
       inviteValidated.value = false
+      selectedInviteDiscount.value = 0
       await recalculateAmount()
     } finally {
       validatingInvite.value = false
@@ -175,14 +185,19 @@ export function useBookingForm() {
   }
 
   const goSelectInviteCode = () => {
+    if (!canUseInviteCode.value) { showErrorToast('该课程未开启返现，暂无可用邀请码'); return }
     if (!selectedSku.value || !course.value) { showErrorToast('请先选择课程规格'); return }
     uni.navigateTo({
       url: `/pages/invite-code-select/index?courseId=${courseId.value}&courseName=${encodeURIComponent(course.value.title)}&orderAmount=${Number(selectedSku.value.total_price)}&cashbackRatio=${Number(course.value.cashback_ratio) || 10}`,
       events: {
-        selectInviteCode: async (data: { inviteCode: string }) => {
+        selectInviteCode: async (data: { inviteCode: string; discountAmount?: number }) => {
           inviteCode.value = data.inviteCode
           inviteValidated.value = true
+          selectedInviteDiscount.value = Number(data.discountAmount) || 0
           await recalculateAmount()
+          if (Number(amountResult.value.invite_discount) > 0) {
+            selectedInviteDiscount.value = Number(amountResult.value.invite_discount) || 0
+          }
         },
       },
     })
@@ -191,6 +206,7 @@ export function useBookingForm() {
   const clearInviteCode = async () => {
     inviteCode.value = ''
     inviteValidated.value = false
+    selectedInviteDiscount.value = 0
     await recalculateAmount()
   }
 
@@ -322,7 +338,7 @@ export function useBookingForm() {
     // 计算金额
     isTrialSku, onlinePayBase, balanceDeductAmount, totalDiscount,
     onlinePayAmount, offlinePayAmount, commissionAmount, finalPrice,
-    inviteDiscount, userBalance, skuCashbackAmount, skuDiscountAmount, displayPrice,
+    inviteDiscount, displayedInviteDiscount, canUseInviteCode, userBalance, skuCashbackAmount, skuDiscountAmount, displayPrice,
     // 工具
     formatPrice, getDayOfWeekLabel, formatTimeRange,
     // 方法

@@ -67,8 +67,8 @@ const AUTH_WHITELIST_RULES: Array<{ pattern: RegExp; methods?: string[] }> = [
   { pattern: /^\/api\/payment\/status\/\d+\/?$/, methods: ['GET'] }, // 查询支付状态（公开接口）
   
   // ==================== 邀友让利相关 ====================
-  // ⚠️ validate 和 calculate-discount 需要登录（下单时用户已登录），以便检查不能使用自己的邀请码
-  { pattern: /^\/api\/invite\/available\/?$/, methods: ['GET'] }, // 获取可用邀请码列表（选择邀请码时调用）
+  // ⚠️ available / validate / calculate-discount 都需要登录（下单时用户已登录），
+  // 否则中间件跳过 JWT 解析后，无法识别 currentUserId，自我邀请过滤会失效
   
   // ==================== 公告相关（公开接口） ====================
   { pattern: /^\/api\/announcement\/?$/, methods: ['GET'] },         // 获取公告列表（公开浏览）
