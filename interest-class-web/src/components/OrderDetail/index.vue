@@ -191,7 +191,7 @@ const statusConfig: Record<string, { label: string; desc: string; class: string 
   confirmed: { label: '已确认', desc: '订单已生效', class: 'status-confirmed' },
   refund_pending: { label: '退款审批中', desc: '等待机构审批退款', class: 'status-refunding' },
   refunding: { label: '退款中', desc: '正在处理退款', class: 'status-refunding' },
-  refund_rejected: { label: '退款被拒绝', desc: '机构拒绝了您的退款申请', class: 'status-refund-rejected' },
+  refund_rejected: { label: '退款被拒绝', desc: '退款申请被拒，订单继续履约', class: 'status-refund-rejected' },
   refunded: { label: '退款成功', desc: '退款已完成', class: 'status-refunded' },
   cancelled: { label: '已取消', desc: '订单已取消', class: 'status-cancelled' },
   completed: { label: '已完成', desc: '感谢您的信任', class: 'status-completed' },
@@ -204,7 +204,7 @@ const getStatusClass = (status: string) => statusConfig[status]?.class || ''
 // 是否显示进度条（确认或完成状态，且有课时信息）
 const showProgress = computed(() => {
   if (!props.order) return false
-  const validStatus = ['confirmed', 'completed'].includes(props.order.status)
+  const validStatus = ['confirmed', 'refund_rejected', 'completed'].includes(props.order.status)
   const hasLessons = (props.order.total_lessons || 0) > 0
   return validStatus && hasLessons
 })

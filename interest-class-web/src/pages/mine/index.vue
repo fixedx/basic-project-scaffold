@@ -280,12 +280,12 @@ const loadInviteCode = async () => {
 }
 
 /**
- * 获取课时资产（已确认订单的剩余课时总和）
+ * 获取课时资产（进行中订单的剩余课时总和，兼容历史 refund_rejected）
  */
 const loadCourseHours = async () => {
   if (!getToken()) return
   try {
-    const res = await orderApi.getMyList({ page: 1, pageSize: 100, status: 'confirmed' })
+    const res = await orderApi.getMyList({ page: 1, pageSize: 100, status: 'confirmed,refund_rejected' })
     const orders = res?.data || []
     let remaining = 0
     for (const order of orders) {
@@ -320,7 +320,7 @@ const loadOrderCounts = async () => {
     const [pending, pendingConfirm, confirmed, refunding] = await Promise.all([
       orderApi.getMyList({ page: 1, pageSize: 1, status: 'pending' }),
       orderApi.getMyList({ page: 1, pageSize: 1, status: 'pending_confirm' }),
-      orderApi.getMyList({ page: 1, pageSize: 1, status: 'confirmed' }),
+      orderApi.getMyList({ page: 1, pageSize: 1, status: 'confirmed,refund_rejected' }),
       orderApi.getMyList({ page: 1, pageSize: 1, status: 'refund_pending,refunding' }),
     ])
     orderCount.value = {

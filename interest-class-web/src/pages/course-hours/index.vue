@@ -127,7 +127,7 @@ const loadOrders = async () => {
   if (!getToken()) return
   loading.value = true
   try {
-    const res = await orderApi.getMyList({ page: 1, pageSize: 100, status: 'confirmed' })
+    const res = await orderApi.getMyList({ page: 1, pageSize: 100, status: 'confirmed,refund_rejected' })
     orders.value = (res?.data || []).filter(
       (o: Order) => (o.total_lessons || 0) > 0,
     )

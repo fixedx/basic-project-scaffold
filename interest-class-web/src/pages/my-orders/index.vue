@@ -59,9 +59,9 @@ const statusTabs = [
   { label: '全部', value: '' },
   { label: '待支付', value: 'pending' },
   { label: '待确认', value: 'pending_confirm' },
-  { label: '已确认', value: 'confirmed' },
+  { label: '已确认', value: 'confirmed,refund_rejected' },
   { label: '退款中', value: 'refund_pending,refunding' },
-  { label: '已完成', value: 'completed,refunded,refund_rejected,cancelled' },
+  { label: '已完成', value: 'completed,refunded,cancelled' },
 ]
 
 const currentStatus = ref('')

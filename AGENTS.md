@@ -247,6 +247,126 @@ const inviteCodes = await this.userInviteCodeRepository.findAllActiveInviteCodes
 
 ---
 
+### 错误 57: 课程表单未传 `cashback_enabled`，导致配置了返现规格但课程营销仍关闭 ⚠️⚠️⚠️
+
+**错误现象**：
+```typescript
+// 机构端课程表单只提交 SKU 的返现配置
+skus: [{
+  cashback_type: 'fixed',
+  cashback_value: 50,
+}]
+
+// ❌ 错误：后端仍直接使用 dto.cashback_enabled || false
+const course = this.courseRepository.create({
+  cashback_enabled: dto.cashback_enabled || false,
+});
+
+// 结果：课程详情里 cashback_enabled=false，
+// 订单 calculate / invite validate 都判定“课程未开启返现功能”
+```
+
+**根本原因**：
+- 机构端课程创建/编辑表单没有单独的“开启返现”开关字段
+- 但后端创建/更新课程时仍依赖 `dto.cashback_enabled`
+- 当前端未传该字段时，即使 SKU 已配置固定返现/比例返现，课程主表仍被写成 `cashback_enabled=false`
+
+**正确写法**：
+```typescript
+private resolveCashbackEnabled(courseType: string, skus?: Array<{ type?: string; cashback_type?: string; cashback_value?: number }>): boolean {
+  if (courseType !== 'standard' || !skus || skus.length === 0) {
+    return false;
+  }
+
+  return skus.some((sku) => {
+    if (sku.type === 'trial') {
+      return false;
+    }
+    const cashbackType = sku.cashback_type || 'none';
+    const cashbackValue = Number(sku.cashback_value) || 0;
+    return cashbackValue > 0 && ['fixed', 'percentage'].includes(cashbackType);
+  });
+}
+
+const resolvedCashbackEnabled = this.resolveCashbackEnabled(dto.type, dto.skus);
+
+const course = this.courseRepository.create({
+  cashback_enabled: resolvedCashbackEnabled,
+  cashback_ratio: dto.cashback_ratio || 10,
+});
+```
+
+**规范**：
+- **课程主表 `cashback_enabled` 必须由后端根据 SKU 返现配置自动推导**，不能依赖前端单独传开关
+- **正式课**下，只要任一非试听 SKU 配置了有效返现（`fixed/percentage` 且 `cashback_value > 0`），就自动开启返现
+- **试听课**或所有 SKU 都为 `none/0` 时，必须自动关闭返现
+- 必须补回归测试：创建固定返现课程 / 百分比返现课程后，`cashback_enabled=true`；试听课保持 `false`
+
+---
+
+### 错误 58: 退款被拒绝后订单进入 `refund_rejected`，破坏继续履约语义 ⚠️⚠️⚠️
+
+**错误现象**：
+```typescript
+// ❌ 错误：机构拒绝退款后，把订单状态写成 refund_rejected
+UPDATE orders
+SET status = 'refund_rejected'
+WHERE id = $1 AND status = 'refund_pending'
+
+// 结果：前端常把它归到历史/完成态，用户看起来像“订单结束了”
+// 但业务上退款被拒绝后，课程仍应继续上课/履约
+```
+
+**根本原因**：
+- `refund_rejected` 是一个“退款审核结果”状态，不适合作为订单主状态长期停留
+- 订单主状态应表达是否仍在履约；退款被拒绝后，订单实际上仍是“已确认、继续履约”
+- 将其停留在 `refund_rejected` 会让前端列表分组、按钮显隐、订单生命周期判断变得混乱
+
+**正确写法**：
+```typescript
+// ✅ 正确：拒绝退款后回退到 confirmed
+UPDATE orders
+SET status = 'confirmed', refund_reason = $1, updated_at = NOW()
+WHERE id = $2 AND status = 'refund_pending' AND is_delete = false
+```
+
+**规范**：
+- **退款被拒绝后，订单状态必须回退到 `confirmed`，不能停留在 `refund_rejected`**
+- `refund_pending` / `refunding` 用于退款流程中间态；**拒绝后应恢复履约主状态**
+- 若需展示拒绝原因，应通过退款原因/审核备注字段承载，不要靠订单主状态表达
+- 必须补回归测试：退款申请 → 机构拒绝 → 订单状态为 `confirmed`
+
+---
+
+### 错误 59: 前端把 `refund_rejected` 归到“已完成”，导致旧数据仍显示为终态 ⚠️⚠️
+
+**错误现象**：
+```typescript
+// ❌ 错误：列表页把 refund_rejected 放在“已完成”分组
+{ label: '已确认', value: 'confirmed' }
+{ label: '已完成', value: 'completed,refunded,refund_rejected,cancelled' }
+
+// 结果：即使后端已修复为拒绝退款后回退 confirmed，
+// 历史旧数据仍会被前端错误归类到“已完成”，用户感知仍像订单结束了
+```
+
+**正确写法**：
+```typescript
+// ✅ 正确：历史 refund_rejected 兼容归到“已确认/进行中”分组
+{ label: '已确认', value: 'confirmed,refund_rejected' }
+{ label: '已完成', value: 'completed,refunded,cancelled' }
+
+// ✅ 详情/卡片中的课时进度也把 refund_rejected 当作继续履约态兼容显示
+const validStatus = ['confirmed', 'refund_rejected', 'completed']
+```
+
+**规范**：
+- 当前端仍需兼容历史 `refund_rejected` 数据时，**只能把它当作“继续履约中的兼容态”处理**，不能归到“已完成”/终态分组
+- 订单列表、统计卡片、筛选 Tab、课时进度显示都要同步调整，避免同一状态在不同页面语义冲突
+- 新代码不能再把 `refund_rejected` 当作订单主生命周期终态使用
+
+---
+
 ### 错误 52: 下单后修改邀请码让利比例，支付确认/回调仍回退到当前 share_ratio ⚠️⚠️⚠️
 
 **错误现象**：

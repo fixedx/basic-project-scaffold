@@ -220,7 +220,7 @@ const getOrderStatusText = (status: string) => {
     completed: '已完成',
     refund_pending: '退款审批中',
     refunding: '退款中',
-    refund_rejected: '退款被拒',
+    refund_rejected: '进行中（退款被拒）',
     refunded: '已退款',
     cancelled: '已取消',
   }

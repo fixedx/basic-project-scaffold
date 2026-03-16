@@ -45,11 +45,11 @@
             <text class="data-num">{{ stats.periodOrders || 0 }}</text>
             <text class="data-label">{{ periodLabel }}订单</text>
           </view>
-          <view class="data-cell" @click="goToOrders('confirmed')">
+          <view class="data-cell" @click="goToOrders('confirmed,refund_rejected')">
             <text class="data-num">{{ confirmedCount }}</text>
             <text class="data-label">已确认</text>
           </view>
-          <view class="data-cell" @click="goToOrders('completed,refunded,refund_rejected,cancelled')">
+          <view class="data-cell" @click="goToOrders('completed,refunded,cancelled')">
             <text class="data-num">{{ completedCount }}</text>
             <text class="data-label">已完成</text>
           </view>
@@ -198,10 +198,10 @@ const statusMap: Record<string, string> = {
 const getStatusLabel = (status: string) => statusMap[status] || status
 
 const getStatusClass = (status: string) => {
-  if (['confirmed'].includes(status)) return 'status-active'
+  if (['confirmed', 'refund_rejected'].includes(status)) return 'status-active'
   if (['completed'].includes(status)) return 'status-success'
   if (['refund_pending', 'refunding'].includes(status)) return 'status-warning'
-  if (['refunded', 'cancelled', 'refund_rejected'].includes(status)) return 'status-grey'
+  if (['refunded', 'cancelled'].includes(status)) return 'status-grey'
   return 'status-pending'
 }
 
@@ -229,8 +229,8 @@ const loadData = async () => {
 const loadStatusCounts = async () => {
   try {
     const [confirmedRes, completedRes, refundingRes] = await Promise.all([
-      adminApi.getOrders({ page: 1, pageSize: 1, status: 'confirmed' }),
-      adminApi.getOrders({ page: 1, pageSize: 1, status: 'completed,refunded,refund_rejected,cancelled' }),
+      adminApi.getOrders({ page: 1, pageSize: 1, status: 'confirmed,refund_rejected' }),
+      adminApi.getOrders({ page: 1, pageSize: 1, status: 'completed,refunded,cancelled' }),
       adminApi.getOrders({ page: 1, pageSize: 1, status: 'refund_pending,refunding' }),
     ])
     confirmedCount.value = (confirmedRes as any)?.total || 0

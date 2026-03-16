@@ -169,6 +169,34 @@ export class CourseService {
   }
 
   /**
+   * 根据课程类型和 SKU 返现配置自动推导是否开启返现营销
+   * 规则：正式课下，只要任一非试听 SKU 配置了有效返现（fixed/percentage 且 value > 0），
+   * 就自动视为 cashback_enabled = true；否则为 false。
+   */
+  private resolveCashbackEnabled(
+    courseType: string,
+    skus?: Array<{
+      type?: string;
+      cashback_type?: string;
+      cashback_value?: number;
+    }>,
+  ): boolean {
+    if (courseType !== 'standard' || !skus || skus.length === 0) {
+      return false;
+    }
+
+    return skus.some((sku) => {
+      if (sku.type === 'trial') {
+        return false;
+      }
+
+      const cashbackType = sku.cashback_type || 'none';
+      const cashbackValue = Number(sku.cashback_value) || 0;
+      return cashbackValue > 0 && ['fixed', 'percentage'].includes(cashbackType);
+    });
+  }
+
+  /**
    * 创建课程
    */
   @Transactional()
@@ -186,6 +214,10 @@ export class CourseService {
 
     // 业务校验
     this.validateCourseDto(dto);
+    const resolvedCashbackEnabled = this.resolveCashbackEnabled(
+      dto.type,
+      dto.skus,
+    );
 
     // 创建课程主表
     const course = this.courseRepository.create({
@@ -201,7 +233,7 @@ export class CourseService {
       lesson_duration: dto.lesson_duration,
       type: dto.type,
       is_online: dto.is_online || false,
-      cashback_enabled: dto.cashback_enabled || false,
+      cashback_enabled: resolvedCashbackEnabled,
       cashback_ratio: dto.cashback_ratio || 10,
     });
 
@@ -273,6 +305,10 @@ export class CourseService {
       this.validateCourseDto({ ...dto, type: course.type } as CreateCourseDto);
     }
 
+    const resolvedCashbackEnabled = dto.skus
+      ? this.resolveCashbackEnabled(course.type, dto.skus)
+      : course.cashback_enabled;
+
     // 更新课程基本信息
     Object.assign(course, {
       title: dto.title ?? course.title,
@@ -285,7 +321,7 @@ export class CourseService {
       max_age: dto.max_age ?? course.max_age,
       lesson_duration: dto.lesson_duration ?? course.lesson_duration,
       is_online: dto.is_online ?? course.is_online,
-      cashback_enabled: dto.cashback_enabled ?? course.cashback_enabled,
+      cashback_enabled: resolvedCashbackEnabled,
       cashback_ratio: dto.cashback_ratio ?? course.cashback_ratio,
     });
 

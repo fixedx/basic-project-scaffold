@@ -718,9 +718,9 @@ async function testProcessRefund() {
 
   logger.info(`退款已拒绝`);
 
-  // 验证状态为 refund_rejected（退款被拒绝，用户可重新申请）
-  if (rejectResult.status !== 'refund_rejected') {
-    throw new Error(`拒绝退款后订单状态应为refund_rejected，实际为 ${rejectResult.status}`);
+  // 验证状态回退为 confirmed（退款被拒绝后继续履约）
+  if (rejectResult.status !== 'confirmed') {
+    throw new Error(`拒绝退款后订单状态应为confirmed，实际为 ${rejectResult.status}`);
   }
 }
 

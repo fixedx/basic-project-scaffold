@@ -858,11 +858,11 @@ export class OrderService {
     }
 
     if (!approved) {
-      // 拒绝退款：纯 DB 操作，直接用事务封装
+      // 拒绝退款：订单恢复为 confirmed，继续履约；保留退款原因/审核备注供前端展示
       await this.dataSource.transaction(async (manager) => {
         await manager.query(
           `UPDATE orders
-           SET status = 'refund_rejected', refund_reason = $1, updated_at = NOW()
+           SET status = 'confirmed', refund_reason = $1, updated_at = NOW()
            WHERE id = $2 AND status = 'refund_pending' AND is_delete = false`,
           [reason || order.refund_reason, id],
         );

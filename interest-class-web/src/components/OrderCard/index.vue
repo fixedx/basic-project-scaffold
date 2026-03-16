@@ -134,7 +134,7 @@ const statusClass = computed(() => statusConfig[props.order.status]?.class || ''
 
 // 是否显示进度条（确认或完成状态，且有课时信息）
 const showProgress = computed(() => {
-  const validStatus = ['confirmed', 'completed'].includes(props.order.status)
+  const validStatus = ['confirmed', 'refund_rejected', 'completed'].includes(props.order.status)
   const hasLessons = props.order.total_lessons > 0
   return validStatus && hasLessons
 })

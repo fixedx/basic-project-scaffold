@@ -305,6 +305,12 @@ async function test4CreateStandardCourse() {
   
   testData.standardCourseId = courseId;
   testData.artCourseId = courseId; // 别名：艺术课程指向正式课
+
+  const detail = await helper.get(`/courses/${courseId}`);
+  if (detail.cashback_enabled !== true) {
+    throw new Error(`正式课配置了返现规格后应自动开启返现，实际 cashback_enabled=${detail.cashback_enabled}`);
+  }
+
   logger.data('正式课创建成功（固定返现）', { courseId: testData.standardCourseId });
 }
 
@@ -340,6 +346,12 @@ async function test5CreatePercentageCourse() {
   }
   
   testData.musicCourseId = courseId;
+
+  const detail = await helper.get(`/courses/${courseId}`);
+  if (detail.cashback_enabled !== true) {
+    throw new Error(`百分比返现课程应自动开启返现，实际 cashback_enabled=${detail.cashback_enabled}`);
+  }
+
   logger.data('正式课创建成功（百分比返现）', { courseId: testData.musicCourseId });
 }
 
@@ -453,6 +465,10 @@ async function test5_3VerifyTrialCourseNoRebate() {
   }
   
   const sku = response.skus[0];
+
+  if (response.cashback_enabled !== false) {
+    throw new Error(`试听课不应开启返现营销，实际 cashback_enabled=${response.cashback_enabled}`);
+  }
   
   // 验证试听课的返现逻辑
   if (sku.cashback_type !== 'none') {
