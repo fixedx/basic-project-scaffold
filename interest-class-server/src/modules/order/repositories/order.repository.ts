@@ -35,6 +35,22 @@ export class OrderRepository extends BaseRepository<OrderEntity> {
   }
 
   /**
+   * 平台佣金确认口径：
+   * - completed / confirmed / refund_rejected / refunded：统一按已上课比例确认佣金
+   */
+  getPlatformCommissionExpression(alias = 'order'): string {
+    const baseCommission = `GREATEST(COALESCE(${alias}.commission_amount, 0), 0)`;
+    const completedLessons = `LEAST(GREATEST(COALESCE(${alias}.completed_lessons, 0), 0), COALESCE(${alias}.total_lessons, 0))`;
+
+    return `CASE
+      WHEN ${alias}.status IN ('confirmed', 'refund_rejected', 'completed', 'refunded')
+        AND COALESCE(${alias}.total_lessons, 0) > 0
+        THEN (${baseCommission} * ${completedLessons} / NULLIF(${alias}.total_lessons, 0))
+      ELSE 0
+    END`;
+  }
+
+  /**
    * 根据订单号查询
    */
   async findByOrderNo(orderNo: string): Promise<OrderEntity | null> {
@@ -91,11 +107,13 @@ export class OrderRepository extends BaseRepository<OrderEntity> {
     period?: string,
     startDate?: string,
     endDate?: string,
+    commissionOnly?: boolean,
   ) {
     const queryBuilder = this.getQuery().andWhere(
       'entity.institution_id = :institutionId',
       { institutionId },
     );
+    const commissionExpression = this.getPlatformCommissionExpression('entity');
 
     if (status) {
       const statuses = status.split(',').map(s => s.trim()).filter(Boolean);
@@ -140,6 +158,10 @@ export class OrderRepository extends BaseRepository<OrderEntity> {
       }
     }
 
+    if (commissionOnly) {
+      queryBuilder.andWhere(`${commissionExpression} > 0`);
+    }
+
     // 分页兼容模式
     if (page && pageSize) {
       const skip = (page - 1) * pageSize;
@@ -170,8 +192,10 @@ export class OrderRepository extends BaseRepository<OrderEntity> {
     period?: string,
     startDate?: string,
     endDate?: string,
+    commissionOnly?: boolean,
   ) {
     const queryBuilder = this.getQuery();
+    const commissionExpression = this.getPlatformCommissionExpression('entity');
 
     if (status) {
       const statuses = status
@@ -223,6 +247,10 @@ export class OrderRepository extends BaseRepository<OrderEntity> {
           periodEnd,
         });
       }
+    }
+
+    if (commissionOnly) {
+      queryBuilder.andWhere(`${commissionExpression} > 0`);
     }
 
     // 分页兼容模式

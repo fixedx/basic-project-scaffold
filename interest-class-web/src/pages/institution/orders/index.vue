@@ -2,10 +2,16 @@
   <view class="page">
     <!-- 状态筛选 -->
     <StatusTabs
+      v-if="!commissionOnly"
       v-model="currentStatus"
       :tabs="statusTabs"
       @change="handleStatusChange"
     />
+
+    <view v-if="commissionOnly" class="commission-tip">
+      <text class="commission-tip__title">佣金明细</text>
+      <text class="commission-tip__desc">仅显示当前机构已确认佣金的订单，金额按实际履约进度计算</text>
+    </view>
 
     <!-- 订单列表 -->
     <view class="order-list">
@@ -36,7 +42,7 @@
       <EmptyState
         v-if="!loading && orderList.length === 0"
         icon="icon-order"
-        text="暂无订单"
+        :text="commissionOnly ? '暂无佣金明细' : '暂无订单'"
       />
     </view>
 
@@ -70,6 +76,7 @@ const statusTabs = [
 const loading = ref(true)
 const orderList = ref<Order[]>([])
 const currentStatus = ref('all')
+const commissionOnly = ref(false)
 
 // 分页
 const page = ref(1)
@@ -105,6 +112,7 @@ onLoad((options) => {
   if (options?.status) {
     currentStatus.value = options.status
   }
+  commissionOnly.value = options?.commissionOnly === 'true'
   if (options?.period) periodFilter.value = options.period
   if (options?.startDate) startDateFilter.value = options.startDate
   if (options?.endDate) endDateFilter.value = options.endDate
@@ -138,6 +146,7 @@ const loadOrders = async (append = false) => {
       period: periodFilter.value || undefined,
       startDate: startDateFilter.value || undefined,
       endDate: endDateFilter.value || undefined,
+      commissionOnly: commissionOnly.value || undefined,
     })
 
     if (append) {
@@ -234,6 +243,28 @@ onShow(() => {
 .page {
   min-height: 100vh;
   background-color: $uni-bg-color-grey;
+}
+
+.commission-tip {
+  margin: 24rpx 24rpx 0;
+  padding: 24rpx;
+  background: #f6ffed;
+  border-radius: 16rpx;
+  border: 1rpx solid #b7eb8f;
+
+  &__title {
+    display: block;
+    font-size: 28rpx;
+    font-weight: 600;
+    color: #389e0d;
+    margin-bottom: 8rpx;
+  }
+
+  &__desc {
+    display: block;
+    font-size: 24rpx;
+    color: $uni-text-color-secondary;
+  }
 }
 
 .institution-selector {

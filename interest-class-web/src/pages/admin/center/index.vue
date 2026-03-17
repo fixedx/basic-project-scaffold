@@ -43,7 +43,7 @@
       </view>
 
       <!-- 佣金高亮行 -->
-      <view class="commission-row">
+      <view class="commission-row" @click="goToCommissionOrders">
         <view class="commission-block">
           <view class="commission-label">
             <text class="iconfont icon-money-rmb"></text>
@@ -319,6 +319,12 @@ const loadStats = async () => {
 const changePeriod = (period: AdminStatsParams['period']) => {
   selectedPeriod.value = period
   loadStats()
+}
+
+const goToCommissionOrders = () => {
+  uni.navigateTo({
+    url: `/pages/admin/orders/index?commissionOnly=true&period=${selectedPeriod.value}`,
+  })
 }
 
 const loadFeedbackCount = async () => {

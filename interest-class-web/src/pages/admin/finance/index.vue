@@ -19,10 +19,11 @@
 
     <view class="content">
       <!-- 佣金概览卡片 -->
-      <view class="overview-card">
+      <view class="overview-card" @click="goToCommissionOrders()">
         <view class="overview-header">
           <text class="iconfont icon-money-rmb" style="font-size: 36rpx;"></text>
           <text class="overview-title">佣金概览</text>
+          <text class="overview-link">查看明细</text>
         </view>
         <view class="amount-row">
           <view class="amount-block">
@@ -93,7 +94,11 @@
                 <text class="order-amount-label">实付</text>
                 <text class="order-amount">¥{{ formatAmount(order.paid_amount) }}</text>
               </view>
-              <view class="order-amount-row" v-if="order.commission_amount">
+              <view class="order-amount-row" v-if="(order.recognized_commission_amount ?? 0) > 0">
+                <text class="order-amount-label">已确认佣金</text>
+                <text class="order-commission">¥{{ formatAmount(order.recognized_commission_amount) }}</text>
+              </view>
+              <view class="order-amount-row" v-else-if="order.commission_amount">
                 <text class="order-amount-label">佣金</text>
                 <text class="order-commission">¥{{ formatAmount(order.commission_amount) }}</text>
               </view>
@@ -251,6 +256,12 @@ const goToOrders = (status?: string) => {
   uni.navigateTo({ url: `/pages/admin/orders/index${params}` })
 }
 
+const goToCommissionOrders = () => {
+  uni.navigateTo({
+    url: `/pages/admin/orders/index?commissionOnly=true&period=${currentPeriod.value}`,
+  })
+}
+
 const goToOrderDetail = (id: string) => {
   uni.navigateTo({ url: `/pages/admin/order-detail/index?id=${id}` })
 }
@@ -321,6 +332,12 @@ onShow(() => {
   align-items: center;
   gap: 12rpx;
   margin-bottom: 28rpx;
+}
+
+.overview-link {
+  margin-left: auto;
+  font-size: 24rpx;
+  color: rgba(255, 255, 255, 0.88);
 }
 
 .overview-title {

@@ -105,6 +105,7 @@ export class AdminController {
     @Query('period') period?: string,
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
+    @Query('commissionOnly') commissionOnly?: string,
   ) {
     return this.orderService.findAllOrders(
       page,
@@ -113,6 +114,7 @@ export class AdminController {
       period,
       startDate,
       endDate,
+      commissionOnly === 'true',
     );
   }
 

@@ -185,6 +185,9 @@ export interface InstitutionStats {
   totalRevenue: number;
   thisMonthRevenue: number;
   todayRevenue: number;
+  totalCommission: number;
+  thisMonthCommission: number;
+  todayCommission: number;
   // 待处理事项
   pendingOrderCount: number;
   refundingOrderCount: number;

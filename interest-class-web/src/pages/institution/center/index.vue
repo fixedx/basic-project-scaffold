@@ -108,6 +108,29 @@
           <text class="stat-label">总营收</text>
         </view>
       </view>
+
+      <view class="commission-section" @click="goToCommissionOrders">
+        <view class="commission-section__header">
+          <text class="commission-section__title">佣金明细</text>
+          <text class="commission-section__link">查看订单明细</text>
+        </view>
+        <view class="stats-row stats-row--commission">
+          <view class="stat-item">
+            <text class="stat-value stat-value--commission">&yen;{{ formatRevenue(stats.todayCommission) }}</text>
+            <text class="stat-label">今日佣金</text>
+          </view>
+          <view class="stat-divider"></view>
+          <view class="stat-item">
+            <text class="stat-value stat-value--commission">&yen;{{ formatRevenue(stats.thisMonthCommission) }}</text>
+            <text class="stat-label">{{ periodLabel }}佣金</text>
+          </view>
+          <view class="stat-divider"></view>
+          <view class="stat-item">
+            <text class="stat-value stat-value--commission">&yen;{{ formatRevenue(stats.totalCommission) }}</text>
+            <text class="stat-label">累计佣金</text>
+          </view>
+        </view>
+      </view>
     </view>
 
     <!-- 待处理事项 -->
@@ -354,6 +377,9 @@ const stats = ref<InstitutionStats>({
   totalRevenue: 0,
   thisMonthRevenue: 0,
   todayRevenue: 0,
+  totalCommission: 0,
+  thisMonthCommission: 0,
+  todayCommission: 0,
   pendingOrderCount: 0,
   refundingOrderCount: 0,
   pendingCancelBookingCount: 0,
@@ -484,6 +510,10 @@ const navigateWithPeriod = (baseUrl: string) => {
     }
   }
   uni.navigateTo({ url })
+}
+
+const goToCommissionOrders = () => {
+  navigateWithPeriod('/pages/institution/orders/index?commissionOnly=true')
 }
 
 const navigateToClassrooms = () => {
@@ -782,6 +812,34 @@ const handleLogout = () => {
     display: flex;
     align-items: center;
     padding: 24rpx 0;
+
+    &--commission {
+      padding-top: 20rpx;
+    }
+  }
+
+  .commission-section {
+    margin: 0 24rpx 24rpx;
+    padding-top: 24rpx;
+    border-top: 1rpx solid $uni-border-color-light;
+
+    &__header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 4rpx;
+    }
+
+    &__title {
+      font-size: 28rpx;
+      font-weight: 600;
+      color: $uni-text-color;
+    }
+
+    &__link {
+      font-size: 24rpx;
+      color: $uni-color-primary;
+    }
   }
 
   .stat-item {
@@ -796,6 +854,10 @@ const handleLogout = () => {
       color: $uni-text-color;
       font-family: 'DIN Alternate', Arial, sans-serif;
       margin-bottom: 8rpx;
+
+      &--commission {
+        color: $uni-color-primary;
+      }
     }
 
     .stat-label {

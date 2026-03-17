@@ -11,6 +11,9 @@ export interface InstitutionStatsDto {
   totalRevenue: number; // 总营收
   thisMonthRevenue: number; // 时段营收（根据筛选时段变化）
   todayRevenue: number; // 今日收入
+  totalCommission: number; // 总佣金支出（平台已确认）
+  thisMonthCommission: number; // 时段佣金支出
+  todayCommission: number; // 今日佣金支出
 
   // === 待处理事项（机构管理员最关心的） ===
   pendingOrderCount: number; // 待确认订单数

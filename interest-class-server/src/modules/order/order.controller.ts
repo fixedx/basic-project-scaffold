@@ -51,6 +51,7 @@ export class OrderController {
     @Query('period') period?: string,
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
+    @Query('commissionOnly') commissionOnly?: string,
   ) {
     return this.orderService.findInstitutionOrders(
       institutionId,
@@ -60,6 +61,7 @@ export class OrderController {
       period || undefined,
       startDate || undefined,
       endDate || undefined,
+      commissionOnly === 'true',
     );
   }
 

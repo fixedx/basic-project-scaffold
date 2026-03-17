@@ -132,6 +132,7 @@ export const adminApi = {
     period?: string
     startDate?: string
     endDate?: string
+    commissionOnly?: boolean
   }) {
     return http.get<{
       data: Order[]

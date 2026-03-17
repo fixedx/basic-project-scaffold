@@ -129,6 +129,7 @@ export interface Order {
   online_pay_amount: number   // 线上支付金额（微信支付）
   offline_pay_amount: number  // 线下支付金额（到店支付）
   commission_amount?: number  // 平台佣金金额
+  recognized_commission_amount?: number // 已确认佣金（按签到/履约进度折算）
   status: 'pending' | 'pending_confirm' | 'confirmed' | 'refund_pending' | 'refunding' | 'refund_rejected' | 'refunded' | 'cancelled' | 'completed'
   payment_method: 'offline' | 'wechat' | 'alipay'
   transaction_no?: string
@@ -141,6 +142,7 @@ export interface Order {
   student_phone?: string
   remark?: string
   refund_reason?: string
+  is_reviewed?: boolean
   // 快照字段
   institution_snapshot?: InstitutionSnapshot
   course_snapshot?: CourseSnapshot
@@ -225,7 +227,7 @@ export const orderApi = {
    */
   getInstitutionList(
     institutionId: string,
-    params?: { page?: number; pageSize?: number; status?: string; period?: string; startDate?: string; endDate?: string }
+    params?: { page?: number; pageSize?: number; status?: string; period?: string; startDate?: string; endDate?: string; commissionOnly?: boolean }
   ) {
     return get<{
       data: Order[]

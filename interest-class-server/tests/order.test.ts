@@ -3,7 +3,7 @@
  * 测试订单的创建、支付、完成、退款操作
  */
 
-import { TestHelper, sleep, generateUserToken } from './utils/test-client';
+import { TestHelper, sleep, generateUserToken, generateAdminToken } from './utils/test-client';
 import { logger } from './utils/logger';
 import { TestOrder } from './utils/test-data';
 import { createInstitution, createCourse } from './utils/test-helpers';
@@ -25,6 +25,9 @@ const testData = {
   // 预约相关
   trialBookingId: '',
   regularBookingId: '',
+  partialRefundOrderId: '',
+  expectedPartialRevenue: 0,
+  expectedPartialCommission: 0,
 };
 
 function generateNumericTransactionNo(): string {
@@ -56,6 +59,7 @@ export async function runCRUDTests(sharedData?: any) {
     { name: '申请退款', fn: testApplyRefund },
     { name: '机构处理退款', fn: testProcessRefund },
     { name: '查询机构营收统计', fn: testGetRevenue },
+    { name: '查询平台佣金统计', fn: testGetAdminPlatformCommission },
     { name: '按状态筛选订单', fn: testFilterByStatus },
     { name: '订单超时自动取消', fn: testOrderAutoCancel },
     { name: '订单状态异常处理', fn: testOrderStatusException },
@@ -797,6 +801,16 @@ async function testGetRevenue() {
       ((Number(refundedOrder.completed_lessons) || 0) / Math.max(Number(refundedOrder.total_lessons) || 1, 1))
     ).toFixed(2),
   );
+  const expectedPartialCommission = Number(
+    (
+      (Number(refundedOrder.commission_amount) || 0) *
+      ((Number(refundedOrder.completed_lessons) || 0) / Math.max(Number(refundedOrder.total_lessons) || 1, 1))
+    ).toFixed(2),
+  );
+
+  testData.partialRefundOrderId = partialRefundOrderId;
+  testData.expectedPartialRevenue = expectedPartialRevenue;
+  testData.expectedPartialCommission = expectedPartialCommission;
 
   const result = await helper.get(
     `/order/institution/${testData.institutionId}/revenue`,
@@ -826,7 +840,90 @@ async function testGetRevenue() {
 }
 
 /**
- * Test 11: Filter orders by status
+ * 测试11: 查询平台佣金统计
+ */
+async function testGetAdminPlatformCommission() {
+  const helper = new TestHelper(generateAdminToken());
+  const userHelper = new TestHelper(testData.userToken);
+  const institutionHelper = new TestHelper(testData.institutionToken);
+
+  if (!testData.partialRefundOrderId) {
+    throw new Error('缺少部分退款订单测试数据，无法验证平台佣金统计');
+  }
+
+  const baselineStats = await helper.get('/admin/stats', { period: 'all' });
+  const baselineCommission = Number(baselineStats.totalPlatformCommission || 0);
+
+  const course = await institutionHelper.get(`/courses/${testData.regularCourseId}`);
+  const schedules = await userHelper.get(`/schedule/course/${testData.regularCourseId}`);
+  if (!course?.skus?.length || !schedules?.length) {
+    throw new Error('缺少正式课 SKU 或排课，无法验证平台佣金进度统计');
+  }
+
+  const progressOrderId = await userHelper.post('/order', {
+    ...TestOrder.offline(),
+    course_id: testData.regularCourseId,
+    sku_id: course.skus[0].id,
+    schedule_ids: [schedules[0].id],
+    student_name: '平台佣金进度统计',
+  });
+
+  await sleep(300);
+  await institutionHelper.put(`/order/${progressOrderId}/confirm-payment`, {});
+  await sleep(300);
+
+  const afterConfirmStats = await helper.get('/admin/stats', { period: 'all' });
+  const confirmDelta = Number(
+    (Number(afterConfirmStats.totalPlatformCommission || 0) - baselineCommission).toFixed(2),
+  );
+  if (Math.abs(confirmDelta) > 0.01) {
+    throw new Error(`未签到的 confirmed 订单不应确认佣金，实际增加 ¥${confirmDelta}`);
+  }
+
+  const orderBeforeCheckIn = await userHelper.get(`/order/${progressOrderId}`);
+  const bookingIds = String(orderBeforeCheckIn.booking_id || '')
+    .split(',')
+    .map((id: string) => id.trim())
+    .filter(Boolean);
+  if (bookingIds.length === 0) {
+    throw new Error('订单未生成预约，无法验证平台佣金进度统计');
+  }
+
+  const firstBooking = await userHelper.get(`/booking/${bookingIds[0]}`);
+  await userHelper.post('/check-in', {
+    order_id: progressOrderId,
+    booking_id: firstBooking.id,
+    schedule_id: firstBooking.schedule_id,
+    latitude: 39.9042,
+    longitude: 116.4074,
+    remark: '平台佣金进度统计签到',
+  });
+  await sleep(300);
+
+  const orderAfterCheckIn = await userHelper.get(`/order/${progressOrderId}`);
+  const expectedProgressCommission = Number(
+    (
+      (Number(orderAfterCheckIn.commission_amount) || 0) *
+      ((Number(orderAfterCheckIn.completed_lessons) || 0) / Math.max(Number(orderAfterCheckIn.total_lessons) || 1, 1))
+    ).toFixed(2),
+  );
+
+  const afterCheckInStats = await helper.get('/admin/stats', { period: 'all' });
+  const checkInDelta = Number(
+    (Number(afterCheckInStats.totalPlatformCommission || 0) - baselineCommission).toFixed(2),
+  );
+
+  if (Math.abs(checkInDelta - expectedProgressCommission) > 0.01) {
+    throw new Error(
+      `平台佣金未按签到进度确认：实际增加 ¥${checkInDelta}，期望 ¥${expectedProgressCommission}`,
+    );
+  }
+
+  logger.info(`✓ confirmed 订单未消费不计佣，签到后按进度计佣: ¥${checkInDelta}`);
+}
+
+/**
+ * Test 12: Filter orders by status
  */
 async function testFilterByStatus() {
   const helper = new TestHelper(testData.institutionToken);

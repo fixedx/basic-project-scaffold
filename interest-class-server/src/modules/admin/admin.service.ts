@@ -214,26 +214,32 @@ export class AdminService implements OnModuleInit {
       periodBookings     = Number(periodCounts.bookings);
     }
 
-    // ===== 平台累计佣金（全量，直接从订单表读取）=====
-    const [totalCommRow] = await this.dataSource.query(`
-      SELECT COALESCE(SUM(commission_amount::numeric), 0) AS total
-      FROM orders
-      WHERE status IN ('confirmed', 'completed')
-        AND is_delete = false
-    `);
+    const commissionExpression = this.orderRepository.getPlatformCommissionExpression('order');
+
+    // ===== 平台累计佣金（全量）=====
+    const totalCommRow = await this.orderRepository
+      .createQueryBuilder('order')
+      .select(`COALESCE(SUM(${commissionExpression}), 0)`, 'total')
+      .where('order.status IN (:...statuses)', {
+        statuses: ['confirmed', 'completed', 'refund_rejected', 'refunded'],
+      })
+      .andWhere('order.is_delete = false')
+      .getRawOne();
     const totalPlatformCommission = Number(totalCommRow?.total || 0);
 
     // ===== 期间佣金 =====
     let periodPlatformCommission = totalPlatformCommission;
     if (hasFilter) {
-      const [periodCommRow] = await this.dataSource.query(
-        `SELECT COALESCE(SUM(commission_amount::numeric), 0) AS total
-        FROM orders
-        WHERE status IN ('confirmed', 'completed')
-          AND is_delete = false
-          AND created_at >= $1 AND created_at <= $2`,
-        [periodStart, periodEnd],
-      );
+      const periodCommRow = await this.orderRepository
+        .createQueryBuilder('order')
+        .select(`COALESCE(SUM(${commissionExpression}), 0)`, 'total')
+        .where('order.status IN (:...statuses)', {
+          statuses: ['confirmed', 'completed', 'refund_rejected', 'refunded'],
+        })
+        .andWhere('order.is_delete = false')
+        .andWhere('order.created_at >= :periodStart', { periodStart })
+        .andWhere('order.created_at <= :periodEnd', { periodEnd })
+        .getRawOne();
       periodPlatformCommission = Number(periodCommRow?.total || 0);
     }
 

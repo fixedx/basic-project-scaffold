@@ -491,6 +491,39 @@ END
 
 ---
 
+### 错误 63: 平台佣金只汇总 `confirmed/completed` 整单金额，导致“部分履约后退款”佣金统计失真 ⚠️⚠️⚠️
+
+**错误现象**：
+```typescript
+// ❌ 错误：管理员统计直接 SUM commission_amount，且只算 confirmed/completed
+SELECT COALESCE(SUM(commission_amount), 0)
+FROM orders
+WHERE status IN ('confirmed', 'completed');
+
+// 结果：
+// - refunded 且已履约部分课时的订单被整个排除 → 平台佣金被低估为 0
+// - 或旧实现把 refunded 整单 commission_amount 算入 → 平台佣金又被高估
+```
+
+**正确写法**：
+```typescript
+// ✅ 正确：平台佣金跟随课程履约进度确认
+CASE
+  WHEN status IN ('confirmed', 'completed', 'refund_rejected', 'refunded') AND total_lessons > 0 THEN
+    GREATEST(COALESCE(commission_amount, 0), 0)
+      * LEAST(GREATEST(completed_lessons, 0), total_lessons)
+      / total_lessons
+  ELSE 0
+END
+```
+
+**规范**：
+- 平台佣金统计不能直接 `SUM(commission_amount)`，必须使用统一的佣金确认表达式
+- `completed` / `confirmed` / 历史兼容 `refund_rejected` / `refunded` 都必须按 `completed_lessons / total_lessons` 比例确认佣金，未签到时佣金应为 `0`
+- 管理端首页与财务页的 `totalPlatformCommission` / `periodPlatformCommission` 必须共用同一套 SQL 口径
+
+---
+
 ### 错误 52: 下单后修改邀请码让利比例，支付确认/回调仍回退到当前 share_ratio ⚠️⚠️⚠️
 
 **错误现象**：
@@ -4768,6 +4801,83 @@ day_of_week: dayOfWeek
 - 演示脚本、测试数据、测试 helper 都必须使用数字格式，和排课 UI 提交格式保持一致
 - 显示层与排序层必须优先支持数字格式；英文格式只作为历史兼容，不能作为新代码写法
 - 若需要从 `Date` 生成 `day_of_week`，统一使用 `date.getDay() === 0 ? '7' : String(date.getDay())`
+
+---
+
+### 错误 64: 统计卡片视觉上可点击，但模板未绑定跳转事件，导致点击无反应 ⚠️⚠️
+
+**错误现象**：
+```vue
+<!-- ❌ 错误：佣金卡片看起来像入口，但没有 @click -->
+<view class="commission-row">
+  <view class="commission-block">
+    <text>本月佣金</text>
+  </view>
+</view>
+```
+
+**问题后果**：
+- 用户在管理员/机构个人中心点击统计卡片没有任何反馈
+- 已实现的明细页入口被“断在首页”
+- 用户误以为页面卡死或功能未开发
+
+**正确写法**：
+```vue
+<!-- ✅ 正确：卡片容器显式绑定点击事件 -->
+<view class="commission-row" @click="goToCommissionOrders">
+  <view class="commission-block">
+    <text>{{ periodLabel }}佣金</text>
+  </view>
+</view>
+```
+
+```typescript
+const goToCommissionOrders = () => {
+  uni.navigateTo({
+    url: `/pages/admin/orders/index?commissionOnly=true&period=${selectedPeriod.value}`,
+  })
+}
+```
+
+**规范**：
+- 所有首页/个人中心中的统计卡片，如果产品语义上是“可进入明细”，必须在模板容器上显式绑定 `@click`
+- 不能只在下级页面实现跳转逻辑，而遗漏首页入口绑定
+- 涉及时间筛选的统计卡片，跳转时必须把当前 `period` 一并透传，保证明细和卡片口径一致
+
+---
+
+### 错误 65: 复用通用列表页做专项明细模式时，未隐藏无关筛选 Tab，造成交互噪音 ⚠️⚠️
+
+**错误现象**：
+```vue
+<!-- ❌ 错误：佣金明细模式仍显示通用订单状态 Tab -->
+<StatusTabs
+  v-model="currentStatus"
+  :tabs="statusTabs"
+  @change="handleStatusChange"
+/>
+```
+
+**问题后果**：
+- 用户进入“佣金明细”后，顶部仍看到“待支付 / 已完成 / 退款中”等通用订单筛选
+- 页面语义变混乱，像是“订单列表”和“佣金明细”两种模式叠在一起
+- 用户会误以为这些 Tab 也会改变佣金统计口径
+
+**正确写法**：
+```vue
+<!-- ✅ 正确：专项明细模式下隐藏无关筛选 -->
+<StatusTabs
+  v-if="!commissionOnly"
+  v-model="currentStatus"
+  :tabs="statusTabs"
+  @change="handleStatusChange"
+/>
+```
+
+**规范**：
+- 当复用通用列表页承载“专项明细模式”时，必须隐藏与该模式无关的通用筛选控件
+- `commissionOnly=true` 这类专项模式下，应优先保留模式说明、统计口径说明，移除会造成歧义的状态 Tab
+- 复用页面时要让用户清晰感知“这是一个特定明细视图”，而不是完整功能页的所有交互都照搬
 
 ---
 

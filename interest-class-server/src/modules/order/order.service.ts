@@ -1086,10 +1086,30 @@ export class OrderService {
   /**
    * 为订单列表附加 refund_info
    */
+  private resolveRecognizedCommissionAmount(order: OrderEntity): number {
+    const commissionAmount = Math.max(Number(order.commission_amount) || 0, 0);
+    const totalLessons = Math.max(Number(order.total_lessons) || 0, 0);
+    const completedLessons = Math.min(
+      Math.max(Number(order.completed_lessons) || 0, 0),
+      totalLessons,
+    );
+
+    if (!['confirmed', 'refund_rejected', 'completed', 'refunded'].includes(order.status)) {
+      return 0;
+    }
+
+    if (totalLessons <= 0) {
+      return 0;
+    }
+
+    return Number(((commissionAmount * completedLessons) / totalLessons).toFixed(2));
+  }
+
   private attachRefundInfo(orders: OrderEntity[]): any[] {
     return orders.map((order) => ({
       ...order,
       refund_info: this.calculateRefundAmount(order),
+      recognized_commission_amount: this.resolveRecognizedCommissionAmount(order),
     }));
   }
 
@@ -1121,6 +1141,7 @@ export class OrderService {
     period?: string,
     startDate?: string,
     endDate?: string,
+    commissionOnly?: boolean,
   ) {
     // 机构账号只允许查询本机构数据；管理员可跨机构查询
     if (!this.userContextService.hasRole('admin')) {
@@ -1138,6 +1159,7 @@ export class OrderService {
       period,
       startDate,
       endDate,
+      commissionOnly,
     );
 
     if (Array.isArray(result)) {
@@ -1160,6 +1182,7 @@ export class OrderService {
     period?: string,
     startDate?: string,
     endDate?: string,
+    commissionOnly?: boolean,
   ) {
     const result = await this.orderRepository.findAllOrders(
       page,
@@ -1168,6 +1191,7 @@ export class OrderService {
       period,
       startDate,
       endDate,
+      commissionOnly,
     );
 
     if (Array.isArray(result)) {

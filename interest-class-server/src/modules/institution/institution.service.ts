@@ -552,6 +552,7 @@ export class InstitutionService {
     const institution = await this.getCurrentInstitution();
     const institutionId = institution.id;
     const revenueExpression = this.orderRepository.getInstitutionRevenueExpression('order');
+    const commissionExpression = this.orderRepository.getPlatformCommissionExpression('order');
 
     const now = new Date();
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -687,6 +688,9 @@ export class InstitutionService {
       revenueResult,
       periodRevenueResult,
       todayRevenueResult,
+      totalCommissionResult,
+      periodCommissionResult,
+      todayCommissionResult,
       pendingOrderCount,
       refundingOrderCount,
       pendingCancelBookingCount,
@@ -723,6 +727,39 @@ export class InstitutionService {
       this.orderRepository
         .createQueryBuilder('order')
         .select(`COALESCE(SUM(${revenueExpression}), 0)`, 'total')
+        .where('order.institution_id = :institutionId', { institutionId })
+        .andWhere('order.status IN (:...statuses)', {
+          statuses: ['confirmed', 'completed', 'refund_rejected', 'refunded'],
+        })
+        .andWhere('order.is_delete = false')
+        .andWhere('order.created_at >= :todayStart', { todayStart })
+        .getRawOne(),
+
+      this.orderRepository
+        .createQueryBuilder('order')
+        .select(`COALESCE(SUM(${commissionExpression}), 0)`, 'total')
+        .where('order.institution_id = :institutionId', { institutionId })
+        .andWhere('order.status IN (:...statuses)', {
+          statuses: ['confirmed', 'completed', 'refund_rejected', 'refunded'],
+        })
+        .andWhere('order.is_delete = false')
+        .getRawOne(),
+
+      this.orderRepository
+        .createQueryBuilder('order')
+        .select(`COALESCE(SUM(${commissionExpression}), 0)`, 'total')
+        .where('order.institution_id = :institutionId', { institutionId })
+        .andWhere('order.status IN (:...statuses)', {
+          statuses: ['confirmed', 'completed', 'refund_rejected', 'refunded'],
+        })
+        .andWhere('order.is_delete = false')
+        .andWhere('order.created_at >= :revenueStart', { revenueStart })
+        .andWhere(revenueEnd ? 'order.created_at <= :revenueEnd' : '1=1', revenueEnd ? { revenueEnd } : {})
+        .getRawOne(),
+
+      this.orderRepository
+        .createQueryBuilder('order')
+        .select(`COALESCE(SUM(${commissionExpression}), 0)`, 'total')
         .where('order.institution_id = :institutionId', { institutionId })
         .andWhere('order.status IN (:...statuses)', {
           statuses: ['confirmed', 'completed', 'refund_rejected', 'refunded'],
@@ -788,6 +825,9 @@ export class InstitutionService {
     const totalRevenue = parseFloat(revenueResult?.total || '0');
     const thisMonthRevenue = parseFloat(periodRevenueResult?.total || '0');
     const todayRevenue = parseFloat(todayRevenueResult?.total || '0');
+    const totalCommission = parseFloat(totalCommissionResult?.total || '0');
+    const thisMonthCommission = parseFloat(periodCommissionResult?.total || '0');
+    const todayCommission = parseFloat(todayCommissionResult?.total || '0');
 
     // 完课率 = 已完成订单 / (已确认 + 已完成)订单 × 100
     const completionRate = totalValidOrderCount > 0
@@ -804,6 +844,9 @@ export class InstitutionService {
       totalRevenue,
       thisMonthRevenue,
       todayRevenue,
+      totalCommission,
+      thisMonthCommission,
+      todayCommission,
       pendingOrderCount,
       refundingOrderCount,
       pendingCancelBookingCount,

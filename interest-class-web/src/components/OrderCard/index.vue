@@ -46,7 +46,11 @@
           <text class="label">返现：</text>
           <text class="cashback">¥{{ formatPrice(order.cashback_amount) }}</text>
         </view>
-        <view class="price-row" v-if="(role === 'admin' || role === 'institution') && (order.commission_amount ?? 0) > 0">
+        <view class="price-row" v-if="(role === 'admin' || role === 'institution') && (order.recognized_commission_amount ?? 0) > 0">
+          <text class="label">已确认佣金：</text>
+          <text class="commission">¥{{ formatPrice(order.recognized_commission_amount) }}</text>
+        </view>
+        <view class="price-row" v-else-if="(role === 'admin' || role === 'institution') && (order.commission_amount ?? 0) > 0">
           <text class="label">平台佣金：</text>
           <text class="commission">¥{{ formatPrice(order.commission_amount) }}</text>
         </view>
