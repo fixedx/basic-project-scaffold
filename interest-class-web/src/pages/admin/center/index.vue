@@ -11,7 +11,7 @@
             <view class="name-row">
               <text class="name">{{ userInfo?.nickname || '管理员' }}</text>
               <view class="admin-badge">
-                <text class="iconfont icon-security"></text>
+                <text class="iconfont icon-user"></text>
                 <text>系统管理员</text>
               </view>
             </view>

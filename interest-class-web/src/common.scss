@@ -3,6 +3,16 @@
  * 在 App.vue 中引入，所有页面生效
  */
 
+ .avatar {
+  width: 110rpx;
+  height: 110rpx;
+  border-radius: 100%;
+  border: 4rpx solid rgba(255, 255, 255, 0.28);
+  background-color: rgba(255, 255, 255, 0.16);
+  overflow: hidden;
+  margin-right: 24rpx;
+}
+
 /* ========== Flex 工具类 ========== */
 .flex-1 {
   flex: 1 !important;

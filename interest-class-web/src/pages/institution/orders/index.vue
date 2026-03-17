@@ -10,7 +10,6 @@
 
     <view v-if="revenueOnly" class="commission-tip">
       <text class="commission-tip__title">收入明细</text>
-      <text class="commission-tip__desc">当前页面用于查看收入相关订单明细，已隐藏通用状态筛选</text>
     </view>
 
     <!-- 订单列表 -->
@@ -242,10 +241,11 @@ onShow(() => {
 .page {
   min-height: 100vh;
   background-color: $uni-bg-color-grey;
+  padding-top: 24rpx;
 }
 
 .commission-tip {
-  margin: 24rpx 24rpx 0;
+  margin: 0 24rpx 24rpx 24rpx;
   padding: 24rpx;
   background: #f6ffed;
   border-radius: 16rpx;

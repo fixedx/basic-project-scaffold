@@ -10,7 +10,6 @@
 
     <view v-if="commissionOnly" class="commission-tip">
       <text class="commission-tip__title">佣金明细</text>
-      <text class="commission-tip__desc">仅显示当前筛选条件下已产生确认佣金的订单</text>
     </view>
 
     <!-- 订单列表 -->

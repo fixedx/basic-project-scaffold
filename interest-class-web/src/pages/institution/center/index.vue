@@ -585,16 +585,6 @@ const handleLogout = () => {
   align-items: center;
   flex: 1;
 
-  .avatar {
-    width: 110rpx;
-    height: 110rpx;
-    border-radius: 16rpx;
-    border: 4rpx solid rgba(255, 255, 255, 0.28);
-    background-color: rgba(255, 255, 255, 0.16);
-    overflow: hidden;
-    margin-right: 24rpx;
-  }
-
   .default-logo {
     width: 110rpx;
     height: 110rpx;
