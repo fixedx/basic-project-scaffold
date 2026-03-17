@@ -15,6 +15,26 @@ export class OrderRepository extends BaseRepository<OrderEntity> {
   }
 
   /**
+   * 机构收入确认口径：
+   * - confirmed / completed / refund_rejected：按整单确认收入
+   * - refunded：按已上课比例确认收入（兼容“部分履约后退款”）
+   *
+   * 基础收入口径统一使用：original_price - cashback_amount
+   * 即机构应得课程收入，不包含平台佣金，也不受支付结构影响。
+   */
+  getInstitutionRevenueExpression(alias = 'order'): string {
+    const baseRevenue = `GREATEST(COALESCE(${alias}.original_price, 0) - COALESCE(${alias}.cashback_amount, 0), 0)`;
+    const completedLessons = `LEAST(GREATEST(COALESCE(${alias}.completed_lessons, 0), 0), COALESCE(${alias}.total_lessons, 0))`;
+
+    return `CASE
+      WHEN ${alias}.status IN ('confirmed', 'completed', 'refund_rejected') THEN ${baseRevenue}
+      WHEN ${alias}.status = 'refunded' AND COALESCE(${alias}.total_lessons, 0) > 0
+        THEN (${baseRevenue} * ${completedLessons} / NULLIF(${alias}.total_lessons, 0))
+      ELSE 0
+    END`;
+  }
+
+  /**
    * 根据订单号查询
    */
   async findByOrderNo(orderNo: string): Promise<OrderEntity | null> {
@@ -229,11 +249,12 @@ export class OrderRepository extends BaseRepository<OrderEntity> {
    * 统计机构收入
    */
   async getInstitutionRevenue(institutionId: string): Promise<number> {
+    const revenueExpression = this.getInstitutionRevenueExpression('order');
     const result = await this.createQueryBuilder('order')
-      .select('SUM(order.paid_amount)', 'total')
+      .select(`COALESCE(SUM(${revenueExpression}), 0)`, 'total')
       .where('order.institution_id = :institutionId', { institutionId })
       .andWhere('order.status IN (:...statuses)', {
-        statuses: ['paid', 'completed'],
+        statuses: ['confirmed', 'completed', 'refund_rejected', 'refunded'],
       })
       .andWhere('order.is_delete = false')
       .getRawOne();

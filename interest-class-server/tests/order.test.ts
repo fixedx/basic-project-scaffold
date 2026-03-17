@@ -27,6 +27,12 @@ const testData = {
   regularBookingId: '',
 };
 
+function generateNumericTransactionNo(): string {
+  return `${Date.now()}${Math.floor(Math.random() * 1000)
+    .toString()
+    .padStart(3, '0')}`;
+}
+
 /**
  * 运行所有CRUD测试
  */
@@ -489,7 +495,7 @@ export async function testConfirmPayment() {
   }
 
   const data = {
-    transaction_no: `TXN_${Date.now()}`,
+    transaction_no: generateNumericTransactionNo(),
   };
 
   await helper.put(
@@ -575,7 +581,7 @@ async function testApplyRefund() {
   // 先确认支付
   const instHelper = new TestHelper(testData.institutionToken);
   await instHelper.put(`/order/${newOrderId}/confirm-payment`, {
-    transaction_no: `TXN_REFUND_${Date.now()}`,
+    transaction_no: generateNumericTransactionNo(),
   });
 
   await sleep(500);
@@ -691,7 +697,7 @@ async function testProcessRefund() {
 
   // 确认支付
   await helper.put(`/order/${newOrderId2}/confirm-payment`, {
-    transaction_no: `TXN_${Date.now()}`,
+    transaction_no: generateNumericTransactionNo(),
   });
 
   await sleep(500);
@@ -729,6 +735,68 @@ async function testProcessRefund() {
  */
 async function testGetRevenue() {
   const helper = new TestHelper(testData.institutionToken);
+  const userHelper = new TestHelper(testData.userToken);
+
+  const beforeResult = await helper.get(
+    `/order/institution/${testData.institutionId}/revenue`,
+  );
+  const beforeRevenue = Number(beforeResult.revenue || 0);
+
+  const course = await helper.get(`/courses/${testData.regularCourseId}`);
+  const schedules = await userHelper.get(`/schedule/course/${testData.regularCourseId}`);
+  if (!course?.skus?.length || !schedules?.length) {
+    throw new Error('缺少正式课 SKU 或排课，无法验证部分退款营收');
+  }
+
+  const partialRefundOrderId = await userHelper.post('/order', {
+    ...TestOrder.offline(),
+    course_id: testData.regularCourseId,
+    sku_id: course.skus[0].id,
+    schedule_ids: [schedules[0].id],
+    student_name: '营收统计部分退款',
+  });
+
+  await sleep(300);
+  await helper.put(`/order/${partialRefundOrderId}/confirm-payment`, {});
+  await sleep(300);
+
+  const orderBeforeRefund = await userHelper.get(`/order/${partialRefundOrderId}`);
+  const bookingIds = String(orderBeforeRefund.booking_id || '')
+    .split(',')
+    .map((id: string) => id.trim())
+    .filter(Boolean);
+  if (bookingIds.length === 0) {
+    throw new Error('订单未生成预约，无法验证部分退款营收');
+  }
+
+  const firstBooking = await userHelper.get(`/booking/${bookingIds[0]}`);
+  await userHelper.post('/check-in', {
+    order_id: partialRefundOrderId,
+    booking_id: firstBooking.id,
+    schedule_id: firstBooking.schedule_id,
+    latitude: 39.9042,
+    longitude: 116.4074,
+    remark: '营收统计测试签到',
+  });
+  await sleep(300);
+
+  await userHelper.put(`/order/${partialRefundOrderId}/apply-refund`, {
+    refund_reason: '营收统计测试：部分退款',
+  });
+  await sleep(300);
+
+  await helper.put(`/order/${partialRefundOrderId}/process-refund`, {
+    approved: true,
+  });
+  await sleep(500);
+
+  const refundedOrder = await userHelper.get(`/order/${partialRefundOrderId}`);
+  const expectedPartialRevenue = Number(
+    (
+      ((Number(refundedOrder.original_price) || 0) - (Number(refundedOrder.cashback_amount) || 0)) *
+      ((Number(refundedOrder.completed_lessons) || 0) / Math.max(Number(refundedOrder.total_lessons) || 1, 1))
+    ).toFixed(2),
+  );
 
   const result = await helper.get(
     `/order/institution/${testData.institutionId}/revenue`,
@@ -745,6 +813,16 @@ async function testGetRevenue() {
   if (result.completed_orders !== undefined) {
     logger.info(`已完成订单: ${result.completed_orders}`);
   }
+
+  const afterRevenue = Number(result.revenue || 0);
+  const revenueDelta = Number((afterRevenue - beforeRevenue).toFixed(2));
+  if (Math.abs(revenueDelta - expectedPartialRevenue) > 0.01) {
+    throw new Error(
+      `部分退款后的营收增量不正确: 实际增加¥${revenueDelta}，期望¥${expectedPartialRevenue}`,
+    );
+  }
+
+  logger.info(`✓ 部分退款订单营收计入正确: 增量 ¥${revenueDelta}`);
 }
 
 /**

@@ -551,6 +551,7 @@ export class InstitutionService {
     // 获取当前机构
     const institution = await this.getCurrentInstitution();
     const institutionId = institution.id;
+    const revenueExpression = this.orderRepository.getInstitutionRevenueExpression('order');
 
     const now = new Date();
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -632,10 +633,10 @@ export class InstitutionService {
     // 5. 时段营收
     const periodRevenueQb = this.orderRepository
       .createQueryBuilder('order')
-      .select('SUM(order.original_price - COALESCE(order.cashback_amount, 0))', 'total')
+      .select(`COALESCE(SUM(${revenueExpression}), 0)`, 'total')
       .where('order.institution_id = :institutionId', { institutionId })
       .andWhere('order.status IN (:...statuses)', {
-        statuses: ['confirmed', 'completed'],
+        statuses: ['confirmed', 'completed', 'refund_rejected', 'refunded'],
       })
       .andWhere('order.is_delete = false')
       .andWhere('order.created_at >= :revenueStart', { revenueStart });
@@ -707,10 +708,10 @@ export class InstitutionService {
       // 4. 总营收（不受时间筛选，始终为全部）
       this.orderRepository
         .createQueryBuilder('order')
-        .select('SUM(order.original_price - COALESCE(order.cashback_amount, 0))', 'total')
+        .select(`COALESCE(SUM(${revenueExpression}), 0)`, 'total')
         .where('order.institution_id = :institutionId', { institutionId })
         .andWhere('order.status IN (:...statuses)', {
-          statuses: ['confirmed', 'completed'],
+          statuses: ['confirmed', 'completed', 'refund_rejected', 'refunded'],
         })
         .andWhere('order.is_delete = false')
         .getRawOne(),
@@ -721,10 +722,10 @@ export class InstitutionService {
       // 6. 今日收入（始终为今日）
       this.orderRepository
         .createQueryBuilder('order')
-        .select('SUM(order.original_price - COALESCE(order.cashback_amount, 0))', 'total')
+        .select(`COALESCE(SUM(${revenueExpression}), 0)`, 'total')
         .where('order.institution_id = :institutionId', { institutionId })
         .andWhere('order.status IN (:...statuses)', {
-          statuses: ['confirmed', 'completed'],
+          statuses: ['confirmed', 'completed', 'refund_rejected', 'refunded'],
         })
         .andWhere('order.is_delete = false')
         .andWhere('order.created_at >= :todayStart', { todayStart })

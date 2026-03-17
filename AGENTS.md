@@ -455,6 +455,42 @@ await this.dataSource.query(
 
 ---
 
+### 错误 62: 机构营收只统计 `confirmed/completed`，导致“已上课后退款”订单收入被漏掉 ⚠️⚠️⚠️
+
+**错误现象**：
+```typescript
+// ❌ 错误：机构营收只汇总 confirmed/completed
+SELECT SUM(order.original_price - COALESCE(order.cashback_amount, 0))
+FROM orders
+WHERE institution_id = $1
+  AND status IN ('confirmed', 'completed');
+
+// 结果：用户已上 3/12 节课后退款，订单变成 refunded，
+// 机构实际已履约的收入被整个排除，营收显示成 0
+```
+
+**正确写法**：
+```typescript
+// ✅ 正确：refunded 订单按已上课比例确认收入
+CASE
+  WHEN status IN ('confirmed', 'completed', 'refund_rejected') THEN
+    GREATEST(original_price - COALESCE(cashback_amount, 0), 0)
+  WHEN status = 'refunded' AND total_lessons > 0 THEN
+    GREATEST(original_price - COALESCE(cashback_amount, 0), 0)
+      * LEAST(GREATEST(completed_lessons, 0), total_lessons)
+      / total_lessons
+  ELSE 0
+END
+```
+
+**规范**：
+- 机构营收口径统一基于 `original_price - cashback_amount`，表示机构应得课程收入，不包含平台佣金
+- `confirmed` / `completed` / 历史兼容 `refund_rejected` 按整单确认收入
+- `refunded` 订单若已发生部分履约，必须按 `completed_lessons / total_lessons` 比例确认已履约收入，不能直接清零
+- 机构中心统计和机构收入接口必须使用同一套收入表达式，避免同一机构在不同页面数据不一致
+
+---
+
 ### 错误 52: 下单后修改邀请码让利比例，支付确认/回调仍回退到当前 share_ratio ⚠️⚠️⚠️
 
 **错误现象**：
