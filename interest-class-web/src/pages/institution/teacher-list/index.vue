@@ -35,13 +35,13 @@
         >
           <view class="card-header">
             <view class="teacher-avatar">
-              <async-image
-                v-if="teacher.avatar"
-                :url="teacher.avatar"
+              <AsyncImage
+                v-if="teacher.photo"
+                :url="teacher.photo"
                 width="120rpx"
                 height="120rpx"
                 mode="aspectFill"
-                :radius="60"
+                custom-class="teacher-avatar__img"
               />
               <view v-else class="default-avatar">
                 {{ teacher.name?.charAt(0) || '师' }}
@@ -49,19 +49,41 @@
             </view>
             <view class="teacher-info">
               <view class="info-top">
-                <text class="teacher-name">{{ teacher.name }}</text>
+                <view class="name-wrap">
+                  <text class="teacher-name">{{ teacher.name }}</text>
+                  <text v-if="teacher.gender" class="gender-tag" :class="teacher.gender">
+                    {{ teacher.gender === 'male' ? '男' : '女' }}
+                  </text>
+                </view>
                 <view class="status-tag" :class="`status-${teacher.status}`">
+                  <text class="status-dot"></text>
                   {{ getStatusLabel(teacher.status) }}
                 </view>
               </view>
-              <view v-if="teacher.title" class="teacher-title">{{ teacher.title }}</view>
-              <view v-if="teacher.phone" class="teacher-phone">📱 {{ teacher.phone }}</view>
+              <view class="teacher-meta" v-if="teacher.title || teacher.phone">
+                <text v-if="teacher.title" class="teacher-title">{{ teacher.title }}</text>
+                <text v-if="teacher.phone" class="teacher-phone">{{ teacher.phone }}</text>
+              </view>
+              <view class="teacher-highlights">
+                <view v-if="teacher.years_of_experience" class="highlight-chip">
+                  <text class="highlight-label">教龄</text>
+                  <text class="highlight-value">{{ teacher.years_of_experience }}年</text>
+                </view>
+                <view v-if="teacher.subjects?.length" class="highlight-chip">
+                  <text class="highlight-label">科目</text>
+                  <text class="highlight-value">{{ teacher.subjects.length }}项</text>
+                </view>
+                <view v-if="teacher.certificates?.length" class="highlight-chip">
+                  <text class="highlight-label">证书</text>
+                  <text class="highlight-value">{{ teacher.certificates.length }}张</text>
+                </view>
+              </view>
             </view>
           </view>
 
           <view class="card-body">
             <view v-if="teacher.subjects && teacher.subjects.length > 0" class="info-row">
-              <text class="label">教授科目：</text>
+              <text class="label">教授科目</text>
               <view class="subjects">
                 <text
                   v-for="(subject, index) in teacher.subjects"
@@ -72,21 +94,18 @@
                 </text>
               </view>
             </view>
-            <view v-if="teacher.years_of_experience" class="info-row">
-              <text class="label">教龄：</text>
-              <text class="value">{{ teacher.years_of_experience }}年</text>
-            </view>
             <view v-if="teacher.bio" class="info-row bio">
-              <text class="label">简介：</text>
-              <text class="value">{{ teacher.bio }}</text>
+              <text class="label">教师简介</text>
+              <text class="value bio-text">{{ teacher.bio }}</text>
             </view>
           </view>
 
           <view class="card-footer">
-            <wd-button size="small" @click.stop="handleEdit(teacher.id)">编辑</wd-button>
+            <wd-button size="small" plain custom-class="teacher-action teacher-action--edit" @click.stop="handleEdit(teacher.id)">编辑</wd-button>
             <wd-button
               size="small"
-              type="error"
+              plain
+              custom-class="teacher-action teacher-action--delete"
               @click.stop="handleDelete(teacher.id, teacher.name)"
             >
               删除
@@ -298,20 +317,25 @@ const handleDelete = async (id: string, name: string) => {
 
 .teacher-card {
   background-color: $uni-bg-color;
-  border-radius: 16rpx;
+  border-radius: 20rpx;
   padding: 32rpx;
   margin-bottom: 24rpx;
-  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.05);
+  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.05);
 }
 
 .card-header {
   display: flex;
+  align-items: flex-start;
   gap: 24rpx;
   margin-bottom: 24rpx;
 }
 
 .teacher-avatar {
   flex-shrink: 0;
+}
+
+:deep(.teacher-avatar__img) {
+  border-radius: 50%;
 }
 
 .default-avatar {
@@ -331,7 +355,8 @@ const handleDelete = async (id: string, name: string) => {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 8rpx;
+  gap: 12rpx;
+  min-width: 0;
 }
 
 .info-top {
@@ -341,17 +366,54 @@ const handleDelete = async (id: string, name: string) => {
   gap: 16rpx;
 }
 
+.name-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  min-width: 0;
+}
+
 .teacher-name {
   font-size: 32rpx;
   font-weight: bold;
   color: $uni-text-color;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gender-tag {
+  padding: 4rpx 12rpx;
+  border-radius: 999rpx;
+  font-size: 22rpx;
+  flex-shrink: 0;
+
+  &.male {
+    color: #1677ff;
+    background-color: rgba(22, 119, 255, 0.12);
+  }
+
+  &.female {
+    color: #eb2f96;
+    background-color: rgba(235, 47, 150, 0.12);
+  }
 }
 
 .status-tag {
-  padding: 4rpx 12rpx;
+  display: inline-flex;
+  align-items: center;
+  gap: 8rpx;
+  padding: 6rpx 14rpx;
   font-size: 24rpx;
-  border-radius: 6rpx;
+  border-radius: 999rpx;
   flex-shrink: 0;
+
+  .status-dot {
+    width: 10rpx;
+    height: 10rpx;
+    border-radius: 50%;
+    background-color: currentColor;
+  }
 
   &.status-active {
     background-color: $uni-color-primary-lighter;
@@ -372,6 +434,7 @@ const handleDelete = async (id: string, name: string) => {
 .teacher-title {
   font-size: 26rpx;
   color: $uni-color-primary;
+  font-weight: 500;
 }
 
 .teacher-phone {
@@ -379,27 +442,61 @@ const handleDelete = async (id: string, name: string) => {
   color: $uni-text-color-secondary;
 }
 
+.teacher-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8rpx 20rpx;
+  align-items: center;
+}
+
+.teacher-highlights {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+}
+
+.highlight-chip {
+  min-width: 132rpx;
+  padding: 12rpx 16rpx;
+  border-radius: 14rpx;
+  background: linear-gradient(180deg, #f8fff2 0%, #f3fce8 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+}
+
+.highlight-label {
+  font-size: 22rpx;
+  color: $uni-text-color-tertiary;
+}
+
+.highlight-value {
+  font-size: 26rpx;
+  color: $uni-text-color;
+  font-weight: 600;
+}
+
 .card-body {
   margin-bottom: 24rpx;
+  padding-top: 24rpx;
+  border-top: 1rpx solid $uni-border-color-light;
 }
 
 .info-row {
   display: flex;
+  flex-direction: column;
+  gap: 12rpx;
   font-size: 28rpx;
-  margin-bottom: 16rpx;
+  margin-bottom: 20rpx;
 
   &:last-child {
     margin-bottom: 0;
-  }
-
-  &.bio {
-    flex-direction: column;
   }
 }
 
 .label {
   color: $uni-text-color-secondary;
-  margin-right: 16rpx;
+  font-size: 24rpx;
   flex-shrink: 0;
 }
 
@@ -408,24 +505,51 @@ const handleDelete = async (id: string, name: string) => {
   word-break: break-all;
 }
 
+.bio-text {
+  line-height: 1.7;
+  color: $uni-text-color-secondary;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
 .subjects {
   display: flex;
   flex-wrap: wrap;
-  gap: 8rpx;
+  gap: 10rpx;
 }
 
 .subject-tag {
-  padding: 4rpx 12rpx;
+  padding: 8rpx 16rpx;
   font-size: 24rpx;
   background-color: $uni-color-primary-lighter;
   color: $uni-color-primary;
-  border-radius: 6rpx;
+  border-radius: 999rpx;
 }
 
 .card-footer {
   display: flex;
   gap: 16rpx;
   justify-content: flex-end;
+}
+
+:deep(.teacher-action) {
+  min-width: 132rpx;
+  border-radius: 999rpx !important;
+  font-size: 26rpx !important;
+}
+
+:deep(.teacher-action--edit.is-plain) {
+  color: $uni-color-primary !important;
+  border-color: rgba(82, 196, 26, 0.35) !important;
+  background-color: rgba(82, 196, 26, 0.06) !important;
+}
+
+:deep(.teacher-action--delete.is-plain) {
+  color: $uni-color-error !important;
+  border-color: rgba(245, 34, 45, 0.28) !important;
+  background-color: rgba(245, 34, 45, 0.05) !important;
 }
 
 .fab {

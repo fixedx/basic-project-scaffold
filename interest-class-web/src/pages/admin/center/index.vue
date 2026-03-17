@@ -294,6 +294,36 @@ const formatAmount = (val: number | undefined) => {
 }
 
 const loadUserInfo = async () => {
+  try {
+    const res = await authApi.getUserInfo()
+    userInfo.value = res
+  } catch (error) {
+    console.error('获取管理员信息失败:', error)
+  }
+}
+
+const loadStats = async () => {
+  try {
+    const res = await adminApi.getStats({
+      period: selectedPeriod.value,
+    })
+    stats.value = res
+    lastUpdateTime.value = new Date()
+  } catch (error) {
+    console.error('获取管理员统计失败:', error)
+  }
+}
+
+const changePeriod = (period: AdminStatsParams['period']) => {
+  if (selectedPeriod.value === period) return
+  selectedPeriod.value = period
+  loadStats()
+}
+
+const goToCommissionOrders = () => {
+  uni.navigateTo({
+    url: `/pages/admin/orders/index?commissionOnly=true&period=${selectedPeriod.value}`,
+  })
 }
 
 const loadFeedbackCount = async () => {
