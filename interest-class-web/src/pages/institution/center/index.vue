@@ -1,25 +1,26 @@
 <template>
   <view v-if="isReady" class="dashboard-page">
     <!-- 顶部背景与机构信息区域 -->
-    <view class="header-section" :style="{ paddingTop: safeAreaTop + 'px' }">
+    <view class="header-section" :style="{ paddingTop: `${safeAreaTop}px` }">
       <view class="header-content">
-        <view class="institution-card" @click="navigateTo('/pages/institution/profile/index')">
+        <view class="user-info" @click="navigateTo('/pages/institution/profile/index')">
           <AsyncImage
-            class="logo"
-            :url="institutionInfo.logo || ''"
-            width="120rpx"
-            height="120rpx"
+            v-if="institutionInfo.logo"
+            custom-class="avatar"
+            :url="institutionInfo.logo"
+            width="110rpx"
+            height="110rpx"
             mode="aspectFill"
-            radius="16rpx"
-          >
-            <template #error>
-              <image class="default-logo" src="/static/logo.png" mode="aspectFill" />
-            </template>
-          </AsyncImage>
+          />
+          <image
+            v-else
+            class="default-logo avatar"
+            src="/static/logo.png"
+            mode="aspectFill"
+          />
           <view class="info">
             <view class="name-row">
               <text class="name">{{ institutionInfo.name || '未命名机构' }}</text>
-              <text class="iconfont icon-right arrow-icon"></text>
             </view>
             <view class="meta-row">
               <view class="status-tag" :class="'status-' + institutionInfo.audit_status">
@@ -93,42 +94,19 @@
 
       <!-- 收入数据 -->
       <view class="stats-row">
-        <view class="stat-item" @click="navigateTo('/pages/institution/orders/index')">
+        <view class="stat-item" @click="goToRevenueOrders()">
           <text class="stat-value">&yen;{{ formatRevenue(stats.todayRevenue) }}</text>
           <text class="stat-label">今日收入</text>
         </view>
         <view class="stat-divider"></view>
-        <view class="stat-item" @click="navigateTo('/pages/institution/orders/index')">
+        <view class="stat-item" @click="goToRevenueOrders()">
           <text class="stat-value">&yen;{{ formatRevenue(stats.thisMonthRevenue) }}</text>
           <text class="stat-label">{{ periodLabel }}收入</text>
         </view>
         <view class="stat-divider"></view>
-        <view class="stat-item" @click="navigateTo('/pages/institution/orders/index')">
+        <view class="stat-item" @click="goToRevenueOrders()">
           <text class="stat-value">&yen;{{ formatRevenue(stats.totalRevenue) }}</text>
           <text class="stat-label">总营收</text>
-        </view>
-      </view>
-
-      <view class="commission-section" @click="goToCommissionOrders">
-        <view class="commission-section__header">
-          <text class="commission-section__title">佣金明细</text>
-          <text class="commission-section__link">查看订单明细</text>
-        </view>
-        <view class="stats-row stats-row--commission">
-          <view class="stat-item">
-            <text class="stat-value stat-value--commission">&yen;{{ formatRevenue(stats.todayCommission) }}</text>
-            <text class="stat-label">今日佣金</text>
-          </view>
-          <view class="stat-divider"></view>
-          <view class="stat-item">
-            <text class="stat-value stat-value--commission">&yen;{{ formatRevenue(stats.thisMonthCommission) }}</text>
-            <text class="stat-label">{{ periodLabel }}佣金</text>
-          </view>
-          <view class="stat-divider"></view>
-          <view class="stat-item">
-            <text class="stat-value stat-value--commission">&yen;{{ formatRevenue(stats.totalCommission) }}</text>
-            <text class="stat-label">累计佣金</text>
-          </view>
         </view>
       </view>
     </view>
@@ -293,22 +271,19 @@
     <FeedbackDialog ref="feedbackDialogRef" page-source="institution-center" />
 
     <!-- 退出登录 -->
-    <view class="logout-btn-container">
-      <view class="logout-btn" @click="handleLogout">
-        <text>退出登录</text>
-      </view>
-    </view>
+    <LogoutButton @click="handleLogout" />
     <view class="safe-area-bottom"></view>
   </view>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { onShow, onLoad } from '@dcloudio/uni-app'
+import { onShow, onLoad, onPullDownRefresh } from '@dcloudio/uni-app'
 import { institutionApi, type InstitutionStats } from '@/api/institution'
 import { useAuthGuard } from '@/composables/useAuthGuard'
 import AsyncImage from '@/components/AsyncImage/index.vue'
 import FeedbackDialog from '@/components/FeedbackDialog/index.vue'
+import LogoutButton from '@/components/LogoutButton/index.vue'
 import { useUserStore } from '@/stores/user'
 
 const { isReady } = useAuthGuard()
@@ -377,9 +352,6 @@ const stats = ref<InstitutionStats>({
   totalRevenue: 0,
   thisMonthRevenue: 0,
   todayRevenue: 0,
-  totalCommission: 0,
-  thisMonthCommission: 0,
-  todayCommission: 0,
   pendingOrderCount: 0,
   refundingOrderCount: 0,
   pendingCancelBookingCount: 0,
@@ -428,13 +400,7 @@ const formatRating = (value?: number) => {
 
 onLoad(() => {
   const systemInfo = uni.getSystemInfoSync()
-  // #ifdef MP-WEIXIN
-  const menuButton = uni.getMenuButtonBoundingClientRect()
-  safeAreaTop.value = menuButton.bottom + 12
-  // #endif
-  // #ifndef MP-WEIXIN
-  safeAreaTop.value = (systemInfo.statusBarHeight || 0) + 12
-  // #endif
+  safeAreaTop.value = (systemInfo.statusBarHeight || 0)
   loadInstitutionInfo()
   loadStats()
 })
@@ -442,6 +408,11 @@ onLoad(() => {
 onShow(() => {
   loadInstitutionInfo()
   loadStats()
+})
+
+onPullDownRefresh(async () => {
+  await Promise.all([loadInstitutionInfo(), loadStats()])
+  uni.stopPullDownRefresh()
 })
 
 const getStatusText = (status?: string) => {
@@ -512,8 +483,8 @@ const navigateWithPeriod = (baseUrl: string) => {
   uni.navigateTo({ url })
 }
 
-const goToCommissionOrders = () => {
-  navigateWithPeriod('/pages/institution/orders/index?commissionOnly=true')
+const goToRevenueOrders = () => {
+  navigateWithPeriod('/pages/institution/orders/index?revenueOnly=true')
 }
 
 const navigateToClassrooms = () => {
@@ -598,25 +569,39 @@ const handleLogout = () => {
 
 .header-section {
   background: linear-gradient(135deg, $uni-color-primary 0%, $uni-color-primary-dark 100%);
-  padding-bottom: 60rpx;
+  padding-right: 32rpx;
+  padding-bottom: 100rpx;
+  padding-left: 32rpx;
+  border-radius: 0 0 40rpx 40rpx;
 
   .header-content {
-    padding: 20rpx 32rpx;
+    display: flex;
+    align-items: center;
   }
 }
 
-.institution-card {
+.user-info {
   display: flex;
   align-items: center;
+  flex: 1;
+
+  .avatar {
+    width: 110rpx;
+    height: 110rpx;
+    border-radius: 16rpx;
+    border: 4rpx solid rgba(255, 255, 255, 0.28);
+    background-color: rgba(255, 255, 255, 0.16);
+    overflow: hidden;
+    margin-right: 24rpx;
+  }
 
   .default-logo {
-    width: 100%;
-    height: 100%;
+    width: 110rpx;
+    height: 110rpx;
     border-radius: 16rpx;
   }
 
   .info {
-    margin-left: 24rpx;
     flex: 1;
 
     .name-row {
@@ -628,16 +613,10 @@ const handleLogout = () => {
         font-size: 36rpx;
         font-weight: bold;
         color: #fff;
-        margin-right: 8rpx;
         max-width: 400rpx;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
-      }
-
-      .arrow-icon {
-        font-size: 28rpx;
-        color: rgba(255, 255, 255, 0.7);
       }
     }
 
@@ -812,34 +791,6 @@ const handleLogout = () => {
     display: flex;
     align-items: center;
     padding: 24rpx 0;
-
-    &--commission {
-      padding-top: 20rpx;
-    }
-  }
-
-  .commission-section {
-    margin: 0 24rpx 24rpx;
-    padding-top: 24rpx;
-    border-top: 1rpx solid $uni-border-color-light;
-
-    &__header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 4rpx;
-    }
-
-    &__title {
-      font-size: 28rpx;
-      font-weight: 600;
-      color: $uni-text-color;
-    }
-
-    &__link {
-      font-size: 24rpx;
-      color: $uni-color-primary;
-    }
   }
 
   .stat-item {
@@ -854,10 +805,6 @@ const handleLogout = () => {
       color: $uni-text-color;
       font-family: 'DIN Alternate', Arial, sans-serif;
       margin-bottom: 8rpx;
-
-      &--commission {
-        color: $uni-color-primary;
-      }
     }
 
     .stat-label {
@@ -1068,25 +1015,6 @@ const handleLogout = () => {
     .action-arrow {
       font-size: 24rpx;
       color: $uni-text-color-disable;
-    }
-  }
-}
-
-.logout-btn-container {
-  padding: 16rpx 32rpx 32rpx;
-
-  .logout-btn {
-    background-color: #fff;
-    height: 88rpx;
-    border-radius: 44rpx;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 30rpx;
-    color: $uni-color-error;
-
-    &:active {
-      background-color: rgba(245, 34, 45, 0.06);
     }
   }
 }

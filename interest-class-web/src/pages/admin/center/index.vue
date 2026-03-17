@@ -219,12 +219,7 @@
     </view>
 
     <!-- 退出登录 -->
-    <view class="logout-section">
-      <view class="logout-btn" @click="handleLogout">
-        <text class="iconfont icon-return"></text>
-        <text>退出登录</text>
-      </view>
-    </view>
+    <LogoutButton @click="handleLogout" />
 
     <view class="footer">
       <text>Interest Class Admin v1.0.0</text>
@@ -239,6 +234,7 @@ import { onShow, onPullDownRefresh } from '@dcloudio/uni-app'
 import { authApi, type UserInfo } from '@/api/auth'
 import { adminApi, type AdminStats, type AdminStatsParams } from '@/api/admin'
 import { feedbackApi } from '@/api/feedback'
+import LogoutButton from '@/components/LogoutButton/index.vue'
 import { removeToken } from '@/utils/request'
 import { useAuthGuard } from '@/composables/useAuthGuard'
 
@@ -298,33 +294,6 @@ const formatAmount = (val: number | undefined) => {
 }
 
 const loadUserInfo = async () => {
-  try {
-    const res = await authApi.getUserInfo()
-    userInfo.value = res
-  } catch (error) {
-    console.error('获取用户信息失败:', error)
-  }
-}
-
-const loadStats = async () => {
-  try {
-    const res = await adminApi.getStats({ period: selectedPeriod.value })
-    stats.value = res
-    lastUpdateTime.value = new Date()
-  } catch (error) {
-    console.error('获取统计数据失败:', error)
-  }
-}
-
-const changePeriod = (period: AdminStatsParams['period']) => {
-  selectedPeriod.value = period
-  loadStats()
-}
-
-const goToCommissionOrders = () => {
-  uni.navigateTo({
-    url: `/pages/admin/orders/index?commissionOnly=true&period=${selectedPeriod.value}`,
-  })
 }
 
 const loadFeedbackCount = async () => {
@@ -834,31 +803,6 @@ onPullDownRefresh(async () => {
   .tool-name {
     font-size: 24rpx;
     color: $uni-text-color;
-  }
-}
-
-/* 退出登录 */
-.logout-section {
-  margin: 32rpx;
-
-  .logout-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 12rpx;
-    padding: 28rpx;
-    background: #fff;
-    border-radius: 24rpx;
-    font-size: 30rpx;
-    color: $uni-color-error;
-
-    &:active {
-      opacity: 0.7;
-    }
-
-    .iconfont {
-      font-size: 32rpx;
-    }
   }
 }
 

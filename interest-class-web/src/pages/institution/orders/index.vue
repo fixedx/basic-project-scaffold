@@ -2,15 +2,15 @@
   <view class="page">
     <!-- 状态筛选 -->
     <StatusTabs
-      v-if="!commissionOnly"
+      v-if="!revenueOnly"
       v-model="currentStatus"
       :tabs="statusTabs"
       @change="handleStatusChange"
     />
 
-    <view v-if="commissionOnly" class="commission-tip">
-      <text class="commission-tip__title">佣金明细</text>
-      <text class="commission-tip__desc">仅显示当前机构已确认佣金的订单，金额按实际履约进度计算</text>
+    <view v-if="revenueOnly" class="commission-tip">
+      <text class="commission-tip__title">收入明细</text>
+      <text class="commission-tip__desc">当前页面用于查看收入相关订单明细，已隐藏通用状态筛选</text>
     </view>
 
     <!-- 订单列表 -->
@@ -42,7 +42,7 @@
       <EmptyState
         v-if="!loading && orderList.length === 0"
         icon="icon-order"
-        :text="commissionOnly ? '暂无佣金明细' : '暂无订单'"
+        :text="revenueOnly ? '暂无收入明细' : '暂无订单'"
       />
     </view>
 
@@ -76,7 +76,7 @@ const statusTabs = [
 const loading = ref(true)
 const orderList = ref<Order[]>([])
 const currentStatus = ref('all')
-const commissionOnly = ref(false)
+const revenueOnly = ref(false)
 
 // 分页
 const page = ref(1)
@@ -112,7 +112,7 @@ onLoad((options) => {
   if (options?.status) {
     currentStatus.value = options.status
   }
-  commissionOnly.value = options?.commissionOnly === 'true'
+  revenueOnly.value = options?.revenueOnly === 'true'
   if (options?.period) periodFilter.value = options.period
   if (options?.startDate) startDateFilter.value = options.startDate
   if (options?.endDate) endDateFilter.value = options.endDate
@@ -146,7 +146,6 @@ const loadOrders = async (append = false) => {
       period: periodFilter.value || undefined,
       startDate: startDateFilter.value || undefined,
       endDate: endDateFilter.value || undefined,
-      commissionOnly: commissionOnly.value || undefined,
     })
 
     if (append) {

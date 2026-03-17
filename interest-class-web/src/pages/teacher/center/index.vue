@@ -76,11 +76,7 @@
     </view>
 
     <!-- 退出登录 -->
-    <view class="logout-btn-container">
-      <view class="logout-btn" @click="handleLogout">
-        <text>退出登录</text>
-      </view>
-    </view>
+    <LogoutButton @click="handleLogout" />
 
     <!-- 底部 TabBar 占位 -->
     <view style="height: 120rpx;"></view>
@@ -97,6 +93,7 @@ import { useAuthGuard } from '@/composables/useAuthGuard'
 import { useUserStore } from '@/stores/user'
 import AsyncImage from '@/components/AsyncImage/index.vue'
 import CustomTabbar from '@/components/CustomTabbar/index.vue'
+import LogoutButton from '@/components/LogoutButton/index.vue'
 
 const { isReady } = useAuthGuard('teacher')
 const userStore = useUserStore()
@@ -137,7 +134,6 @@ const loadUserInfo = async () => {
     const result = await authApi.getUserInfo()
     userInfo.value = result
     userStore.setUserInfo(result)
-    // TODO: 加载教师统计数据和机构名称
     institutionName.value = '待实现'
   } catch (error) {
     console.error('加载用户信息失败:', error)
@@ -346,23 +342,4 @@ const handleLogout = () => {
   }
 }
 
-/* 退出登录 */
-.logout-btn-container {
-  padding: 32rpx;
-
-  .logout-btn {
-    background-color: #fff;
-    height: 88rpx;
-    border-radius: 44rpx;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 30rpx;
-    color: $uni-color-error;
-
-    &:active {
-      background-color: rgba(245, 34, 45, 0.06);
-    }
-  }
-}
 </style>

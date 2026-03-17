@@ -187,7 +187,8 @@
 			"path": "pages/institution/center/index",
 			"style": {
 				"navigationBarTitleText": "机构中心",
-				"navigationStyle": "custom"
+				"navigationStyle": "custom",
+				"enablePullDownRefresh": true
 			}
 		},
 		{
