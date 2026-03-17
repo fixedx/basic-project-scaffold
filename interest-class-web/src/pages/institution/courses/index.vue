@@ -2,16 +2,12 @@
   <view class="page">
     <!-- 搜索和筛选区域 -->
     <view class="sticky-header">
-      <view class="search-box">
-        <wd-search
-          v-model="searchKeyword"
-          placeholder="搜索课程名称"
-          hide-cancel
-          light
-          @search="handleSearch"
-          @clear="handleSearch"
-        />
-      </view>
+      <KeywordSearchBar
+        v-model="searchKeyword"
+        placeholder="搜索课程名称"
+        @search="handleSearch"
+        @clear="handleSearch"
+      />
       <view class="filter-box">
         <wd-drop-menu>
           <wd-drop-menu-item v-model="filterType" :options="typeOptions" @change="handleFilterChange" />
@@ -56,9 +52,8 @@
                 </view>
                 <wd-button
                   size="small"
-                  type="warning"
                   plain
-                  custom-class="btn-action"
+                  custom-class="btn-action btn-offline"
                   @click="handleToggleOnline(c)"
                 >
                   下架
@@ -69,25 +64,23 @@
                 <wd-button
                   size="small"
                   plain
-                  custom-class="btn-action btn-info"
+                  custom-class="btn-action btn-schedule"
                   @click="goToSchedule(c.id)"
                 >
                   排课管理
                 </wd-button>
                 <wd-button
                   size="small"
-                  type="success"
                   plain
-                  custom-class="btn-action"
+                  custom-class="btn-action btn-online"
                   @click="handleToggleOnline(c)"
                 >
                   上架
                 </wd-button>
                 <wd-button
                   size="small"
-                  type="primary"
                   plain
-                  custom-class="btn-action"
+                  custom-class="btn-action btn-edit"
                   @click="goToEdit(c.id)"
                 >
                   编辑
@@ -113,6 +106,7 @@ import { courseApi, type CourseInfo } from '@/api/course'
 import { getMyInstitutions } from '@/api/category'
 import { useEnums } from '@/composables/useEnums'
 import CourseCard from '@/components/CourseCard/index.vue'
+import KeywordSearchBar from '@/components/KeywordSearchBar/index.vue'
 import Loading from '@/components/Loading/index.vue'
 import EmptyState from '@/components/EmptyState/index.vue'
 const { loadEnumsByTypes, getEnumLabel, ENUM_TYPES } = useEnums()
@@ -282,7 +276,9 @@ const goToCreate = () => {
  * 跳转到编辑页面
  */
 const handleCardClick = (course: any) => {
-  goToEdit(course.id)
+  uni.navigateTo({
+    url: `/pages/course-detail/index?id=${course.id}`,
+  })
 }
 
 const goToEdit = (id: string) => {
@@ -317,7 +313,6 @@ onMounted(async () => {
 .page {
   min-height: 100vh;
   background-color: $uni-bg-color-grey;
-  padding-bottom: calc(160rpx + env(safe-area-inset-bottom));
 }
 
 .sticky-header {
@@ -326,16 +321,6 @@ onMounted(async () => {
   z-index: 100;
   background-color: $uni-bg-color;
   box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.04);
-}
-
-.search-box {
-  padding: 8rpx 0;
-  border-bottom: 1rpx solid $uni-border-color-light;
-}
-
-:deep(.wd-search) {
-  background: transparent !important;
-  padding: 0 32rpx;
 }
 
 :deep(.wd-drop-menu) {
@@ -395,10 +380,28 @@ onMounted(async () => {
   line-height: 56rpx;
 }
 
-:deep(.btn-info) {
-  color: $uni-text-color-secondary;
-  border-color: $uni-border-color-secondary;
-  background: transparent;
+:deep(.btn-schedule) {
+  color: #4e5969;
+  border-color: #d9f7be;
+  background: rgba(217, 247, 190, 0.22);
+}
+
+:deep(.btn-online) {
+  color: $uni-color-primary-dark;
+  border-color: rgba(82, 196, 26, 0.48);
+  background: rgba(82, 196, 26, 0.12);
+}
+
+:deep(.btn-edit) {
+  color: #237804;
+  border-color: rgba(35, 120, 4, 0.28);
+  background: rgba(149, 222, 100, 0.16);
+}
+
+:deep(.btn-offline) {
+  color: #ad6800;
+  border-color: rgba(250, 173, 20, 0.36);
+  background: rgba(250, 173, 20, 0.14);
 }
 
 .fab {

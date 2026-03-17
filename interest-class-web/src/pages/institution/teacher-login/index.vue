@@ -60,8 +60,8 @@
           <text class="link">《隐私政策》</text>
         </view>
 
-        <view class="cancel-login">
-          <text @click="handleCancelLogin">取消登录</text>
+        <view class="cancel-login" @click="handleCancelLogin">
+          <text class="cancel-link-common">取消登录</text>
         </view>
       </view>
     </view>
@@ -350,7 +350,6 @@ const handleCancelLogin = () => {
       
       text {
         font-size: 28rpx;
-        color: $uni-text-color-secondary;
       }
     }
   }

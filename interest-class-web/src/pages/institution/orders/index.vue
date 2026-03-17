@@ -8,10 +8,6 @@
       @change="handleStatusChange"
     />
 
-    <view v-if="revenueOnly" class="commission-tip">
-      <text class="commission-tip__title">收入明细</text>
-    </view>
-
     <!-- 订单列表 -->
     <view class="order-list">
       <!-- 加载中 -->
@@ -241,29 +237,6 @@ onShow(() => {
 .page {
   min-height: 100vh;
   background-color: $uni-bg-color-grey;
-  padding-top: 24rpx;
-}
-
-.commission-tip {
-  margin: 0 24rpx 24rpx 24rpx;
-  padding: 24rpx;
-  background: #f6ffed;
-  border-radius: 16rpx;
-  border: 1rpx solid #b7eb8f;
-
-  &__title {
-    display: block;
-    font-size: 28rpx;
-    font-weight: 600;
-    color: #389e0d;
-    margin-bottom: 8rpx;
-  }
-
-  &__desc {
-    display: block;
-    font-size: 24rpx;
-    color: $uni-text-color-secondary;
-  }
 }
 
 .institution-selector {

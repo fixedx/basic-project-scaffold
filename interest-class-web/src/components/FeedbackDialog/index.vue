@@ -39,7 +39,7 @@
 
       <!-- 操作按钮 -->
       <view class="feedback-actions">
-        <view class="feedback-btn cancel" @click="handleClose">
+        <view class="feedback-btn cancel cancel-btn-common" @click="handleClose">
           <text>取消</text>
         </view>
         <view class="feedback-btn confirm" :class="{ disabled: submitting }" @click="handleSubmit">
@@ -232,11 +232,6 @@ defineExpose({ open })
   justify-content: center;
   border-radius: 12rpx;
   font-size: 30rpx;
-
-  &.cancel {
-    background: $uni-bg-color-grey;
-    color: $uni-text-color-secondary;
-  }
 
   &.confirm {
     background: $uni-color-primary;

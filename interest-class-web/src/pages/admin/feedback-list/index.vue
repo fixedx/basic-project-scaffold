@@ -136,7 +136,7 @@
 
         <!-- 操作按钮 -->
         <view class="detail-actions">
-          <view class="detail-btn cancel" @click="showDetailDialog = false">
+          <view class="detail-btn cancel cancel-btn-common" @click="showDetailDialog = false">
             <text>取消</text>
           </view>
           <view class="detail-btn confirm" :class="{ disabled: submitting }" @click="handleReply">
@@ -640,11 +640,6 @@ onMounted(() => {
   justify-content: center;
   border-radius: 12rpx;
   font-size: 30rpx;
-
-  &.cancel {
-    background: $uni-bg-color-grey;
-    color: $uni-text-color-secondary;
-  }
 
   &.confirm {
     background: $uni-color-primary;

@@ -4911,6 +4911,49 @@ const goToCommissionOrders = () => {
 
 ---
 
+### 错误 67: 管理列表各自手写搜索栏，导致搜索样式和交互不一致 ⚠️⚠️
+
+**错误现象**：
+```vue
+<!-- ❌ 错误：每个管理列表页各自写一套搜索栏 -->
+<view class="search-bar">
+  <wd-search
+    v-model="keyword"
+    placeholder="搜索昵称、手机号"
+    @search="handleSearch"
+  />
+</view>
+
+<!-- 或者手写原生 input -->
+<view class="search-box">
+  <text class="iconfont icon-search"></text>
+  <input v-model="keyword" class="search-input" placeholder="搜索学员姓名/手机号" />
+</view>
+```
+
+**问题后果**：
+- 机构课程、教师、教室、学员、管理端用户/机构列表的搜索框圆角、间距、边框、清空交互不一致
+- 后续若要统一搜索框样式，需要逐页修改，维护成本高
+- 容易出现有的页面支持清空回调、有的页面只支持搜索提交，交互割裂
+
+**正确写法**：
+```vue
+<!-- ✅ 正确：统一复用公共搜索组件 -->
+<KeywordSearchBar
+  v-model="keyword"
+  placeholder="搜索课程名称"
+  @search="handleSearch"
+  @clear="handleSearch"
+/>
+```
+
+**规范**：
+- 管理类列表页（机构端/管理端的课程、教室、教师、学员、机构、用户等列表）必须统一使用公共组件 `src/components/KeywordSearchBar/`
+- 禁止在这些管理列表中继续直接写 `wd-search` 或手写原生 `input` 搜索栏样式
+- 搜索框的圆角、内边距、边框、清空行为统一在公共组件维护，页面只保留 `keyword` 状态和 `handleSearch` 逻辑
+
+---
+
 
 
 在生成新模块时，请检查以下内容：

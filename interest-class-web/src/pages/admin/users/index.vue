@@ -2,7 +2,7 @@
   <view class="admin-users-page">
     <!-- 搜索栏 -->
     <view class="search-bar">
-      <wd-search
+      <KeywordSearchBar
         v-model="keyword"
         placeholder="搜索昵称、手机号"
         @search="handleSearch"
@@ -94,6 +94,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { onPullDownRefresh, onReachBottom } from '@dcloudio/uni-app'
 import { adminApi } from '@/api/admin'
+import KeywordSearchBar from '@/components/KeywordSearchBar/index.vue'
 import AsyncImage from '@/components/AsyncImage/index.vue'
 import Loading from '@/components/Loading/index.vue'
 

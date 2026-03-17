@@ -2,21 +2,12 @@
   <view class="student-list-page">
     <!-- 搜索栏 -->
     <view class="search-bar">
-      <view class="search-input-wrap">
-        <text class="iconfont icon-search search-icon"></text>
-        <input
-          v-model="keyword"
-          class="search-input"
-          placeholder="搜索学员姓名/手机号"
-          confirm-type="search"
-          @confirm="onSearch"
-        />
-        <text
-          v-if="keyword"
-          class="iconfont icon-close clear-icon"
-          @click="clearSearch"
-        ></text>
-      </view>
+      <KeywordSearchBar
+        v-model="keyword"
+        placeholder="搜索学员姓名/手机号"
+        @search="onSearch"
+        @clear="clearSearch"
+      />
     </view>
 
     <!-- 统计信息 -->
@@ -128,6 +119,7 @@
 import { ref, computed } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { institutionApi, type StudentInfo } from '@/api/institution'
+import KeywordSearchBar from '@/components/KeywordSearchBar/index.vue'
 import AsyncImage from '@/components/AsyncImage/index.vue'
 import EmptyState from '@/components/EmptyState/index.vue'
 
@@ -235,35 +227,7 @@ const getOrderStatusText = (status: string) => {
 }
 
 .search-bar {
-  padding: 20rpx 32rpx;
   background-color: $uni-bg-color;
-
-  .search-input-wrap {
-    display: flex;
-    align-items: center;
-    background-color: $uni-bg-color-grey;
-    border-radius: 16rpx;
-    padding: 0 24rpx;
-    height: 72rpx;
-
-    .search-icon {
-      font-size: 32rpx;
-      color: $uni-text-color-tertiary;
-      margin-right: 12rpx;
-    }
-
-    .search-input {
-      flex: 1;
-      font-size: 28rpx;
-      color: $uni-text-color;
-    }
-
-    .clear-icon {
-      font-size: 28rpx;
-      color: $uni-text-color-tertiary;
-      padding: 8rpx;
-    }
-  }
 }
 
 .summary-bar {

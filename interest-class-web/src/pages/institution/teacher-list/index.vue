@@ -7,10 +7,9 @@
     <view v-else class="container">
       <!-- 筛选栏 -->
       <view class="filter-bar">
-        <wd-search 
+        <KeywordSearchBar
           v-model="searchKeyword" 
           placeholder="搜索教师姓名、手机号" 
-          hide-cancel
           @search="handleSearch"
           @clear="handleSearch"
         />
@@ -116,6 +115,7 @@ import { ref, onMounted } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { useMessage } from 'wot-design-uni'
 import { teacherApi, type TeacherInfo } from '@/api/teacher'
+import KeywordSearchBar from '@/components/KeywordSearchBar/index.vue'
 import AsyncImage from '@/components/AsyncImage/index.vue'
 import Loading from '@/components/Loading/index.vue'
 import EmptyState from '@/components/EmptyState/index.vue'

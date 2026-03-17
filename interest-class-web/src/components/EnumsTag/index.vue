@@ -100,8 +100,8 @@ const handleSelect = (code: string) => {
 .tag-item {
   display: flex;
   align-items: center;
-  padding: 12rpx 32rpx;
-  font-size: 28rpx;
+  padding: 5rpx 20rpx;
+  font-size: 24rpx;
   border-radius: 8rpx;
   background-color: $uni-bg-color-grey;
   color: $uni-text-color-secondary;

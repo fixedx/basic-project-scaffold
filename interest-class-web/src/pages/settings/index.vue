@@ -85,16 +85,7 @@
     </view>
 
     <!-- 退出登录按钮 -->
-    <view class="logout-section" v-if="isLoggedIn">
-      <wd-button 
-        block 
-        type="error" 
-        plain
-        @click="handleLogout"
-      >
-        退出登录
-      </wd-button>
-    </view>
+    <LogoutButton v-if="isLoggedIn" @click="handleLogout" />
 
     <!-- 安全区域 -->
     <view class="safe-area"></view>
@@ -103,6 +94,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import LogoutButton from '@/components/LogoutButton/index.vue'
 import { getToken, removeToken } from '@/utils/request'
 
 // 版本号
@@ -365,11 +357,6 @@ onMounted(() => {
   height: 14rpx;
   border-radius: 50%;
   background-color: $uni-color-error;
-}
-
-.logout-section {
-  margin-top: 64rpx;
-  padding: 0 32rpx;
 }
 
 .safe-area {

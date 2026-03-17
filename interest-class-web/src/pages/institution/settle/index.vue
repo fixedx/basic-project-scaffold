@@ -387,7 +387,7 @@
             plain
             size="large"
             @click="accountDialogVisible = false"
-            custom-class="flex-1 dialog-btn-cancel"
+            custom-class="flex-1 cancel-btn-common"
           >
             取消
           </wd-button>
@@ -1391,13 +1391,6 @@ onMounted(async () => {
 :deep(.dialog-textarea) {
   padding: 0 !important;
   background: transparent !important;
-}
-
-// 取消按钮样式
-:deep(.dialog-btn-cancel) {
-  border: 1rpx solid $uni-border-color !important;
-  color: $uni-text-color !important;
-  background-color: $uni-bg-color !important;
 }
 
 .dialog-actions {

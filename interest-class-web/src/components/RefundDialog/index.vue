@@ -59,7 +59,7 @@
 
       <!-- 操作按钮 -->
       <view class="refund-dialog__footer">
-        <wd-button type="info" plain block custom-class="flex-1" @click="close">取消</wd-button>
+        <wd-button type="info" plain block custom-class="flex-1 cancel-btn-common" @click="close">取消</wd-button>
         <wd-button
           type="warning"
           block

@@ -2,10 +2,9 @@
   <view class="admin-institutions-page">
     <!-- 筛选栏 -->
     <view class="filter-bar">
-      <wd-search 
+      <KeywordSearchBar
         v-model="searchKeyword" 
         placeholder="搜索机构名称" 
-        hide-cancel
         @search="handleSearch"
         @clear="handleSearch"
       />
@@ -79,6 +78,7 @@ import { ref } from 'vue'
 import { onLoad, onPullDownRefresh } from '@dcloudio/uni-app'
 import { type InstitutionInfo } from '@/api/institution'
 import { adminApi } from '@/api/admin'
+import KeywordSearchBar from '@/components/KeywordSearchBar/index.vue'
 import Loading from '@/components/Loading/index.vue'
 import EmptyState from '@/components/EmptyState/index.vue'
 import InstitutionCard from '@/components/InstitutionCard/index.vue'
