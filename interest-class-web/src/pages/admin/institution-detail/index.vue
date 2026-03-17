@@ -206,7 +206,7 @@
           />
         </view>
         <view class="dialog-footer">
-          <wd-button type="default" custom-class="cancel-btn-common" @click="showRejectDialog = false">取消</wd-button>
+          <wd-button type="default" @click="showRejectDialog = false">取消</wd-button>
           <wd-button type="error" @click="confirmReject">确定驳回</wd-button>
         </view>
       </view>
@@ -228,7 +228,7 @@
           />
         </view>
         <view class="dialog-footer">
-          <wd-button type="default" custom-class="cancel-btn-common" @click="showContractRejectDialog = false">取消</wd-button>
+          <wd-button type="default" @click="showContractRejectDialog = false">取消</wd-button>
           <wd-button type="error" @click="confirmContractReject">确定驳回</wd-button>
         </view>
       </view>

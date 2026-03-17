@@ -107,7 +107,7 @@
     </view>
     <!-- 取消登录 -->
     <view class="cancel-login" @click="handleCancelLogin">
-      <text class="cancel-text cancel-link-common">取消登录</text>
+      <text class="cancel-text">取消登录</text>
     </view>
 
     <!-- 底部装饰 -->
@@ -425,6 +425,8 @@ const handleCancelLogin = () => {
 
   .cancel-text {
     font-size: 26rpx;
+    color: $uni-text-color-tertiary;
+    text-decoration: underline;
   }
 }
 

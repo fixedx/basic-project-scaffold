@@ -357,7 +357,6 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   gap: 8rpx;
-  flex: 1;
 
   .iconfont {
     font-size: 24rpx;

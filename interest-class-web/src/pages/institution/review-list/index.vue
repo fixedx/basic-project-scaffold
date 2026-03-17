@@ -171,7 +171,7 @@
         />
         <text class="char-count">{{ editReplyContent.length }}/500</text>
         <view class="dialog-actions">
-          <view class="dialog-btn cancel cancel-btn-common" @click="closeEditDialog">取消</view>
+          <view class="dialog-btn cancel" @click="closeEditDialog">取消</view>
           <view class="dialog-btn confirm" @click="submitEditReply">保存</view>
         </view>
       </view>
@@ -756,6 +756,11 @@ function formatTime(dateStr: string): string {
   border-radius: 16rpx;
   font-size: 30rpx;
   font-weight: 600;
+
+  &.cancel {
+    background-color: $uni-bg-color-grey;
+    color: $uni-text-color-secondary;
+  }
 
   &.confirm {
     background-color: $uni-color-primary;

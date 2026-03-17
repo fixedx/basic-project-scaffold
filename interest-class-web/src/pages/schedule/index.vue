@@ -278,7 +278,7 @@
     >
       <view class="month-picker-container">
         <view class="picker-header">
-          <text class="picker-cancel cancel-link-common" @click="showMonthPicker = false">取消</text>
+          <text class="picker-cancel" @click="showMonthPicker = false">取消</text>
           <text class="picker-title">选择月份</text>
           <text class="picker-confirm" @click="confirmMonthSelect">确定</text>
         </view>

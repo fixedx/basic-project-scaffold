@@ -183,7 +183,7 @@
           show-word-limit
         />
         <view class="dialog-actions">
-          <wd-button block plain custom-class="cancel-btn-common" @click="showRejectDialog = false">取消</wd-button>
+          <wd-button block plain @click="showRejectDialog = false">取消</wd-button>
           <wd-button block type="error" :loading="actionLoading" @click="doReject">确认拒绝</wd-button>
         </view>
       </view>

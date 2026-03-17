@@ -261,7 +261,7 @@ const handleCourseClick = () => {
 .order-detail-component {
   min-height: 100vh;
   background-color: #f5f5f5;
-  padding-bottom: 200rpx; /* Space for footer */
+  padding-bottom: 50rpx; /* Space for footer */
 }
 
 .loading, .empty {

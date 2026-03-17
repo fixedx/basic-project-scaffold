@@ -191,7 +191,7 @@
 
     <!-- 底部按钮 -->
     <PageFooter>
-      <wd-button type="default" custom-class="cancel-btn-common" @click="goBack">取消</wd-button>
+      <wd-button type="default" @click="goBack">取消</wd-button>
       <wd-button type="primary" @click="handleSubmit" custom-style="margin-left: 16rpx;">
         批量创建
       </wd-button>

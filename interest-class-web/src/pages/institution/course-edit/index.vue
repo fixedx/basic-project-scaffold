@@ -175,7 +175,7 @@
     <!-- 底部按钮 -->
     <PageFooter custom-class="footer-buttons">
       <view class="footer-btn left">
-        <wd-button type="info" plain block custom-class="cancel-btn-common" @click="goBack">取消</wd-button>
+        <wd-button type="info" plain block @click="goBack">取消</wd-button>
       </view>
       <view class="footer-btn right">
         <wd-button type="primary" block :loading="submitting" @click="handleSubmit">
@@ -532,7 +532,7 @@ onLoad(async (options: any) => {
 .page {
   min-height: 100vh;
   background-color: #f5f7fa;
-  padding-bottom: calc(100rpx + env(safe-area-inset-bottom));
+  padding-bottom: calc(180rpx + env(safe-area-inset-bottom));
 }
 
 .loading {
@@ -544,6 +544,7 @@ onLoad(async (options: any) => {
 
 .form-container {
   padding: 24rpx;
+  padding-bottom: 200rpx;
 }
 
 /* ========== 直接引入公共样式逻辑，避免 @extend 无法跨作用域的问题 ========== */

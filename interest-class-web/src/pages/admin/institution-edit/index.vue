@@ -201,7 +201,7 @@
       <!-- 底部操作栏 -->
       <PageFooter>
         <view class="footer-actions">
-          <wd-button plain custom-class="cancel-btn-common" @click="handleCancel">取消</wd-button>
+          <wd-button plain @click="handleCancel">取消</wd-button>
           <wd-button type="primary" :loading="saving" @click="handleSave">保存修改</wd-button>
         </view>
       </PageFooter>
