@@ -39,6 +39,7 @@ export default {
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
 import { ossApi } from '@/api/oss'
+import { previewImageList } from '@/utils/image-preview'
 import Loading from '@/components/Loading/index.vue'
 
 interface Props {
@@ -70,6 +71,12 @@ interface Props {
   expiresIn?: number
   /** 加载中占位符样式 */
   placeholderStyle?: string
+  /** 点击图片时是否启用内置预览 */
+  enablePreview?: boolean
+  /** 预览图片列表，不传时默认预览当前 url */
+  previewUrls?: string[]
+  /** 预览当前项，支持索引或具体 URL */
+  previewCurrent?: number | string
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -84,7 +91,10 @@ const props = withDefaults(defineProps<Props>(), {
   customStyle: '',
   autoLoad: true,
   expiresIn: 3600,
-  placeholderStyle: ''
+  placeholderStyle: '',
+  enablePreview: false,
+  previewUrls: () => [],
+  previewCurrent: '',
 })
 
 interface Emits {
@@ -100,6 +110,12 @@ const emit = defineEmits<Emits>()
 const loading = ref(false)
 const error = ref(false)
 const previewUrl = ref('')
+
+const resolvedPreviewUrls = computed(() => {
+  const urls = props.previewUrls?.filter(Boolean) || []
+  if (urls.length > 0) return urls
+  return props.url ? [props.url] : []
+})
 
 /**
  * 计算容器样式
@@ -142,8 +158,15 @@ const computedImageStyle = computed(() => {
 /**
  * 判断是否为完整URL
  */
-const isFullUrl = (url: string) => {
-  return url.startsWith('http://') || url.startsWith('https://')
+const isDirectUrl = (url: string) => {
+  return url.startsWith('http://')
+    || url.startsWith('https://')
+    || url.startsWith('/')
+    || url.startsWith('./')
+    || url.startsWith('../')
+    || url.startsWith('data:')
+    || url.startsWith('blob:')
+    || url.startsWith('wxfile://')
 }
 
 /**
@@ -156,7 +179,7 @@ const loadPreviewUrl = async () => {
   }
 
   // 如果已经是完整URL，直接使用
-  if (isFullUrl(props.url)) {
+  if (isDirectUrl(props.url)) {
     previewUrl.value = props.url
     return
   }
@@ -193,8 +216,23 @@ const handleError = (event: any) => {
 /**
  * 点击图片
  */
-const handleClick = (event: any) => {
+const handleClick = async (event: any) => {
   emit('click', event)
+
+  if (!props.enablePreview || resolvedPreviewUrls.value.length === 0) {
+    return
+  }
+
+  try {
+    const current = props.previewCurrent !== ''
+      ? props.previewCurrent
+      : (resolvedPreviewUrls.value.length > 1 ? props.url : 0)
+
+    await previewImageList(resolvedPreviewUrls.value, current)
+  } catch (err) {
+    console.error('AsyncImage 内置预览失败:', err)
+    uni.showToast({ title: '图片预览失败', icon: 'none' })
+  }
 }
 
 /**

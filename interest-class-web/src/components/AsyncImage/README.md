@@ -11,6 +11,7 @@
 - ✅ 自定义过期时间
 - ✅ 支持所有 uni-app image 组件的 mode
 - ✅ 事件透传（load、error、click）
+- ✅ 可选内置点击预览（自动处理 OSS path → 预览 URL）
 - ✅ 暴露 reload 方法支持手动重新加载
 
 ## 基本使用
@@ -40,6 +41,9 @@ import AsyncImage from '@/components/AsyncImage/index.vue'
 | autoLoad | boolean | true | 是否自动加载 |
 | expiresIn | number | 3600 | 预览URL过期时间（秒） |
 | placeholderStyle | string | '' | 占位符样式 |
+| enablePreview | boolean | false | 是否启用内置点击预览 |
+| previewUrls | string[] | [] | 预览图片列表，不传则默认预览当前 url |
+| previewCurrent | number \| string | '' | 预览当前项，支持索引或具体 URL |
 
 ## Events
 
@@ -62,7 +66,19 @@ import AsyncImage from '@/components/AsyncImage/index.vue'
 />
 ```
 
-### 2. 图片预览功能
+### 2. 单图点击预览
+
+```vue
+<async-image
+  :url="licenseImg"
+  width="100%"
+  height="400rpx"
+  mode="aspectFit"
+  :enable-preview="true"
+/>
+```
+
+### 3. 多图点击预览
 
 ```vue
 <template>
@@ -72,7 +88,9 @@ import AsyncImage from '@/components/AsyncImage/index.vue'
     :url="img"
     mode="aspectFill"
     custom-class="grid-img"
-    @click="handlePreview(index)"
+    :enable-preview="true"
+    :preview-urls="images"
+    :preview-current="index"
   />
 </template>
 
@@ -81,21 +99,10 @@ const images = ref([
   'uploads/teaching/img1.jpg',
   'uploads/teaching/img2.jpg'
 ])
-
-// 需要先转换为完整URL
-const handlePreview = async (index: number) => {
-  const urls = await Promise.all(
-    images.value.map(path => ossApi.getPreviewUrl(path))
-  )
-  uni.previewImage({
-    urls: urls.map(res => res.url),
-    current: index
-  })
-}
 </script>
 ```
 
-### 3. 自定义占位符样式
+### 4. 自定义占位符样式
 
 ```vue
 <async-image
@@ -106,7 +113,7 @@ const handlePreview = async (index: number) => {
 />
 ```
 
-### 4. 手动控制加载
+### 5. 手动控制加载
 
 ```vue
 <template>
@@ -130,7 +137,7 @@ const loadImage = () => {
 </script>
 ```
 
-### 5. 监听加载状态
+### 6. 监听加载状态
 
 ```vue
 <async-image
@@ -154,7 +161,7 @@ const handleImageError = (e) => {
 </script>
 ```
 
-### 6. 完整 URL 直接显示
+### 7. 完整 URL 直接显示
 
 ```vue
 <!-- 已经是完整 URL，不会调用预览接口 -->
@@ -215,7 +222,7 @@ const handleImageError = (e) => {
 ## 性能优化建议
 
 1. **列表场景使用图片懒加载**：配合 `intersection-observer` 实现
-2. **缓存预览 URL**：在需要频繁显示同一图片时，可以缓存预览 URL
+2. **列表预览优先使用内置预览**：`enablePreview + previewUrls + previewCurrent` 即可覆盖大多数场景
 3. **设置合理的过期时间**：根据业务场景调整 `expiresIn`
 4. **图片列表批量获取**：先批量获取所有预览 URL，再渲染
 
@@ -223,8 +230,9 @@ const handleImageError = (e) => {
 
 1. 组件会自动判断 `url` 是否为完整 URL，如果是则直接使用，不会调用预览接口
 2. 预览 URL 是有时效性的，默认 1 小时，可通过 `expiresIn` 调整
-3. 如果图片路径不存在或网络错误，会显示错误占位符
-4. 建议在 `components.d.ts` 中添加类型声明以获得更好的开发体验
+3. 启用内置预览后，组件会在点击时自动把 OSS path 转为可访问预览 URL
+4. 如果图片路径不存在或网络错误，会显示错误占位符
+5. 建议在 `components.d.ts` 中添加类型声明以获得更好的开发体验
 
 ## 类型声明
 

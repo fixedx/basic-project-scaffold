@@ -11,14 +11,15 @@
             width="64rpx" 
             height="64rpx"
             mode="aspectFill"
-            round
             custom-class="avatar"
           />
-          <image 
+          <AsyncImage 
             v-else
-            class="avatar" 
-            src="/static/images/default-avatar.png" 
+            url="/static/images/default-avatar.png"
+            width="64rpx"
+            height="64rpx"
             mode="aspectFill"
+            custom-class="avatar"
           />
           <view class="user-meta">
             <text class="nickname">{{ userInfo.nickname || (getToken() ? '未设置昵称' : '点击登录') }}</text>

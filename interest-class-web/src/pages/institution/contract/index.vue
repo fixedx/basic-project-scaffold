@@ -23,7 +23,7 @@
             height="500rpx"
             mode="aspectFit"
             custom-style="border-radius: 16rpx; border: 1rpx solid #f0f0f0;"
-            @click="previewImage(contractScreenshot)"
+            :enable-preview="true"
           />
         </view>
       </view>
@@ -254,13 +254,6 @@ const handleSubmit = async () => {
   } finally {
     submitting.value = false
   }
-}
-
-/**
- * 预览图片
- */
-const previewImage = (url: string) => {
-  uni.previewImage({ urls: [url], current: url })
 }
 
 /**

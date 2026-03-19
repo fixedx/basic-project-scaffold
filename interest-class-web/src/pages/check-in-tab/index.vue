@@ -10,7 +10,6 @@
     <!-- 空状态 -->
     <view class="empty-container" v-else-if="!bookings || bookings.length === 0">
       <view class="empty-content">
-        <!-- <image class="empty-img" src="/static/empty/check-in.png" mode="widthFix" v-if="false"></image> -->
         <view class="empty-icon-box">
           <text class="iconfont icon-calendar"></text>
         </view>

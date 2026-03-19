@@ -10,7 +10,7 @@
     <view class="login-card">
       <view class="card-header">
         <view class="logo">
-          <image src="/static/logo.png" mode="aspectFit" class="logo-img" />
+          <AsyncImage url="/static/logo.png" mode="aspectFit" custom-class="logo-img" />
         </view>
         <text class="title">教师工作台</text>
         <text class="subtitle">专注教学，轻松管理</text>
@@ -84,6 +84,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { authApi } from '@/api/auth'
+import AsyncImage from '@/components/AsyncImage/index.vue'
 import { setToken } from '@/utils/request'
 import { useUserStore } from '@/stores/user'
 

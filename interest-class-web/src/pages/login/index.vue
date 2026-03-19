@@ -10,7 +10,7 @@
     <!-- Logo 和标题 -->
     <view class="logo-section">
       <view class="logo">
-        <image src="/static/logo.png" mode="aspectFit" class="logo-img" />
+        <AsyncImage url="/static/logo.png" mode="aspectFit" custom-class="logo-img" />
       </view>
       <text class="app-name">家长登录</text>
       <text class="app-slogan">发现身边优质兴趣课程</text>
@@ -121,6 +121,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { authApi } from '@/api/auth'
+import AsyncImage from '@/components/AsyncImage/index.vue'
 import { setToken } from '@/utils/request'
 import { useUserStore } from '@/stores/user'
 import { isValidPhone } from '@/utils/validator'

@@ -6,11 +6,11 @@
       :class="icon"
       :style="{ fontSize: iconSize, color: iconColor }"
     ></text>
-    <image 
+    <AsyncImage 
       v-else-if="image" 
-      :src="image" 
-      class="empty-image"
+      :url="image"
       mode="aspectFit"
+      custom-class="empty-image"
     />
     <view v-else class="default-icon">
       <text class="iconfont icon-empty"></text>
@@ -32,6 +32,8 @@
 </template>
 
 <script setup lang="ts">
+import AsyncImage from '@/components/AsyncImage/index.vue'
+
 interface Props {
   text?: string
   icon?: string

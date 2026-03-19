@@ -52,8 +52,9 @@
             width="200rpx"
             height="200rpx"
             mode="aspectFill"
-            :radius="8"
-            @click="previewImage(review.images, idx)"
+            :enable-preview="true"
+            :preview-urls="review.images"
+            :preview-current="idx"
           />
         </view>
         <!-- 商家回复 -->
@@ -212,13 +213,6 @@ const formatDate = (dateStr: string) => {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
 }
 
-// 预览图片
-const previewImage = (urls: string[], current: number) => {
-  uni.previewImage({
-    urls,
-    current,
-  })
-}
 </script>
 
 <style lang="scss" scoped>

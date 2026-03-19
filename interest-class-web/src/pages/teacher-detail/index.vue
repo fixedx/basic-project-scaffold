@@ -75,14 +75,15 @@
               v-for="(cert, index) in teacher.certificates" 
               :key="index"
               class="certificate-item"
-              @click="previewCertificate(index)"
             >
               <AsyncImage
                 :url="cert"
                 width="200rpx"
                 height="280rpx"
                 mode="aspectFill"
-                :radius="8"
+                :enable-preview="true"
+                :preview-urls="teacher.certificates"
+                :preview-current="index"
               />
             </view>
           </view>
@@ -160,15 +161,6 @@ const loadTeacherDetail = async () => {
   } finally {
     loading.value = false
   }
-}
-
-// 预览证书
-const previewCertificate = (index: number) => {
-  if (!teacher.value?.certificates) return
-  uni.previewImage({
-    urls: teacher.value.certificates,
-    current: index,
-  })
 }
 
 // 加载机构信息

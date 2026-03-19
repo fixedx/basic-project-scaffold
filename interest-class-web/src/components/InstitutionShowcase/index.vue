@@ -18,9 +18,17 @@
               v-for="(item, idx) in currentShowcases"
               :key="idx"
               class="showcase-item"
-              @click="previewImages(currentShowcases, Number(idx))"
             >
-              <AsyncImage :url="item.img_url" width="240rpx" height="180rpx" mode="aspectFill" custom-style="border-radius: 12rpx;" />
+              <AsyncImage
+                :url="item.img_url"
+                width="240rpx"
+                height="180rpx"
+                mode="aspectFill"
+                custom-style="border-radius: 12rpx;"
+                :enable-preview="true"
+                :preview-urls="currentShowcases.map((showcase) => showcase.img_url)"
+                :preview-current="idx"
+              />
               <view class="showcase-title">{{ item.title || '图片' }}</view>
             </view>
           </template>
@@ -40,9 +48,17 @@
             v-for="(item, idx) in honors"
             :key="idx"
             class="showcase-item"
-            @click="previewImages(honors, Number(idx))"
           >
-            <AsyncImage :url="item.img_url" width="240rpx" height="180rpx" mode="aspectFill" custom-style="border-radius: 12rpx;" />
+            <AsyncImage
+              :url="item.img_url"
+              width="240rpx"
+              height="180rpx"
+              mode="aspectFill"
+              custom-style="border-radius: 12rpx;"
+              :enable-preview="true"
+              :preview-urls="honors.map((honor) => honor.img_url)"
+              :preview-current="idx"
+            />
             <view class="showcase-title">{{ item.title || '荣誉' }}</view>
           </view>
         </view>
@@ -88,10 +104,6 @@ const currentShowcases = computed(() =>
   albumTab.value === 'env' ? classroomShowcases.value : studentShowcases.value
 )
 
-const previewImages = (list: ShowcaseItem[], current: number) => {
-  const urls = list.map(i => i.img_url)
-  uni.previewImage({ urls, current })
-}
 </script>
 
 <style lang="scss" scoped>

@@ -110,7 +110,9 @@
                 height="160rpx"
                 mode="aspectFill"
                 custom-class="review-img"
-                @click="previewImage(review.images!, idx)"
+                :enable-preview="true"
+                :preview-urls="review.images!"
+                :preview-current="idx"
               />
             </view>
           </view>
@@ -367,11 +369,6 @@ async function submitEditReply() {
   } finally {
     uni.hideLoading()
   }
-}
-
-// ─── 图片预览 ──────────────────────────────────────────
-function previewImage(images: string[], idx: number) {
-  uni.previewImage({ urls: images, current: images[idx] })
 }
 
 // ─── 工具函数 ──────────────────────────────────────────

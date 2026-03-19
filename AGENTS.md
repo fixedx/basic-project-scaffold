@@ -1919,6 +1919,12 @@ grep "icon-set" src/static/iconfont/iconfont.css
 - ✅ **自动处理 OSS 路径转预览 URL**（无需手动调用 `ossApi.getPreviewUrl`）
 - ✅ 支持完整 URL 和 OSS path 两种格式
 
+**强制要求**：
+- 业务页面和业务组件中的图片展示，统一使用 `AsyncImage`
+- 禁止在业务代码中继续直接写原生 `<image>` 标签展示真实图片资源
+- 本地静态图片（如 `/static/logo.png`、`/static/default-avatar.png`）也统一走 `AsyncImage`
+- 唯一例外是 `AsyncImage` 组件内部对 uni-app 原生 `<image>` 的封装实现本身
+
 ### 1.1.1 文件上传规范 ⭐⭐⭐
 
 **前端遇到文件/图片上传时，必须使用 `FileUpload` 组件**：
@@ -4951,6 +4957,42 @@ const goToCommissionOrders = () => {
 - 管理类列表页（机构端/管理端的课程、教室、教师、学员、机构、用户等列表）必须统一使用公共组件 `src/components/KeywordSearchBar/`
 - 禁止在这些管理列表中继续直接写 `wd-search` 或手写原生 `input` 搜索栏样式
 - 搜索框的圆角、内边距、边框、清空行为统一在公共组件维护，页面只保留 `keyword` 状态和 `handleSearch` 逻辑
+
+---
+
+### 错误 68: `uni.previewImage` 直接传 OSS path，放大预览一直 loading ⚠️⚠️⚠️
+
+**错误现象**：
+```typescript
+// ❌ 错误：直接把 OSS 存储路径传给预览
+const previewImage = (url: string) => {
+  uni.previewImage({ urls: [url], current: url })
+}
+
+const previewImages = (images: string[], idx: number) => {
+  uni.previewImage({ urls: images, current: images[idx] })
+}
+```
+
+**问题后果**：
+- 页面上的 `AsyncImage` 能正常显示，因为组件内部先调用了 `ossApi.getPreviewUrl()` 拿到了可访问 URL
+- 但点击放大时，如果仍把原始 `uploads/...`、`contracts/...` 这类 OSS path 直接传给 `uni.previewImage`
+- 小程序预览层无法直接访问该路径，就会出现“点击后一直 loading”
+
+**正确写法**：
+```typescript
+// ✅ 正确：先把 OSS path 转成可访问的预览 URL，再调用 uni.previewImage
+import { previewSingleImage, previewImageList } from '@/utils/image-preview'
+
+await previewSingleImage(contractScreenshot)
+await previewImageList(review.images, idx)
+```
+
+**规范**：
+- 只要图片来源可能是 OSS path，就不能直接把原值传给 `uni.previewImage`
+- 所有图片放大预览统一复用 `src/utils/image-preview.ts`
+- 单张图用 `previewSingleImage()`，多张图用 `previewImageList()`
+- `AsyncImage` 负责“展示时”解析 URL；“点击放大”仍需要在调用预览时再次使用可访问 URL，不能误以为原始 path 可直接预览
 
 ---
 

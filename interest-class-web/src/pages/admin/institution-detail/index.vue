@@ -59,7 +59,7 @@
             width="100%"
             height="400rpx"
             custom-style="border-radius: 16rpx;"
-            @click="previewSingleImage(institution.license_img)"
+            :enable-preview="true"
           />
         </view>
 
@@ -74,7 +74,7 @@
               width="320rpx"
               height="200rpx"
               custom-style="border-radius: 16rpx;"
-              @click="previewSingleImage(institution.id_card_imgs.front)"
+              :enable-preview="true"
             />
             <AsyncImage
               v-if="institution.id_card_imgs.back"
@@ -83,7 +83,7 @@
               width="320rpx"
               height="200rpx"
               custom-style="border-radius: 16rpx;"
-              @click="previewSingleImage(institution.id_card_imgs.back)"
+              :enable-preview="true"
             />
           </view>
         </view>
@@ -159,7 +159,7 @@
           width="100%"
           height="500rpx"
           custom-style="border-radius: 16rpx; border: 1rpx solid #f0f0f0;"
-          @click="previewSingleImage(institution.contract_screenshot)"
+          :enable-preview="true"
         />
       </view>
     </view>
@@ -393,10 +393,6 @@ const formatDate = (dateStr: string) => {
   if (!dateStr) return ''
   const d = new Date(dateStr)
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-}
-
-const previewSingleImage = (url: string) => {
-  uni.previewImage({ urls: [url], current: url })
 }
 
 const goToCourse = (course: any) => {

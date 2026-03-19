@@ -10,7 +10,13 @@
     <view class="review-list" v-if="displayReviews.length > 0">
       <view v-for="review in displayReviews" :key="review.id" class="review-card">
         <view class="review-user-row">
-          <image class="review-avatar" :src="review.user_avatar || '/static/default-avatar.png'" />
+          <AsyncImage
+            :url="review.user_avatar || '/static/default-avatar.png'"
+            width="48rpx"
+            height="48rpx"
+            mode="aspectFill"
+            custom-class="review-avatar"
+          />
           <text class="review-name">
             {{ review.user_nickname || review.user_id?.substring(0, 8) || '匿名用户' }}***
           </text>
@@ -25,6 +31,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import AsyncImage from '@/components/AsyncImage/index.vue'
 
 interface ReviewItem {
   id: string
