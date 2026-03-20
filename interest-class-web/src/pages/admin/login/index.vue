@@ -1,10 +1,8 @@
 <template>
   <AuthLoginLayout
     title="管理员登录"
-    subtitle="统一进入系统后台，管理机构、用户与运营数据"
-    role-label="Admin Console"
+    v-model:is-agreed="isAgreed"
     :links="entryLinks"
-    :show-agreement="false"
     footer-text="返回首页"
   >
     <view class="form-stack">
@@ -52,6 +50,7 @@ import { setToken } from '@/utils/request'
 import AuthLoginLayout from '@/components/AuthLoginLayout/index.vue'
 
 const loading = ref(false)
+const isAgreed = ref(false)
 const formData = reactive({
   username: '',
   password: '',
@@ -64,6 +63,10 @@ const entryLinks = [
 ]
 
 const handleLogin = async () => {
+  if (!isAgreed.value) {
+    uni.showToast({ title: '请先勾选同意用户协议和隐私政策', icon: 'none' })
+    return
+  }
   if (!formData.username || !formData.password) {
     uni.showToast({ title: '请输入账号和密码', icon: 'none' })
     return

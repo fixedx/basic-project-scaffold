@@ -1,8 +1,7 @@
 <template>
   <AuthLoginLayout
     title="机构登录"
-    subtitle="授权手机号后快速进入机构工作台"
-    role-label="Institution Portal"
+    v-model:is-agreed="isAgreed"
     :links="entryLinks"
     footer-text="取消登录，返回首页"
   >
@@ -39,6 +38,7 @@ import { useUserStore } from '@/stores/user'
 import AuthLoginLayout from '@/components/AuthLoginLayout/index.vue'
 
 const loading = ref(false)
+const isAgreed = ref(false)
 
 const entryLinks = [
   { label: '家长登录', path: '/pages/login/index', icon: 'icon-customer-fill' },
@@ -64,6 +64,10 @@ const onLoginSuccess = (res: any) => {
 }
 
 const handleGetPhoneNumber = async (event: any) => {
+  if (!isAgreed.value) {
+    uni.showToast({ title: '请先勾选同意用户协议和隐私政策', icon: 'none' })
+    return
+  }
   const detail = event?.detail || event || {}
   const errMsg = detail.errMsg || ''
   const code = detail.code

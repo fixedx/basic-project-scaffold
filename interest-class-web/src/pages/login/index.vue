@@ -1,8 +1,7 @@
 <template>
   <AuthLoginLayout
     title="家长登录"
-    subtitle="用微信快速进入孩子的兴趣学习空间"
-    role-label="Parent Portal"
+    v-model:is-agreed="isAgreed"
     :links="entryLinks"
     footer-text="暂不登录，返回首页"
   >
@@ -38,6 +37,7 @@ import { useUserStore } from '@/stores/user'
 import AuthLoginLayout from '@/components/AuthLoginLayout/index.vue'
 
 const wechatLoading = ref(false)
+const isAgreed = ref(false)
 
 const entryLinks = [
   { label: '机构登录', path: '/pages/institution/login/index', icon: 'icon-store-fill' },
@@ -47,6 +47,10 @@ const entryLinks = [
 ]
 
 const handleWechatLogin = async () => {
+  if (!isAgreed.value) {
+    uni.showToast({ title: '请先阅读并同意用户协议', icon: 'none' })
+    return
+  }
   try {
     wechatLoading.value = true
     // #ifdef MP-WEIXIN
