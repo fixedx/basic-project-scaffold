@@ -27,7 +27,7 @@
             width="200rpx"
             height="200rpx"
             mode="aspectFill"
-            custom-class="main-avatar"
+            custom-class="avatar main-avatar"
           />
           <view class="avatar-edit-badge">
             <text class="iconfont icon-camera-fill"></text>

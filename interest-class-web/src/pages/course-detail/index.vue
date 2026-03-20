@@ -139,7 +139,7 @@
                   width="100rpx"
                   height="100rpx"
                   mode="aspectFill"
-                  custom-class="teacher-avatar-img"
+                  custom-class="avatar teacher-avatar-img"
                 />
                 <text class="teacher-name">{{ teacher.name }}</text>
                 <text class="teacher-title">{{ teacher.title || '教师' }}</text>

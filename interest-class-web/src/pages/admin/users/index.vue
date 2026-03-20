@@ -43,7 +43,7 @@
               width="96rpx"
               height="96rpx"
               mode="aspectFill"
-              custom-class="avatar-img"
+              custom-class="avatar avatar-img"
             />
             <view v-else class="avatar-placeholder">
               <text class="iconfont icon-customer"></text>

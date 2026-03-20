@@ -41,7 +41,7 @@
                 width="120rpx"
                 height="120rpx"
                 mode="aspectFill"
-                custom-class="teacher-avatar__img"
+                custom-class="avatar teacher-avatar__img"
               />
               <view v-else class="default-avatar">
                 {{ teacher.name?.charAt(0) || '师' }}

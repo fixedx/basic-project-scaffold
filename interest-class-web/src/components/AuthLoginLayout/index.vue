@@ -9,14 +9,14 @@
         <view class="auth-login-layout__panel">
           <view class="auth-login-layout__panel-top">
             <view class="auth-login-layout__logo-wrap">
-              <view class="auth-login-layout__logo">
+              <view class="auth-login-layout__logo avatar">
                 <AsyncImage
                   v-if="logoUrl"
                   :url="logoUrl"
                   width="104rpx"
                   height="104rpx"
                   mode="aspectFit"
-                  custom-class="auth-login-layout__logo-image"
+                  custom-class="avatar"
                 />
                 <text v-else class="iconfont auth-login-layout__logo-icon" :class="logoIcon"></text>
               </view>
@@ -196,18 +196,19 @@
   }
 
   .auth-login-layout__logo {
-    width: 112rpx;
-    height: 112rpx;
-    border-radius: 32rpx;
-    background: #ffffff;
-    box-shadow: 0 12rpx 32rpx rgba(0, 0, 0, 0.05);
     display: flex;
     align-items: center;
     justify-content: center;
+    margin-right: 0;
+    box-shadow: 0 12rpx 32rpx rgba(0, 0, 0, 0.05);
   }
 
-  :deep(.auth-login-layout__logo-image) {
-    border-radius: 20rpx;
+  :deep(.auth-login-layout__logo .avatar) {
+    width: 104rpx !important;
+    height: 104rpx !important;
+    margin-right: 0 !important;
+    border: 0 !important;
+    background-color: transparent !important;
   }
 
   .auth-login-layout__logo-icon {

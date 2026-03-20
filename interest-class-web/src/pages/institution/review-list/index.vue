@@ -72,7 +72,7 @@
                 width="72rpx"
                 height="72rpx"
                 mode="aspectFill"
-                custom-class="user-avatar"
+                custom-class="avatar user-avatar"
               />
               <view v-else class="avatar-placeholder">
                 <text>{{ (review.user_nickname || '用').charAt(0) }}</text>

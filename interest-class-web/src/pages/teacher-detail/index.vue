@@ -15,7 +15,7 @@
             width="200rpx"
             height="200rpx"
             mode="aspectFill"
-            custom-class="teacher-avatar-img"
+            custom-class="avatar teacher-avatar-img"
           />
         </view>
         <view class="teacher-basic">

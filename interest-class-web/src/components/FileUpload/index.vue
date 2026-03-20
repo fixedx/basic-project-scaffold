@@ -9,7 +9,7 @@
           mode="aspectFill"
           :width="avatarSize"
           :height="avatarSize"
-          custom-class="avatar-image-round"
+          custom-class="avatar avatar-image-round"
         />
         <view v-else class="avatar-placeholder" :style="avatarStyle">
           <text class="iconfont icon-camera"></text>
@@ -352,14 +352,22 @@ const handleChooseFile = () => {
     sizeType: ['compressed'],
     sourceType: ['album', 'camera'],
     success: (res) => {
-      const tempFiles = res.tempFilePaths || []
-      tempFiles.forEach((tempPath) => {
+      const tempFiles: string[] = []
+      const rawTempFilePaths = res.tempFilePaths
+
+      if (Array.isArray(rawTempFilePaths)) {
+        tempFiles.push(...rawTempFilePaths)
+      } else if (typeof rawTempFilePaths === 'string' && rawTempFilePaths) {
+        tempFiles.push(rawTempFilePaths)
+      }
+
+      for (const tempPath of tempFiles) {
         if (props.mode === 'avatar') {
           uploadAvatarFile(tempPath)
         } else {
           uploadFile(tempPath)
         }
-      })
+      }
     },
     fail: (error) => {
       console.error('选择文件失败:', error)

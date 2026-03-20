@@ -12,7 +12,7 @@
               :url="selectedChild.avatar" 
               width="64rpx" 
               height="64rpx"
-              custom-class="avatar-img"
+              custom-class="avatar avatar-img"
             />
             <view v-else class="default-avatar">
               <text class="iconfont icon-customer"></text>

@@ -15,7 +15,7 @@
             width="48rpx"
             height="48rpx"
             mode="aspectFill"
-            custom-class="review-avatar"
+            custom-class="avatar review-avatar"
           />
           <text class="review-name">
             {{ review.user_nickname || review.user_id?.substring(0, 8) || '匿名用户' }}***

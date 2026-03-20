@@ -37,7 +37,7 @@
                 width="88rpx"
                 height="88rpx"
                 mode="aspectFill"
-                custom-class="student-avatar"
+                custom-class="avatar student-avatar"
               />
               <view v-else class="avatar-placeholder">
                 <text>{{ student.name?.charAt(0) || '?' }}</text>

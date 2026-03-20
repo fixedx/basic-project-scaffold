@@ -29,7 +29,7 @@
               :url="child.avatar"
               width="100rpx"
               height="100rpx"
-              custom-class="avatar-round"
+              custom-class="avatar avatar-round"
               mode="aspectFill"
             />
             <view v-else class="avatar-placeholder">
