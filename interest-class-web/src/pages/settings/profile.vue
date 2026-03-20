@@ -298,64 +298,6 @@ onMounted(() => {
   }
 }
 
-/* 悬浮头像卡片 */
-.avatar-card {
-  position: absolute;
-  top: 240rpx;
-  width: 90%;
-  left: 5%;
-  background: #ffffff;
-  border-radius: 32rpx;
-  padding: 40rpx;
-  box-shadow: 0 12rpx 48rpx rgba(0, 0, 0, 0.08);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  z-index: 10;
-  box-sizing: border-box;
-}
-
-.avatar-wrapper {
-  position: relative;
-  width: 200rpx;
-  height: 200rpx;
-  border-radius: 100rpx;
-  background: #f1f5f9;
-  padding: 0;
-  margin: 0;
-  line-height: 0;
-  overflow: visible;
-  border: 8rpx solid #ffffff;
-  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.1);
-  
-  &::after {
-    border: none;
-  }
-}
-
-:deep(.main-avatar) {
-  border-radius: 100rpx;
-}
-
-.avatar-edit-badge {
-  position: absolute;
-  right: 0;
-  bottom: 0;
-  width: 56rpx;
-  height: 56rpx;
-  background: $uni-color-primary;
-  border-radius: 28rpx;
-  border: 4rpx solid #ffffff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  
-  .iconfont {
-    color: #ffffff;
-    font-size: 28rpx;
-  }
-}
-
 .nickname-label {
   margin-top: 32rpx;
   font-size: 36rpx;

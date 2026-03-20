@@ -330,27 +330,6 @@ const handleDelete = async (id: string, name: string) => {
   margin-bottom: 24rpx;
 }
 
-.teacher-avatar {
-  flex-shrink: 0;
-}
-
-:deep(.teacher-avatar__img) {
-  border-radius: 50%;
-}
-
-.default-avatar {
-  width: 120rpx;
-  height: 120rpx;
-  border-radius: 60rpx;
-  background: linear-gradient(135deg, $uni-color-primary-light, $uni-color-primary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 48rpx;
-  font-weight: bold;
-  color: $uni-text-color-inverse;
-}
-
 .teacher-info {
   flex: 1;
   display: flex;

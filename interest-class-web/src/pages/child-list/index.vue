@@ -170,54 +170,6 @@ const handleEdit = (child: Child) => {
   border-radius: 16rpx;
   margin-bottom: 24rpx;
   
-  .child-avatar {
-    position: relative;
-    flex-shrink: 0;
-    
-    .avatar-placeholder {
-      width: 100rpx;
-      height: 100rpx;
-      border-radius: 50%;
-      background-color: $uni-bg-color-grey;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      
-      .iconfont {
-        font-size: 48rpx;
-        color: $uni-text-color-disable;
-      }
-    }
-    
-    .gender-badge {
-      position: absolute;
-      right: -4rpx;
-      bottom: -4rpx;
-      width: 36rpx;
-      height: 36rpx;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      
-      .icon-male {
-        background-color: #1890ff;
-        color: #fff;
-        font-size: 20rpx;
-        border-radius: 50%;
-        padding: 6rpx;
-      }
-      
-      .icon-female {
-        background-color: #eb2f96;
-        color: #fff;
-        font-size: 20rpx;
-        border-radius: 50%;
-        padding: 6rpx;
-      }
-    }
-  }
-  
   .child-info {
     flex: 1;
     margin-left: 24rpx;
@@ -283,9 +235,4 @@ const handleEdit = (child: Child) => {
   }
 }
 
-// 圆形头像样式
-:deep(.avatar-round) {
-  border-radius: 50%;
-  overflow: hidden;
-}
 </style>

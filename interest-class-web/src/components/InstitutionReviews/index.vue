@@ -129,12 +129,6 @@ const displayReviews = computed(() => {
   gap: 12rpx;
 }
 
-.review-avatar {
-  width: 48rpx;
-  height: 48rpx;
-  border-radius: 50%;
-}
-
 .review-name {
   font-size: 24rpx;
   color: #666;

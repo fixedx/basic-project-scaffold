@@ -105,13 +105,6 @@ const displayTeachers = computed(() => {
   text-align: center;
 }
 
-.teacher-avatar {
-  width: 100rpx;
-  height: 100rpx;
-  border-radius: 50%;
-  margin-bottom: 8rpx;
-}
-
 .teacher-name {
   font-size: 26rpx;
   font-weight: bold;

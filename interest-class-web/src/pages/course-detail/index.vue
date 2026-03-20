@@ -821,17 +821,6 @@ onMounted(() => {
   gap: 16rpx;
   width: 140rpx;
   flex-shrink: 0; // Prevent shrinking
-
-  :deep(.teacher-avatar-img) {
-    border-radius: 50%;
-    overflow: hidden;
-    border: 2rpx solid #fff;
-    box-shadow: 0 4rpx 12rpx rgba(0,0,0,0.05);
-    
-    .async-image__img {
-      border-radius: 50%;
-    }
-  }
 }
 
 .teacher-name {

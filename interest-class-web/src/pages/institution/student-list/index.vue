@@ -256,31 +256,6 @@ const getOrderStatusText = (status: string) => {
     padding: 28rpx;
     border-bottom: 1rpx solid $uni-border-color-light;
 
-    .student-avatar-wrap {
-      margin-right: 20rpx;
-      flex-shrink: 0;
-
-      :deep(.student-avatar) {
-        border-radius: 50%;
-      }
-    }
-
-    .avatar-placeholder {
-      width: 88rpx;
-      height: 88rpx;
-      border-radius: 50%;
-      background: linear-gradient(135deg, $uni-color-primary-light 0%, $uni-color-primary 100%);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-
-      text {
-        font-size: 36rpx;
-        color: #fff;
-        font-weight: bold;
-      }
-    }
-
     .student-info {
       flex: 1;
       min-width: 0;

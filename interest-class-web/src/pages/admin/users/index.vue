@@ -225,30 +225,6 @@ onReachBottom(() => {
   border-top: 1rpx solid $uni-border-color-light;
 }
 
-.stats-text {
-  font-size: 24rpx;
-  color: $uni-text-color-tertiary;
-}
-
-.loading-container {
-  display: flex;
-  justify-content: center;
-  padding: 80rpx 0;
-}
-
-.empty-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 24rpx;
-  padding: 120rpx 0;
-
-  .empty-text {
-    font-size: 28rpx;
-    color: $uni-text-color-tertiary;
-  }
-}
-
 .user-list {
   padding: 16rpx 24rpx;
   display: flex;
@@ -268,29 +244,6 @@ onReachBottom(() => {
   display: flex;
   gap: 20rpx;
   align-items: flex-start;
-}
-
-.user-avatar {
-  flex-shrink: 0;
-}
-
-:deep(.avatar-img) {
-  border-radius: 50%;
-}
-
-.avatar-placeholder {
-  width: 96rpx;
-  height: 96rpx;
-  border-radius: 50%;
-  background: linear-gradient(135deg, $uni-color-primary-lighter, #eef8e4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  .iconfont {
-    font-size: 44rpx;
-    color: $uni-color-primary;
-  }
 }
 
 .user-info {

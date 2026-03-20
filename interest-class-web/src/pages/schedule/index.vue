@@ -997,29 +997,6 @@ onPullDownRefresh(async () => {
   padding: 8rpx 20rpx 8rpx 8rpx;
   border-radius: 40rpx;
   
-  .child-avatar {
-    margin-right: 12rpx;
-    
-    .default-avatar {
-      width: 64rpx;
-      height: 64rpx;
-      border-radius: 50%;
-      background-color: #e6f7ff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      
-      .iconfont {
-        font-size: 32rpx;
-        color: #1890ff;
-      }
-    }
-    
-    :deep(.avatar-img) {
-      border-radius: 50%;
-    }
-  }
-  
   .child-info {
     display: flex;
     align-items: center;

@@ -423,23 +423,6 @@ onPullDownRefresh(async () => {
   align-items: center;
 }
 
-.avatar {
-  width: 110rpx;
-  height: 110rpx;
-  background-color: rgba(255, 255, 255, 0.2);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 4rpx solid rgba(255, 255, 255, 0.3);
-  margin-right: 24rpx;
-
-  .avatar-icon {
-    font-size: 56rpx;
-    color: #fff;
-  }
-}
-
 .name-row {
   display: flex;
   align-items: center;

@@ -16,16 +16,13 @@
           <AsyncImage 
             v-else
             url="/static/images/default-avatar.png"
-            width="64rpx"
-            height="64rpx"
+            width="100rpx"
+            height="100rpx"
             mode="aspectFill"
             custom-class="avatar"
           />
           <view class="user-meta">
             <text class="nickname">{{ userInfo.nickname || (getToken() ? '未设置昵称' : '点击登录') }}</text>
-            <view class="vip-badge" v-if="userInfo.id">
-              <text class="iconfont icon-vip-fill"></text>
-            </view>
           </view>
         </view>
       </view>
@@ -494,22 +491,6 @@ onShow(() => {
       align-items: center;
       gap: 16rpx;
       max-width: 400rpx; /* 限制宽度，防止钻入右侧胶囊按钮区域 */
-
-      .avatar {
-        width: 64rpx;
-        height: 64rpx;
-        border-radius: 32rpx;
-        border: 2rpx solid #fff;
-        background-color: #eee;
-        flex-shrink: 0;
-      }
-      
-      /* 针对 AsyncImage 组件的样式 */
-      :deep(.avatar) {
-        width: 64rpx !important;
-        height: 64rpx !important;
-        border-radius: 32rpx !important;
-      }
 
       .user-meta {
         display: flex;

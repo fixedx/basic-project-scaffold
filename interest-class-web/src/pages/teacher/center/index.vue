@@ -204,28 +204,6 @@ const handleLogout = () => {
   align-items: center;
   margin-bottom: 40rpx;
 
-  .avatar {
-    width: 100rpx;
-    height: 100rpx;
-    border-radius: 50%;
-    border: 4rpx solid rgba(255, 255, 255, 0.4);
-    margin-right: 24rpx;
-    background-color: #fff;
-  }
-
-  :deep(.avatar) {
-    width: 100rpx !important;
-    height: 100rpx !important;
-    border-radius: 50% !important;
-    border: 4rpx solid rgba(255, 255, 255, 0.4) !important;
-    margin-right: 24rpx !important;
-    overflow: hidden;
-
-    image {
-      border-radius: 50% !important;
-    }
-  }
-
   .info-content {
     flex: 1;
     display: flex;

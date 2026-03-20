@@ -11,14 +11,12 @@
       >
         <text>{{ tab.label }}</text>
       </view>
-
-      <!-- 只看未回复 -->
       <view
         class="filter-tab reply-toggle"
         :class="{ active: onlyUnreplied }"
         @click="toggleUnreplied"
       >
-        <text>待回复</text>
+        <text>{{ onlyUnreplied ? '只看待回复' : '全部评价' }}</text>
       </view>
     </view>
 
@@ -262,17 +260,16 @@ async function loadList(reset = false) {
       pageSize,
       sort_by: sortBy.value,
     })
+    let data = res.data || []
 
-    let data: ReviewWithMeta[] = res.data || []
-
-    // 客户端过滤待回复
     if (onlyUnreplied.value) {
-      data = data.filter(r => !r.reply)
+      data = data.filter((review) => !review.reply)
     }
+
+    total.value = res.total || 0
 
     if (reset) {
       list.value = data
-      total.value = res.total
     } else {
       list.value = [...list.value, ...data]
     }
@@ -526,24 +523,6 @@ function formatTime(dateStr: string): string {
   align-items: center;
   gap: 16rpx;
   flex: 1;
-}
-
-:deep(.user-avatar) {
-  border-radius: 50%;
-}
-
-.avatar-placeholder {
-  width: 72rpx;
-  height: 72rpx;
-  border-radius: 50%;
-  background-color: $uni-color-primary-lighter;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 32rpx;
-  color: $uni-color-primary;
-  font-weight: bold;
-  flex-shrink: 0;
 }
 
 .user-meta {

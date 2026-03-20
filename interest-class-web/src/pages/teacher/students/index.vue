@@ -183,24 +183,6 @@ onShow(() => {
   box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.04);
 }
 
-.student-avatar {
-  width: 88rpx;
-  height: 88rpx;
-  border-radius: 50%;
-  background: linear-gradient(135deg, $uni-color-primary-light, $uni-color-primary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  margin-right: 20rpx;
-
-  .avatar-text {
-    font-size: 36rpx;
-    font-weight: bold;
-    color: #fff;
-  }
-}
-
 .student-info {
   flex: 1;
   min-width: 0;

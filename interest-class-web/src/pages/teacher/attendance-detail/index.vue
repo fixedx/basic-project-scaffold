@@ -430,28 +430,6 @@ onLoad((options) => {
   min-width: 0;
 }
 
-.student-avatar {
-  width: 72rpx;
-  height: 72rpx;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 28rpx;
-  font-weight: 600;
-  flex-shrink: 0;
-
-  &.avatar-checked {
-    background-color: $uni-color-primary-lighter;
-    color: $uni-color-primary;
-  }
-
-  &.avatar-unchecked {
-    background-color: #fff1f0;
-    color: $uni-color-error;
-  }
-}
-
 .student-detail {
   flex: 1;
   min-width: 0;

@@ -397,23 +397,6 @@ const handleDelete = () => {
   }
 }
 
-// 头像区域
-.avatar-section {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 48rpx 0;
-  background-color: $uni-bg-color;
-  border-radius: 16rpx;
-  margin-bottom: 24rpx;
-  
-  .avatar-tip {
-    font-size: 24rpx;
-    color: $uni-text-color-secondary;
-    margin-top: 16rpx;
-  }
-}
-
 // 区块
 .section {
   background-color: $uni-bg-color;

@@ -151,27 +151,6 @@ const goToDetail = (id: string) => {
   min-width: 0;
 }
 
-.teacher-avatar {
-  flex-shrink: 0;
-
-  .default-avatar {
-    width: 120rpx;
-    height: 120rpx;
-    border-radius: 50%;
-    background: $uni-color-primary-lighter;
-    color: $uni-color-primary;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 40rpx;
-    font-weight: bold;
-  }
-}
-
-:deep(.avatar-img) {
-  border-radius: 50%;
-}
-
 .teacher-info {
   flex: 1;
   min-width: 0;

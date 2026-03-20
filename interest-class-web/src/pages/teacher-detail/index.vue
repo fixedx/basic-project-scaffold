@@ -229,29 +229,6 @@ onMounted(() => {
   box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.04);
 }
 
-.avatar-wrapper {
-  margin-bottom: 24rpx;
-  position: relative;
-  
-  &::after {
-    content: '';
-    position: absolute;
-    inset: -8rpx;
-    border-radius: 50%;
-    border: 2rpx solid rgba(82, 196, 26, 0.2); // Greenish border ring
-    z-index: 0;
-  }
-}
-
-:deep(.teacher-avatar-img) {
-  border-radius: 50%;
-  overflow: hidden;
-  
-  .async-image__img {
-    border-radius: 50%;
-  }
-}
-
 .teacher-basic {
   display: flex;
   flex-direction: column;
