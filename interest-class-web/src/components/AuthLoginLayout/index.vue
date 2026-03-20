@@ -31,10 +31,15 @@
             <slot></slot>
 
             <view v-if="showAgreement" class="auth-login-layout__agreement">
-              <text class="auth-login-layout__agreement-text">登录即表示同意</text>
-              <text class="auth-login-layout__agreement-link" @click="handleLinkClick('/pages/agreement/index', true)">《用户协议》</text>
-              <text class="auth-login-layout__agreement-text">和</text>
-              <text class="auth-login-layout__agreement-link" @click="handleLinkClick('/pages/privacy/index', true)">《隐私政策》</text>
+              <view class="auth-login-layout__agreement-row">
+                <wd-checkbox :model-value="isAgreed" @change="handleAgreementChange" shape="square" size="small"></wd-checkbox>
+                <view class="auth-login-layout__agreement-content">
+                  <text class="auth-login-layout__agreement-text">我已阅读并同意</text>
+                  <text class="auth-login-layout__agreement-link" @click.stop="handleLinkClick('/pages/agreement/index', true)">《用户协议》</text>
+                  <text class="auth-login-layout__agreement-text">和</text>
+                  <text class="auth-login-layout__agreement-link" @click.stop="handleLinkClick('/pages/privacy/index', true)">《隐私政策》</text>
+                </view>
+              </view>
             </view>
           </view>
 
@@ -84,6 +89,7 @@
     logoIcon?: string
     links?: LinkItem[]
     showAgreement?: boolean
+    isAgreed?: boolean
     footerText?: string
     footerIcon?: string
     footerPath?: string
@@ -96,11 +102,20 @@
     logoIcon: 'icon-customer',
     links: () => [],
     showAgreement: true,
+    isAgreed: false,
     footerText: '返回首页',
     footerIcon: 'icon-home',
     footerPath: '/pages/index/index',
     footerNavigate: false,
   })
+
+  const emit = defineEmits<{
+    (e: 'update:isAgreed', value: boolean): void
+  }>()
+
+  const handleAgreementChange = ({ value }: { value: boolean }) => {
+    emit('update:isAgreed', value)
+  }
 
   const handleLinkClick = (path: string, navigate = false) => {
     if (navigate) {
@@ -235,15 +250,39 @@
   }
 
   .auth-login-layout__agreement {
-    margin-top: 32rpx;
-    text-align: center;
-    font-size: 22rpx;
+    margin-top: 40rpx;
+    padding: 0 4rpx;
+  }
+
+  .auth-login-layout__agreement-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 8rpx;
+  }
+
+  .auth-login-layout__agreement-content {
+    flex: 1;
+    font-size: 24rpx;
+    line-height: 1.5;
+    color: #94a3b8;
+  }
+
+  :deep(.wd-checkbox) {
+    margin-top: 2rpx;
+  }
+
+  :deep(.wd-checkbox__label) {
+    display: none;
+  }
+
+  .auth-login-layout__agreement-text {
     color: #94a3b8;
   }
 
   .auth-login-layout__agreement-link {
     color: $uni-color-primary;
-    margin: 0 4rpx;
+    font-weight: 500;
   }
 
   .auth-login-layout__links {
