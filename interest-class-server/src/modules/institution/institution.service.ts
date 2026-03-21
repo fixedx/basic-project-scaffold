@@ -466,24 +466,55 @@ export class InstitutionService {
     // 获取全平台最高让利比例（用于计算立减金额）
     const maxShareRatio = await this.userInviteCodeRepository.getMaxShareRatio();
 
+    // 获取机构列表
+    const institutions = Array.isArray(result) ? result : result.data;
+    
+    if (institutions.length === 0) {
+      return result;
+    }
+
+    // 批量查询所有机构的课程（避免N+1查询）
+    const institutionIds = institutions.map((i: any) => i.id);
+    const courses = await this.courseRepository.getQuery()
+      .andWhere('entity.institution_id IN (:...institutionIds)', { institutionIds })
+      .andWhere('entity.is_online = :isOnline', { isOnline: true })
+      .andWhere('entity.cashback_enabled = :enabled', { enabled: true })
+      .andWhere('entity.type != :trialType', { trialType: 'trial' })
+      .getMany();
+
+    // 按机构ID分组课程
+    const coursesByInstitution = new Map<string, typeof courses>();
+    for (const course of courses) {
+      const list = coursesByInstitution.get(course.institution_id) || [];
+      list.push(course);
+      coursesByInstitution.set(course.institution_id, list);
+    }
+
+    // 批量查询所有课程的SKU（避免N+1查询）
+    const courseIds = courses.map((c: any) => c.id);
+    let skusByCourse = new Map<string, any[]>();
+    if (courseIds.length > 0) {
+      const skus = await this.courseSkuRepository.getQuery()
+        .andWhere('entity.course_id IN (:...courseIds)', { courseIds })
+        .getMany();
+      
+      for (const sku of skus) {
+        const list = skusByCourse.get(sku.course_id) || [];
+        list.push(sku);
+        skusByCourse.set(sku.course_id, list);
+      }
+    }
+
     // 计算每个机构的最大立减和返现金额
     // 最高返现 = 最高SKU价格 × 课程返现比例
     // 最高立减 = 最高返现 × 最高让利比例
-    const addMaxCashback = async (institution: any) => {
-      // 直接使用 courseRepository 查询该机构的课程
-      const courses = await this.courseRepository.getQuery()
-        .andWhere('entity.institution_id = :institutionId', { institutionId: institution.id })
-        .andWhere('entity.is_online = :isOnline', { isOnline: true })
-        .andWhere('entity.cashback_enabled = :enabled', { enabled: true })
-        .andWhere('entity.type != :trialType', { trialType: 'trial' })
-        .getMany();
+    const addMaxCashback = (institution: any) => {
+      const institutionCourses = coursesByInstitution.get(institution.id) || [];
       
       let maxCashback = 0;
-      for (const course of courses) {
+      for (const course of institutionCourses) {
         if (course.cashback_ratio > 0) {
-          const skus = await this.courseSkuRepository.getQuery()
-            .andWhere('entity.course_id = :courseId', { courseId: course.id })
-            .getMany();
+          const skus = skusByCourse.get(course.id) || [];
           
           if (skus.length > 0) {
             const maxPrice = Math.max(...skus.map((s: any) => Number(s.total_price) || 0));
@@ -504,10 +535,10 @@ export class InstitutionService {
     // 处理分页和非分页两种情况
     if (Array.isArray(result)) {
       // 非分页模式
-      return Promise.all(result.map(addMaxCashback));
+      return institutions.map(addMaxCashback);
     } else {
       // 分页模式
-      const enhancedData = await Promise.all(result.data.map(addMaxCashback));
+      const enhancedData = institutions.map(addMaxCashback);
       return {
         ...result,
         data: enhancedData,

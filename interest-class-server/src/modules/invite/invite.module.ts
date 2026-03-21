@@ -4,6 +4,7 @@ import { CommonModule } from '@/modules/common/common.module';
 import { AuthModule } from '@/modules/auth/auth.module';
 import { PaymentModule } from '@/modules/payment/payment.module';
 import { NotificationModule } from '@/modules/notification/notification.module';
+import { OrderModule } from '@/modules/order/order.module';
 import { InviteController } from './invite.controller';
 import { InviteService } from './invite.service';
 import { InviteTasksService } from './invite-tasks.service';
@@ -35,6 +36,7 @@ import {
     forwardRef(() => AuthModule),
     forwardRef(() => PaymentModule),
     NotificationModule,
+    forwardRef(() => OrderModule),
   ],
   controllers: [InviteController],
   providers: [

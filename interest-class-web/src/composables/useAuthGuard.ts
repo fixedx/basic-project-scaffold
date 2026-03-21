@@ -20,7 +20,7 @@
  */
 import { ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
-import { getToken } from '@/utils/request'
+import { getToken } from '@/utils/auth'
 
 /** 根据 userType 获取对应的登录页路径 */
 function getLoginPath(userType?: string): string {

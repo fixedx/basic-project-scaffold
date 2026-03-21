@@ -294,7 +294,7 @@ import { courseApi, reviewApi, type Course, type CourseSku, type Review } from '
 import { useEnums } from '@/composables/useEnums'
 import { favoriteApi } from '@/api/favorite'
 import { showErrorToast, showSuccessToast } from '@/utils/toast'
-import { getToken } from '@/utils/request'
+import { getToken } from '@/utils/auth'
 import AsyncImage from '@/components/AsyncImage/index.vue'
 import PageFooter from '@/components/PageFooter/index.vue'
 import EmptyState from '@/components/EmptyState/index.vue'
@@ -390,7 +390,9 @@ const formatDate = (dateStr: string) => {
 
 // 跳转邀请页
 const goToInvite = () => {
-  goToInvite()
+  uni.navigateTo({
+    url: '/pages/mine/invite/index'
+  })
 }
 
 // 查看更多评价

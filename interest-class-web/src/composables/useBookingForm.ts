@@ -7,7 +7,7 @@ import { childApi, type Child } from '@/api/child'
 import { scheduleApi, type Schedule } from '@/api/schedule'
 import { inviteApi } from '@/api/invite'
 import { showErrorToast, showSuccessToast } from '@/utils/toast'
-import { getToken } from '@/utils/request'
+import { getToken } from '@/utils/auth'
 
 export function useBookingForm() {
   // --- 路由参数 ---
@@ -281,6 +281,11 @@ export function useBookingForm() {
   }
 
   const handleSubmit = async () => {
+    // 防抖：如果正在提交中，直接返回
+    if (submitting.value) {
+      console.warn('提交中，请勿重复点击')
+      return
+    }
     if (!validateForm()) return
     if (selectedScheduleIds.value.length === 0) { showErrorToast('请选择上课时间'); return }
     submitting.value = true

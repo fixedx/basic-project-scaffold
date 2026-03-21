@@ -3,6 +3,7 @@ import { DataSource } from 'typeorm';
 import { BaseRepository } from '@/common/repositories/base.repository';
 import { InstitutionEntity } from '../entities/institution.entity';
 import { UserContextService } from '@/common/services/user-context.service';
+import { MoneyMath } from '@/common/utils/money.util';
 
 @Injectable()
 export class InstitutionRepository extends BaseRepository<InstitutionEntity> {
@@ -190,7 +191,7 @@ export class InstitutionRepository extends BaseRepository<InstitutionEntity> {
         return {
           data: data.map((item: any) => ({
             ...item,
-            distance: parseFloat(item.distance).toFixed(2),
+            distance: MoneyMath.format(item.distance),
           })),
           total,
           page,
@@ -236,7 +237,7 @@ export class InstitutionRepository extends BaseRepository<InstitutionEntity> {
         const data = await this.dataSource.query(dataQuery, [...coordParams, ...filterParams]);
         return data.map((item: any) => ({
           ...item,
-          distance: parseFloat(item.distance).toFixed(2),
+          distance: MoneyMath.format(item.distance),
         }));
       }
     } else {
@@ -435,7 +436,7 @@ export class InstitutionRepository extends BaseRepository<InstitutionEntity> {
       return {
         data: data.map((item: any) => ({
           ...item,
-          distance: parseFloat(item.distance).toFixed(2),
+          distance: MoneyMath.format(item.distance),
         })),
         total,
         page,

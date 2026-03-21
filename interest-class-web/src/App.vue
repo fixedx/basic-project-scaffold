@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onLaunch, onShow, onHide } from "@dcloudio/uni-app";
-import { getToken } from "@/utils/request";
+import { getToken } from "@/utils/auth";
 
 onLaunch(() => {
   console.log("App Launch");
@@ -9,8 +9,11 @@ onLaunch(() => {
   const token = getToken();
   const userType = uni.getStorageSync('userType');
   
+  // 生产环境不输出敏感信息
+  // #ifdef DEV
   console.log('Token:', token ? '存在' : '无');
   console.log('UserType:', userType);
+  // #endif
   
   // 获取当前页面路径
   const pages = getCurrentPages();

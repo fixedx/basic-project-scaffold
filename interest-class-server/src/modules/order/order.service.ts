@@ -689,7 +689,7 @@ export class OrderService {
     const lockedCashbackAmount = Number(order.cashback_amount) || 0;
     const lockedBaseAmount = Number(baseAmount) || 0;
     if (lockedCashbackAmount > 0 && lockedBaseAmount > 0) {
-      return Number(((lockedCashbackAmount / lockedBaseAmount) * 100).toFixed(2));
+      return MoneyMath.calculatePercent(lockedCashbackAmount, lockedBaseAmount);
     }
 
     return 0;
@@ -1102,7 +1102,7 @@ export class OrderService {
       return 0;
     }
 
-    return Number(((commissionAmount * completedLessons) / totalLessons).toFixed(2));
+    return MoneyMath.calculatePercent(commissionAmount * completedLessons, totalLessons);
   }
 
   private attachRefundInfo(orders: OrderEntity[]): any[] {
@@ -1249,7 +1249,8 @@ export class OrderService {
       };
     }
 
-    const remainingRatio = (totalLessons - completedLessons) / totalLessons;
+    const remainingLessons = totalLessons - completedLessons;
+    const remainingRatio = remainingLessons / totalLessons;
     const onlineFen = MoneyMath.yuan2fen(Number(order.online_pay_amount) || 0);
     const offlineFen = MoneyMath.yuan2fen(Number(order.offline_pay_amount) || 0);
     const onlineRefundFen = MoneyMath.ratioOfFen(onlineFen, remainingRatio);
@@ -1258,7 +1259,7 @@ export class OrderService {
 
     return {
       refundable: true,
-      remaining_ratio: Number(remainingRatio.toFixed(4)),
+      remaining_ratio: MoneyMath.calculateRatio(remainingLessons, totalLessons),
       total_refund_amount: MoneyMath.fen2yuan(totalRefundFen),
       online_refund_amount: MoneyMath.fen2yuan(onlineRefundFen),
       offline_refund_amount: MoneyMath.fen2yuan(offlineRefundFen),

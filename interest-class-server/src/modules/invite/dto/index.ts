@@ -48,6 +48,10 @@ export class CalculateDiscountDto {
   @IsNotEmpty({ message: '订单金额不能为空' })
   @Type(() => Number)
   order_amount: number;
+
+  @IsNotEmpty({ message: '订单ID不能为空' })
+  @IsString({ message: '订单ID必须是字符串' })
+  order_id: string;
 }
 
 /**

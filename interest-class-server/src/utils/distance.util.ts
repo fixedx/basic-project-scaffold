@@ -117,6 +117,8 @@ function toRad(deg: number): number {
   return deg * (Math.PI / 180);
 }
 
+import { MoneyMath } from '@/common/utils/money.util';
+
 /**
  * 格式化距离显示
  * @param distance 距离（米）
@@ -126,6 +128,8 @@ export function formatDistance(distance: number): string {
   if (distance < 1000) {
     return `${Math.round(distance)}m`;
   } else {
-    return `${(distance / 1000).toFixed(1)}km`;
+    // 使用 MoneyMath 处理精度，保留1位小数
+    const km = MoneyMath.divideYuan(distance, 1000);
+    return `${MoneyMath.d(km).toDecimalPlaces(1).toString()}km`;
   }
 }

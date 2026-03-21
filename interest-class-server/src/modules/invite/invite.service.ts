@@ -6,6 +6,7 @@ import { generateSnowflakeId } from '@/utils/snowflake.util';
 import { PaymentService } from '@/modules/payment/payment.service';
 import { NotificationService } from '@/modules/notification/notification.service';
 import { UserRepository } from '@/modules/auth/repositories/user.repository';
+import { OrderRepository } from '@/modules/order/repositories/order.repository';
 import {
   UserInviteCodeRepository,
   InviteOrderRepository,
@@ -94,6 +95,7 @@ export class InviteService implements OnModuleInit {
     private paymentService: PaymentService,
     private userRepository: UserRepository,
     private notificationService: NotificationService,
+    private orderRepository: OrderRepository,
   ) {}
 
   /**
@@ -289,7 +291,7 @@ export class InviteService implements OnModuleInit {
     discount_amount: number;
     actual_cashback: number;
   }> {
-    const { invite_code, order_amount, course_id } = dto;
+    const { invite_code, order_amount, order_id } = dto;
 
     // 获取邀请码信息
     const inviteCodeEntity =
@@ -304,21 +306,18 @@ export class InviteService implements OnModuleInit {
       throw new BadRequestException('不能使用自己的邀请码');
     }
 
-    // 从课程表查询实际返现比例（同时校验课程是否开启了返现）
+    // 从订单快照中获取返现比例（避免回查课程表，确保使用下单时的锁定比例）
     let cashback_ratio = 0;
-    if (course_id) {
-      const courseRows = await this.dataSource.query(
-        `SELECT cashback_ratio, cashback_enabled FROM courses WHERE id = $1 AND is_delete = false`,
-        [course_id],
-      );
-      if (!courseRows || courseRows.length === 0) {
-        throw new BadRequestException('课程不存在');
+    if (order_id) {
+      const order = await this.orderRepository.findOneById(order_id);
+      if (!order) {
+        throw new BadRequestException('订单不存在');
       }
-      const course = courseRows[0];
-      if (!course.cashback_enabled) {
-        throw new BadRequestException('该课程未开启返现功能，邀请码无效');
+      // 使用订单快照中的返现比例
+      cashback_ratio = Number(order.course_snapshot?.cashback_ratio) || 0;
+      if (cashback_ratio <= 0) {
+        throw new BadRequestException('该订单未开启返现功能，邀请码无效');
       }
-      cashback_ratio = Number(course.cashback_ratio) || 0;
     }
 
     const share_ratio = inviteCodeEntity.share_ratio;

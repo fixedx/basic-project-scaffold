@@ -68,7 +68,7 @@
 import { ref, reactive } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { authApi } from '@/api/auth'
-import { setToken } from '@/utils/request'
+import { setToken } from '@/utils/auth'
 import { useUserStore } from '@/stores/user'
 
 const loading = ref(false)

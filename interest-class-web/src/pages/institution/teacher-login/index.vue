@@ -85,7 +85,7 @@
 import { ref } from 'vue'
 import { authApi } from '@/api/auth'
 import AsyncImage from '@/components/AsyncImage/index.vue'
-import { setToken } from '@/utils/request'
+import { setToken } from '@/utils/auth'
 import { useUserStore } from '@/stores/user'
 
 const loading = ref(false)
