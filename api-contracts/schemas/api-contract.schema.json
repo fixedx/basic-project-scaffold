@@ -1,0 +1,126 @@
+{
+  "$id": "api-contract.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "API Contract Schema",
+  "description": "前后端测试协作契约规范",
+  "type": "object",
+  "required": ["feature", "version", "backend"],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "Schema引用"
+    },
+    "feature": {
+      "type": "string",
+      "description": "功能名称（中文）"
+    },
+    "description": {
+      "type": "string",
+      "description": "功能描述"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "语义化版本号"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date",
+      "description": "创建日期"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date",
+      "description": "更新日期"
+    },
+    "backend": {
+      "type": "object",
+      "required": ["endpoints"],
+      "properties": {
+        "endpoints": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["path", "method"],
+            "properties": {
+              "path": { "type": "string" },
+              "method": { 
+                "type": "string",
+                "enum": ["GET", "POST", "PUT", "DELETE", "PATCH"]
+              },
+              "description": { "type": "string" },
+              "request": { "type": "object" },
+              "response": { "type": "object" },
+              "error_codes": { 
+                "type": "object",
+                "additionalProperties": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "frontend": {
+      "type": "object",
+      "properties": {
+        "pages": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "path": { "type": "string" },
+              "description": { "type": "string" },
+              "elements": { "type": "object" },
+              "flow": { 
+                "type": "array",
+                "items": { "type": "string" }
+              },
+              "state_management": { "type": "object" }
+            }
+          }
+        }
+      }
+    },
+    "qa": {
+      "type": "object",
+      "properties": {
+        "test_cases": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "title": { "type": "string" },
+              "type": { 
+                "type": "string",
+                "enum": ["positive", "negative", "edge"]
+              },
+              "priority": {
+                "type": "string",
+                "enum": ["P0", "P1", "P2", "P3"]
+              },
+              "preconditions": {
+                "type": "array",
+                "items": { "type": "string" }
+              },
+              "steps": {
+                "type": "array",
+                "items": { "type": "string" }
+              },
+              "expected": { "type": "string" },
+              "data": { "type": "object" }
+            }
+          }
+        },
+        "automation": {
+          "type": "object",
+          "properties": {
+            "api_tests": { "type": "boolean" },
+            "e2e_tests": { "type": "boolean" },
+            "unit_tests": { "type": "boolean" }
+          }
+        }
+      }
+    }
+  }
+}

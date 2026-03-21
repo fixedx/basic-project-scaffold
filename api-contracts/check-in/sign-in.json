@@ -1,0 +1,257 @@
+{
+  "$schema": "../schemas/api-contract.schema.json",
+  "feature": "上课签到",
+  "description": "家长为孩子上课进行签到打卡，记录课时进度",
+  "version": "1.0.0",
+  "created_at": "2026-03-21",
+  "updated_at": "2026-03-21",
+  
+  "backend": {
+    "endpoints": [
+      {
+        "path": "/api/check-in",
+        "method": "POST",
+        "description": "上课签到接口",
+        "request": {
+          "headers": {
+            "Authorization": { 
+              "type": "string", 
+              "required": true, 
+              "description": "Bearer token，家长登录态"
+            }
+          },
+          "body": {
+            "order_id": { 
+              "type": "string", 
+              "required": true, 
+              "description": "订单ID" 
+            },
+            "booking_id": { 
+              "type": "string", 
+              "required": true, 
+              "description": "预约ID，对应具体课时" 
+            }
+          }
+        },
+        "response": {
+          "success": {
+            "status": 200,
+            "body": {
+              "code": { "type": "number", "example": 200 },
+              "message": { "type": "string", "example": "签到成功" },
+              "data": {
+                "completed_lessons": { 
+                  "type": "number", 
+                  "description": "已完成课时数",
+                  "example": 5 
+                },
+                "total_lessons": { 
+                  "type": "number", 
+                  "description": "总课时数",
+                  "example": 20 
+                },
+                "is_completed": {
+                  "type": "boolean",
+                  "description": "是否全部课时完成",
+                  "example": false
+                }
+              }
+            }
+          },
+          "error": {
+            "status": 400,
+            "body": {
+              "code": { "type": "number", "example": 400 },
+              "message": { "type": "string", "example": "参数错误" }
+            }
+          }
+        },
+        "error_codes": {
+          "400": "缺少必要参数（order_id 或 booking_id）",
+          "401": "未登录或Token过期",
+          "403": "无权操作此订单（非订单购买者）",
+          "404": "订单或预约不存在",
+          "409": "该课时已签到，不能重复签到",
+          "422": "签到时间不在允许范围内（需上课前24小时内）"
+        }
+      },
+      {
+        "path": "/api/check-in/history",
+        "method": "GET",
+        "description": "查询签到历史",
+        "request": {
+          "headers": {
+            "Authorization": { "type": "string", "required": true }
+          },
+          "query": {
+            "order_id": { "type": "string", "required": true },
+            "page": { "type": "number", "required": false, "default": 1 },
+            "pageSize": { "type": "number", "required": false, "default": 20 }
+          }
+        },
+        "response": {
+          "success": {
+            "status": 200,
+            "body": {
+              "code": 200,
+              "message": "success",
+              "data": {
+                "list": [
+                  {
+                    "id": "string",
+                    "booking_id": "string",
+                    "check_in_time": "2026-03-21T10:00:00Z",
+                    "is_makeup": false,
+                    "lesson_number": 1
+                  }
+                ],
+                "total": 10
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  
+  "frontend": {
+    "pages": [
+      {
+        "path": "/pages/check-in/index",
+        "description": "签到页面",
+        "elements": {
+          "sign_button": {
+            "type": "button",
+            "selector": ".sign-in-btn",
+            "text": "立即签到",
+            "events": ["click"]
+          },
+          "progress_text": {
+            "type": "text",
+            "selector": ".progress-text",
+            "format": "已上{completed}课/共{total}课"
+          },
+          "course_name": {
+            "type": "text",
+            "selector": ".course-name",
+            "description": "课程名称"
+          },
+          "institution_name": {
+            "type": "text", 
+            "selector": ".institution-name",
+            "description": "机构名称"
+          },
+          "history_list": {
+            "type": "list",
+            "selector": ".history-list",
+            "description": "签到历史列表"
+          },
+          "makeup_button": {
+            "type": "button",
+            "selector": ".makeup-btn",
+            "text": "补签",
+            "description": "补签按钮（仅过去日期显示）"
+          }
+        },
+        "flow": [
+          "1. 用户从订单详情或课表进入签到页",
+          "2. 页面显示课程信息、机构信息、签到进度",
+          "3. 用户点击【立即签到】按钮",
+          "4. 调用签到接口",
+          "5. 显示签到成功提示，更新进度",
+          "6. 如全部课时完成，显示订单完成提示"
+        ],
+        "state_management": {
+          "loading": "页面加载中，显示骨架屏",
+          "can_sign": "可以签到，显示绿色签到按钮",
+          "cannot_sign": "不能签到（时间未到或已签到），按钮禁用",
+          "signed": "已签到，显示成功状态",
+          "error": "接口错误，显示错误提示和重试按钮"
+        }
+      }
+    ]
+  },
+  
+  "qa": {
+    "test_cases": [
+      {
+        "id": "TC001",
+        "title": "正常签到成功",
+        "type": "positive",
+        "priority": "P0",
+        "preconditions": [
+          "用户已登录",
+          "订单状态为confirmed",
+          "预约状态为confirmed",
+          "当前时间在上课前24小时内"
+        ],
+        "steps": [
+          "1. 进入签到页面",
+          "2. 点击【立即签到】按钮",
+          "3. 等待接口返回"
+        ],
+        "expected": "签到成功，显示成功提示，进度+1",
+        "data": {
+          "order_id": "ORD20240321001",
+          "booking_id": "BKG20240321001"
+        }
+      },
+      {
+        "id": "TC002",
+        "title": "重复签到失败",
+        "type": "negative",
+        "priority": "P1",
+        "preconditions": ["该课时已签到"],
+        "steps": [
+          "1. 对已签到的课时再次点击签到"
+        ],
+        "expected": "提示"这节课已经签到过了"，返回409错误",
+        "data": {}
+      },
+      {
+        "id": "TC003",
+        "title": "非购买者签到失败",
+        "type": "negative", 
+        "priority": "P1",
+        "preconditions": ["用户A登录，但订单是用户B购买的"],
+        "steps": [
+          "1. 用户A尝试对用户B的订单签到"
+        ],
+        "expected": "提示"无权操作此订单"，返回403错误",
+        "data": {}
+      },
+      {
+        "id": "TC004",
+        "title": "提前24小时以上签到失败",
+        "type": "edge",
+        "priority": "P2",
+        "preconditions": ["距离上课时间还有48小时"],
+        "steps": [
+          "1. 尝试提前签到"
+        ],
+        "expected": "提示"签到时间未到，请在上课前24小时内签到"，返回422错误",
+        "data": {}
+      },
+      {
+        "id": "TC005",
+        "title": "补签功能",
+        "type": "positive",
+        "priority": "P1",
+        "preconditions": ["有过去未签到的课时"],
+        "steps": [
+          "1. 查看签到历史",
+          "2. 点击某条记录的【补签】按钮",
+          "3. 填写补签原因",
+          "4. 确认补签"
+        ],
+        "expected": "补签成功，标记为补签状态",
+        "data": {}
+      }
+    ],
+    "automation": {
+      "api_tests": true,
+      "e2e_tests": true,
+      "unit_tests": true
+    }
+  }
+}
