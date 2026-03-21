@@ -1,4 +1,4 @@
-# Interest Class Server 开发规范
+# 稚小苗 Server 开发规范
 
 ## 项目概述
 

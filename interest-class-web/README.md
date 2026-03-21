@@ -1,4 +1,4 @@
-# Interest Class Web 开发规范
+# 稚小苗 Web 开发规范
 
 ## 项目概述
 
