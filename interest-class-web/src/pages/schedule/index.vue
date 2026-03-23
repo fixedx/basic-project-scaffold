@@ -366,7 +366,44 @@ const dayViewHeight = computed(() => {
 })
 
 // ==================== 登录状态 ====================
-const isLoggedIn = computed(() => !!getToken())
+const isLoggedIn = ref(false)
+
+function syncLoginState() {
+  isLoggedIn.value = !!getToken()
+}
+
+function getRedirectPathByUserType(userType: string): string {
+  switch (userType) {
+    case 'institution':
+      return '/pages/institution/center/index'
+    case 'teacher':
+      return '/pages/teacher/schedule/index'
+    case 'admin':
+      return '/pages/admin/center/index'
+    default:
+      return '/pages/login/index'
+  }
+}
+
+function ensureParentAccess(): boolean {
+  syncLoginState()
+  if (!isLoggedIn.value) {
+    uni.reLaunch({
+      url: '/pages/login/index'
+    })
+    return false
+  }
+
+  const userType = uni.getStorageSync('userType') || ''
+  if (userType) {
+    uni.reLaunch({
+      url: getRedirectPathByUserType(userType)
+    })
+    return false
+  }
+
+  return true
+}
 
 // ==================== 视图相关 ====================
 type ViewType = 'day' | 'week' | 'month'
@@ -919,11 +956,7 @@ async function loadScheduleData() {
 // ==================== 生命周期 ====================
 
 onMounted(async () => {
-  // 检查登录状态，未登录直接跳转登录页
-  if (!isLoggedIn.value) {
-    uni.navigateTo({
-      url: '/pages/login/index'
-    })
+  if (!ensureParentAccess()) {
     return
   }
   
@@ -939,10 +972,7 @@ onMounted(async () => {
 
 onShow(() => {
   uni.hideTabBar({ animation: false })
-  if (!isLoggedIn.value) {
-    uni.navigateTo({
-      url: '/pages/login/index'
-    })
+  if (!ensureParentAccess()) {
     return
   }
   loadScheduleData()
@@ -950,6 +980,7 @@ onShow(() => {
 
 // 下拉刷新
 onPullDownRefresh(async () => {
+  syncLoginState()
   if (isLoggedIn.value) {
     await loadScheduleData()
   }

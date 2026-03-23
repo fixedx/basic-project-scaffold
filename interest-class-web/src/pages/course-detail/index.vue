@@ -821,7 +821,7 @@ onMounted(() => {
   flex-direction: column;
   align-items: center;
   gap: 16rpx;
-  width: 140rpx;
+  width: 180rpx;
   flex-shrink: 0; // Prevent shrinking
 }
 
@@ -829,6 +829,17 @@ onMounted(() => {
   font-size: 26rpx;
   font-weight: 500;
   color: #333;
+  width: 100%;
+  line-height: 1.5;
+  text-align: center;
+  white-space: normal;
+  word-break: break-word;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  line-clamp: 2;
+  overflow: hidden;
+  min-height: 78rpx;
 }
 
 .teacher-title {

@@ -13,11 +13,14 @@
         class="teacher-card"
         @click="emit('click', t.id)"
       >
-        <image
-          :src="t.avatar_url || '/static/default-avatar.png'"
-          mode="aspectFill"
-          class="teacher-avatar"
-        />
+        <view class="teacher-avatar avatar">
+          <AsyncImage
+            :url="t.avatar_url || '/static/default-avatar.png'"
+            width="100%"
+            height="100%"
+            mode="aspectFill"
+          />
+        </view>
         <view class="teacher-name">{{ t.name }}</view>
         <view class="teacher-title">{{ t.title || '' }}</view>
       </view>
@@ -27,6 +30,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import AsyncImage from '@/components/AsyncImage/index.vue'
 
 interface TeacherItem {
   id: string
@@ -105,15 +109,28 @@ const displayTeachers = computed(() => {
   text-align: center;
 }
 
+.teacher-avatar {
+  width: 120rpx;
+  height: 120rpx;
+  margin-right: 0;
+  margin-bottom: 16rpx;
+  flex-shrink: 0;
+}
+
 .teacher-name {
   font-size: 26rpx;
   font-weight: bold;
   color: #333;
   margin-bottom: 4rpx;
-  white-space: nowrap;
   overflow: hidden;
   width: 100%;
   text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  line-clamp: 2;
+  white-space: normal;
+  word-break: break-word;
 }
 
 .teacher-title {

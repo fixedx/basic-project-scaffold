@@ -2,8 +2,8 @@
   <view class="info-section">
     <!-- Header: Logo + Name -->
     <view class="info-header">
-      <view v-if="institution.logo" class="inst-logo">
-        <AsyncImage :url="institution.logo" width="120rpx" height="120rpx" mode="aspectFill" custom-style="border-radius: 16rpx;" />
+      <view v-if="institution.logo" class="inst-logo avatar">
+        <AsyncImage :url="institution.logo" width="100%" height="100%" mode="aspectFill" />
       </view>
       <view class="inst-main">
         <text class="info-name">{{ institution.name }}</text>
@@ -138,6 +138,9 @@ const handleCallPhone = () => {
 
 .inst-logo {
   flex-shrink: 0;
+  width: 120rpx;
+  height: 120rpx;
+  margin-right: 0;
 }
 
 .inst-main {

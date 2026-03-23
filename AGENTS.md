@@ -4996,6 +4996,60 @@ await previewImageList(review.images, idx)
 
 ---
 
+### 错误 69: 用 `computed(() => !!getToken())` 读取 storage 登录态，在 tabBar 缓存页会卡住旧值 ⚠️⚠️⚠️
+
+**错误现象**：
+```typescript
+// ❌ 错误：computed 内直接读取 storage，没有任何响应式依赖
+const isLoggedIn = computed(() => !!getToken())
+
+onShow(() => {
+  if (!isLoggedIn.value) {
+    uni.navigateTo({ url: '/pages/login/index' })
+  }
+})
+
+// 结果：tabBar 页面首次在未登录态被创建后，后续即使已登录，
+// isLoggedIn 也可能仍然保持 false，点击“课表”仍被错误跳到登录页
+```
+
+**根本原因**：
+- `getToken()` 只是同步读取 storage，不是响应式数据源
+- `computed` 没有依赖任何 `ref/reactive`，只会缓存第一次求值结果
+- uni-app 的 tabBar 页面会被缓存，`onShow` 再次触发时组件实例不会重建，旧的登录态判断会被复用
+
+**正确写法**：
+```typescript
+// ✅ 正确：使用 ref，并在 onShow / 进入页面前主动同步 storage 状态
+const isLoggedIn = ref(false)
+
+function syncLoginState() {
+  isLoggedIn.value = !!getToken()
+}
+
+function ensurePageAccess() {
+  syncLoginState()
+  if (!isLoggedIn.value) {
+    uni.reLaunch({ url: '/pages/login/index' })
+    return false
+  }
+  return true
+}
+
+onShow(() => {
+  if (!ensurePageAccess()) return
+  loadPageData()
+})
+```
+
+**规范**：
+- **禁止用 `computed(() => uni.getStorageSync(...) )` 或 `computed(() => !!getToken())` 作为页面登录态来源**
+- 对 storage 登录态判断，统一使用 `ref + sync函数 + onShow` 方式主动刷新
+- 对 tabBar 页面和会被缓存的页面，鉴权必须放在 `onShow` 中重新同步，而不是依赖组件首次创建时的计算结果
+- 若页面只允许某种角色访问，还要在同步 token 后继续校验 `userType`，避免“已登录但进错端页面”被误判成未登录
+
+---
+
 
 
 在生成新模块时，请检查以下内容：

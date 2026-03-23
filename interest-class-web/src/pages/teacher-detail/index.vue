@@ -43,17 +43,27 @@
       </view>
 
       <!-- 擅长科目 -->
-      <view class="section" v-if="teacher.subjects && teacher.subjects.length > 0">
+      <view class="section" v-if="normalizedSubjects.length > 0">
         <view class="section-title">擅长科目</view>
         <view class="section-content">
           <view class="subject-list">
             <text 
-              v-for="subject in teacher.subjects" 
+              v-for="subject in normalizedSubjects" 
               :key="subject"
               class="subject-tag"
             >
               {{ subject }}
             </text>
+          </view>
+        </view>
+      </view>
+
+      <view class="section" v-if="teacherInfoItems.length > 0">
+        <view class="section-title">教师信息</view>
+        <view class="section-content teacher-info-list">
+          <view v-for="item in teacherInfoItems" :key="item.label" class="teacher-info-item">
+            <text class="teacher-info-label">{{ item.label }}</text>
+            <text class="teacher-info-value">{{ item.value }}</text>
           </view>
         </view>
       </view>
@@ -67,12 +77,12 @@
       </view>
 
       <!-- 资质证书 -->
-      <view class="section" v-if="teacher.certificates && teacher.certificates.length > 0">
+      <view class="section" v-if="normalizedCertificates.length > 0">
         <view class="section-title">资质证书</view>
         <view class="section-content">
           <view class="certificate-grid">
             <view 
-              v-for="(cert, index) in teacher.certificates" 
+              v-for="(cert, index) in normalizedCertificates" 
               :key="index"
               class="certificate-item"
             >
@@ -82,7 +92,7 @@
                 height="280rpx"
                 mode="aspectFill"
                 :enable-preview="true"
-                :preview-urls="teacher.certificates"
+                :preview-urls="normalizedCertificates"
                 :preview-current="index"
               />
             </view>
@@ -126,12 +136,39 @@ import { onLoad } from '@dcloudio/uni-app'
 import { teacherApi, institutionApi, type TeacherInfo } from '@/api'
 import { showErrorToast } from '@/utils/toast'
 import AsyncImage from '@/components/AsyncImage/index.vue'
+import InstitutionCard from '@/components/InstitutionCard/index.vue'
 import Loading from '@/components/Loading/index.vue'
 
 const teacherId = ref('')
 const teacher = ref<TeacherInfo | null>(null)
 const loading = ref(false)
 const institutionData = ref<any>(null)
+
+const normalizedSubjects = computed(() => {
+  if (!teacher.value?.subjects) return []
+  return Array.isArray(teacher.value.subjects) ? teacher.value.subjects : []
+})
+
+const normalizedCertificates = computed(() => {
+  if (!teacher.value?.certificates) return []
+  return Array.isArray(teacher.value.certificates) ? teacher.value.certificates : []
+})
+
+const teacherInfoItems = computed(() => {
+  if (!teacher.value) return []
+
+  return [
+    teacher.value.phone
+      ? { label: '联系电话', value: teacher.value.phone }
+      : null,
+    teacher.value.title
+      ? { label: '教师职称', value: teacher.value.title }
+      : null,
+    teacher.value.years_of_experience
+      ? { label: '教学经验', value: `${teacher.value.years_of_experience}年` }
+      : null,
+  ].filter(Boolean) as Array<{ label: string; value: string }>
+})
 
 // 状态文本
 const statusText = computed(() => {
@@ -151,10 +188,14 @@ const loadTeacherDetail = async () => {
   loading.value = true
   try {
     const data = await teacherApi.getDetail(teacherId.value)
-    teacher.value = data
+    teacher.value = {
+      ...data,
+      subjects: Array.isArray(data.subjects) ? data.subjects : [],
+      certificates: Array.isArray(data.certificates) ? data.certificates : [],
+    }
     // 加载所属机构信息
     if (data.institution_id) {
-      loadInstitution(data.institution_id)
+      await loadInstitution(data.institution_id)
     }
   } catch (error) {
     showErrorToast('加载失败')
@@ -191,11 +232,14 @@ const handleBack = () => {
 onLoad((options) => {
   if (options?.id) {
     teacherId.value = options.id
+    loadTeacherDetail()
   }
 })
 
 onMounted(() => {
-  loadTeacherDetail()
+  if (!teacher.value && teacherId.value) {
+    loadTeacherDetail()
+  }
 })
 </script>
 
@@ -322,6 +366,32 @@ onMounted(() => {
   display: flex;
   flex-wrap: wrap;
   gap: 16rpx;
+}
+
+.teacher-info-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+
+.teacher-info-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24rpx;
+}
+
+.teacher-info-label {
+  font-size: 26rpx;
+  color: $uni-text-color-secondary;
+}
+
+.teacher-info-value {
+  flex: 1;
+  font-size: 28rpx;
+  color: $uni-text-color;
+  text-align: right;
+  word-break: break-all;
 }
 
 .subject-tag {
