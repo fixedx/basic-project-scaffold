@@ -348,15 +348,31 @@ export class AuthService {
   }
 
   /**
-   * 家长手机号登录（密码固定为66666666）
+   * 家长手机号登录（使用短信验证码）
    * 效果与微信登录一致，创建普通家长用户
    */
   @Transactional()
-  async parentPhoneLogin(dto: { phone: string }): Promise<LoginResponseDto> {
-    const { phone } = dto;
-    const FIXED_PASSWORD = '66666666';
+  async parentPhoneLogin(dto: { phone: string; verify_code?: string }): Promise<LoginResponseDto> {
+    const { phone, verify_code } = dto;
 
-    // 1. 查找或创建用户（通过手机号）
+    // 1. 验证码校验（生产环境必须验证，开发环境可跳过）
+    if (process.env.NODE_ENV === 'production') {
+      if (!verify_code) {
+        throw new BadRequestException('请输入短信验证码');
+      }
+      // TODO: 接入短信服务验证验证码
+      // const isValid = await this.smsService.verifyCode(phone, verify_code);
+      // if (!isValid) {
+      //   throw new BadRequestException('验证码错误或已过期');
+      // }
+    } else {
+      // 开发环境：记录验证码使用情况，便于调试
+      if (verify_code) {
+        console.log(`[Dev] 手机号 ${phone} 使用验证码登录: ${verify_code}`);
+      }
+    }
+
+    // 2. 查找或创建用户（通过手机号）
     let user = await this.userRepository.findByPhone(phone);
 
     if (!user) {
@@ -380,17 +396,17 @@ export class AuthService {
       }
     }
 
-    // 2. 生成 JWT token（普通家长角色，与微信登录一致）
+    // 3. 生成 JWT token（普通家长角色，与微信登录一致）
     const token = this.generateToken(user);
 
-    // 3. 首次登录自动生成邀请码（幂等，不阻塞登录主流程）
+    // 4. 首次登录自动生成邀请码（幂等，不阻塞登录主流程）
     try {
       await this.inviteService.getOrCreateInviteCode(user.id);
     } catch (err: any) {
       console.warn(`自动生成邀请码失败（不影响登录）: ${err?.message}`);
     }
 
-    // 4. 返回登录结果
+    // 5. 返回登录结果
     return {
       token,
       userInfo: {

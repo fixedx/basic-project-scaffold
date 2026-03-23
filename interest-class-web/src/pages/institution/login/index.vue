@@ -33,7 +33,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { authApi } from '@/api/auth'
-import { setToken } from '@/utils/request'
+import { setToken } from '@/utils/auth'
 import { useUserStore } from '@/stores/user'
 import AuthLoginLayout from '@/components/AuthLoginLayout/index.vue'
 

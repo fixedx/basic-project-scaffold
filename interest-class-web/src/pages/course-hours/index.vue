@@ -80,7 +80,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { orderApi, type Order } from '@/api/order'
-import { getToken } from '@/utils/request'
+import { getToken } from '@/utils/auth'
 import Loading from '@/components/Loading/index.vue'
 import EmptyState from '@/components/EmptyState/index.vue'
 

@@ -88,7 +88,7 @@
 import { ref } from 'vue'
 import { onShow, onLoad } from '@dcloudio/uni-app'
 import { authApi } from '@/api/auth'
-import { removeToken } from '@/utils/request'
+import { removeToken } from '@/utils/auth'
 import { useAuthGuard } from '@/composables/useAuthGuard'
 import { useUserStore } from '@/stores/user'
 import AsyncImage from '@/components/AsyncImage/index.vue'

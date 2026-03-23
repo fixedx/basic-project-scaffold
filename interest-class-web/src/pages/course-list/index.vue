@@ -61,7 +61,12 @@
 
     <!-- 课程列表 -->
     <view class="list-container">
-      <view class="course-list" v-if="courses.length > 0 || loading">
+      <!-- 骨架屏（初始加载时显示） -->
+      <view class="skeleton-list" v-if="loading && courses.length === 0">
+        <CourseCardSkeleton v-for="i in 5" :key="i" />
+      </view>
+
+      <view class="course-list" v-else-if="courses.length > 0">
         <CourseCard
           v-for="course in courses"
           :key="course.id"
@@ -94,6 +99,7 @@ import { showErrorToast } from '@/utils/toast'
 import { formatDistance, getUserLocation } from '@/utils/distance'
 import CourseCard from '@/components/CourseCard/index.vue'
 import EmptyState from '@/components/EmptyState/index.vue'
+import { CourseCardSkeleton } from '@/components/Skeleton'
 
 // 导航栏配置
 const config = reactive({
@@ -405,5 +411,9 @@ onReachBottom(() => {
   text-align: center;
   color: #999;
   font-size: 24rpx;
+}
+
+.skeleton-list {
+  padding: 24rpx;
 }
 </style>

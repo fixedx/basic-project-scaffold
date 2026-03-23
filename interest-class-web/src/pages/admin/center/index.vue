@@ -235,7 +235,7 @@ import { authApi, type UserInfo } from '@/api/auth'
 import { adminApi, type AdminStats, type AdminStatsParams } from '@/api/admin'
 import { feedbackApi } from '@/api/feedback'
 import LogoutButton from '@/components/LogoutButton/index.vue'
-import { removeToken } from '@/utils/request'
+import { removeToken } from '@/utils/auth'
 import { useAuthGuard } from '@/composables/useAuthGuard'
 
 const { isReady } = useAuthGuard('admin')

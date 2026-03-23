@@ -95,7 +95,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import LogoutButton from '@/components/LogoutButton/index.vue'
-import { getToken, removeToken } from '@/utils/request'
+import { getToken, removeToken } from '@/utils/auth'
 
 // 版本号
 const appVersion = ref('1.0.0')

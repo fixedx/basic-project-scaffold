@@ -106,7 +106,7 @@ export class PaymentService {
     const lockedCashbackAmount = Number(order?.cashback_amount) || 0;
     const lockedBaseAmount = Number(baseAmount) || 0;
     if (lockedCashbackAmount > 0 && lockedBaseAmount > 0) {
-      return Number(((lockedCashbackAmount / lockedBaseAmount) * 100).toFixed(2));
+      return MoneyMath.calculatePercent(lockedCashbackAmount, lockedBaseAmount);
     }
 
     return 0;

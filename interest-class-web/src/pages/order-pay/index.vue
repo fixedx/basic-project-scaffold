@@ -255,6 +255,12 @@ const startCountdown = () => {
 
 // 处理支付
 const handlePay = async () => {
+  // 防抖：如果正在支付中，直接返回
+  if (paying.value) {
+    console.warn('支付中，请勿重复点击')
+    return
+  }
+  
   if (!order.value) return
 
   if (isExpired.value) {

@@ -83,8 +83,8 @@ const props = withDefaults(defineProps<Props>(), {
   mode: 'aspectFill',
   width: '',
   height: '',
-  lazyLoad: false,
-  fadeShow: false,
+  lazyLoad: true,  // 默认开启懒加载，优化长列表性能
+  fadeShow: true,  // 默认开启淡入动画
   webp: false,
   showMenuByLongpress: false,
   draggable: true,

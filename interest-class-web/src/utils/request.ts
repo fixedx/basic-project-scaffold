@@ -2,6 +2,8 @@
  * HTTP 请求工具
  */
 
+import { getToken, setToken, removeToken } from './auth'
+
 // API 前缀
 const API_PREFIX = '/api'
 
@@ -55,8 +57,6 @@ function getBaseURLLazy(): string {
   return _baseURL
 }
 
-const TOKEN_KEY = 'auth_token'
-
 /**
  * 请求配置
  */
@@ -76,26 +76,8 @@ interface ResponseData<T = any> {
   message: string
 }
 
-/**
- * 获取 token
- */
-export function getToken(): string | null {
-  return uni.getStorageSync(TOKEN_KEY)
-}
-
-/**
- * 设置 token
- */
-export function setToken(token: string) {
-  uni.setStorageSync(TOKEN_KEY, token)
-}
-
-/**
- * 移除 token
- */
-export function removeToken() {
-  uni.removeStorageSync(TOKEN_KEY)
-}
+// 重新导出 auth.ts 中的函数，保持向后兼容
+export { getToken, setToken, removeToken }
 
 /**
  * HTTP 请求封装

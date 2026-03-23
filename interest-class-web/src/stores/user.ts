@@ -1,6 +1,6 @@
 import { reactive } from 'vue'
 import { authApi } from '@/api/auth'
-import { setToken, removeToken } from '@/utils/request'
+import { setToken, removeToken } from '@/utils/auth'
 import type { PhoneLoginParams } from '@/api/auth'
 
 // Simple state management using reactive
